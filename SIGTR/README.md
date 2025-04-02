@@ -1,7 +1,7 @@
 # Proyecto IcasoftIA
 
 ## Descripción
-ICASOFT IA es un proyecto que utiliza varias bibliotecas de Python para proporcionar funcionalidades como desarrollo web, geolocalización, utilidades de GPU y más.
+ICASOFT IA es un proyecto que utiliza varias bibliotecas de Python para proporcionar funcionalidades como analisis de tus componentes, geolocalización, utilidades de GPU y más.
 
 ## Requisitos
 El proyecto requiere los siguientes paquetes de Python:
