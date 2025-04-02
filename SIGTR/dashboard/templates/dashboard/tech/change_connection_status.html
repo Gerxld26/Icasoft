@@ -1,0 +1,75 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Cambiar Estado de Conexión{% endblock %}
+{% block header %}Cambiar Estado de Conexión{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Cambiar Estado de Conexión</h2>
+<form id="connection-status-form">
+    {% csrf_token %}
+    <div class="form-group mb-3">
+        <label for="estado_conexion" class="form-label"><i class="fas fa-network-wired"></i> Estado de Conexión:</label>
+        <select name="estado_conexion" id="estado_conexion" class="form-select">
+            <option value="online" {% if tecnico.estado_conexion == 'online' %}selected{% endif %}>En Línea</option>
+            <option value="offline" {% if tecnico.estado_conexion == 'offline' %}selected{% endif %}>Fuera de Línea</option>
+        </select>
+    </div>
+    <button type="button" class="btn btn-primary mt-2" onclick="updateConnectionStatus()">
+        <i class="fas fa-sync-alt"></i> Actualizar
+    </button>
+</form>
+
+<!-- Feedback messages -->
+<div id="feedback-message" class="mt-3" style="display: none;"></div>
+
+<!-- Loading spinner -->
+<div id="loading-spinner" class="spinner-border text-primary mt-3" role="status" style="display: none;">
+    <span class="visually-hidden">Cargando...</span>
+</div>
+
+<script>
+function updateConnectionStatus() {
+    const form = document.getElementById('connection-status-form');
+    const formData = new FormData(form);
+    
+    // Show loading spinner
+    document.getElementById('loading-spinner').style.display = 'block';
+
+    fetch("{% url 'change_connection_status' %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            "X-CSRFToken": formData.get('csrfmiddlewaretoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Hide loading spinner
+        document.getElementById('loading-spinner').style.display = 'none';
+
+        const feedbackMessage = document.getElementById('feedback-message');
+        if (data.status === 'success') {
+            feedbackMessage.className = 'alert alert-success';
+            feedbackMessage.innerHTML = '<i class="fas fa-check-circle"></i> Estado de conexión actualizado a ' + data.estado_conexion;
+        } else {
+            feedbackMessage.className = 'alert alert-danger';
+            feedbackMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error: ' + data.message;
+        }
+        feedbackMessage.style.display = 'block';
+    })
+    .catch(error => {
+        // Hide loading spinner
+        document.getElementById('loading-spinner').style.display = 'none';
+
+        console.error('Error:', error);
+        const feedbackMessage = document.getElementById('feedback-message');
+        feedbackMessage.className = 'alert alert-danger';
+        feedbackMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Ocurrió un error al actualizar el estado de conexión.';
+        feedbackMessage.style.display = 'block';
+    });
+}
+</script>
+
+<!-- Include Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}

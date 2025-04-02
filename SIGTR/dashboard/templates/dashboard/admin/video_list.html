@@ -1,0 +1,32 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Lista de Videos{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-primary">Lista de Videos</h2>
+    <a href="{% url 'video_create' %}" class="btn btn-success mb-3">Agregar Nuevo Video</a>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Título</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for video in videos %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ video.title }}</td>
+                <td>{{ video.description|truncatechars:50 }}</td>
+                <td>
+                    <a href="{% url 'video_update' video.pk %}" class="btn btn-primary btn-sm">Editar</a>
+                    <a href="{% url 'video_delete' video.pk %}" class="btn btn-danger btn-sm">Eliminar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

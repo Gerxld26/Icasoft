@@ -1,0 +1,154 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Solicitar Asistencia Técnica{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-primary">Solicitar Asistencia Técnica</h2>
+    <p>Describe tu problema, selecciona tu ubicación y elige un técnico disponible.</p>
+
+    <form id="assistance-form" method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.title.label_tag }}
+            {{ form.title }}
+        </div>
+        <div class="mb-3">
+            {{ form.description.label_tag }}
+            {{ form.description }}
+        </div>
+        <div class="mb-3">
+            {{ form.address.label_tag }}
+            {{ form.address }}
+        </div>
+        <!-- Mostrar Técnicos Disponibles -->
+        <div class="mb-3">
+            <label for="technician">Selecciona un Técnico:</label>
+            <select name="technician" id="technician" class="form-control">
+                <option value="">-- Elige un técnico --</option>
+                {% for technician in technicians %}
+                <option value="{{ technician.technician.id }}">
+                    {{ technician.technician.username }} - {{ technician.distance }} km - {{ technician.district_name }}
+                </option>
+                {% empty %}
+                <option>No hay técnicos disponibles en línea cerca de ti.</option>
+                {% endfor %}
+            </select>
+        </div>
+
+   
+        <!-- Mapa para capturar ubicación -->
+        <div id="map" style="height: 300px; margin-bottom: 15px;"></div>
+
+        {{ form.latitude }}
+        {{ form.longitude }}
+
+        <button type="submit" class="btn btn-primary">Enviar</button>
+    </form>
+</div>
+
+<!-- Leaflet.js para mapas interactivos -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var map = L.map("map").setView([0, 0], 2);
+        var marker;
+        let latField = document.getElementById("id_latitude");
+        let lonField = document.getElementById("id_longitude");
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap contributors"
+        }).addTo(map);
+
+        function updateLocation(lat, lon) {
+            latField.value = lat.toFixed(6);
+            lonField.value = lon.toFixed(6);
+        }
+
+        function success(position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+            map.setView([lat, lon], 15);
+            marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+            updateLocation(lat, lon);
+
+            marker.on("dragend", function () {
+                var newPos = marker.getLatLng();
+                updateLocation(newPos.lat, newPos.lng);
+            });
+        }
+
+        function error() {
+            Swal.fire("Ubicación no disponible", "No se pudo obtener la ubicación. Arrastra el marcador manualmente.", "warning");
+        }
+
+        navigator.geolocation.getCurrentPosition(success, error);
+    });
+
+    // Manejo del formulario con AJAX
+    document.getElementById("assistance-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        // Deshabilitar el botón para prevenir clics múltiples
+        document.querySelector('button[type="submit"]').disabled = true;
+
+        let formData = new FormData(this);
+
+        // Validación de ubicación
+        if (!document.getElementById("id_latitude").value || !document.getElementById("id_longitude").value) {
+            Swal.fire("Error", "Debe seleccionar una ubicación en el mapa.", "error");
+            // Reactivar el botón si la validación falla
+            document.querySelector('button[type="submit"]').disabled = false;
+            return;
+        }
+
+        fetch("/tickets/request/", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Respuesta del servidor:", data);
+
+                Swal.fire({
+                    icon: data.status === "success" ? "success" : "error",
+                    title: data.status === "success" ? "Éxito" : "Error",
+                    text: data.message,
+                    confirmButtonColor: "#3085d6",
+                    confirmButtonText: "Entendido"
+                }).then((result) => {
+                    if (result.isConfirmed && data.status === "success") {
+                        window.location.href = data.redirect_url;
+                    }
+                });
+
+                // Reactivar el botón después de la respuesta
+                document.querySelector('button[type="submit"]').disabled = false;
+            })
+            .catch(error => {
+                console.error("Error en la solicitud:", error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Hubo un problema con la solicitud. Inténtalo nuevamente.",
+                    confirmButtonColor: "#d33",
+                    confirmButtonText: "Cerrar"
+                });
+                // Reactivar el botón si hay un error
+                document.querySelector('button[type="submit"]').disabled = false;
+            });
+    });
+</script>
+{% endblock %}

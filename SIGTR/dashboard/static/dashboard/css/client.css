@@ -1,0 +1,106 @@
+/* General Styles for Client Dashboard */
+.container-fluid {
+    padding: 0 1rem;
+    overflow-x: hidden; /* Soluciona el scroll horizontal */
+}
+
+/* Fix scroll horizontal caused by cards and charts */
+.chart-container, .disk-details, .disk-pies {
+    overflow-x: hidden;
+    margin: 0 auto; /* Centra los elementos */
+}
+
+.row-equal-height {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -0.5rem; /* Elimina márgenes laterales que causan scroll */
+}
+
+.card-equal, .card-height-match {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    margin: 0.5rem; /* Uniformiza espacio entre tarjetas */
+}
+
+.card-height-match {
+    height: 100%;
+    min-height: 350px; /* Establece altura mínima uniforme */
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.list-group-item {
+    font-size: 0.95rem;
+}
+
+.chart-container {
+    margin-bottom: 2rem;
+    max-width: 100%; /* Evita que se extienda más allá del contenedor */
+}
+
+.disk-details, .disk-pies {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap; /* Asegura que las cards se ajusten automáticamente */
+    margin-top: 1.5rem;
+}
+
+.disk-details .card, .disk-pies .card {
+    flex: 1 1 calc(50% - 1rem); /* Dos tarjetas por fila */
+    margin: 0.5rem;
+}
+
+.disk-details .card:first-child, .disk-pies .card:first-child {
+    margin-left: 0;
+}
+
+.disk-details .card:last-child, .disk-pies .card:last-child {
+    margin-right: 0;
+}
+
+/* Chart Styles */
+#gpu-chart-container, #disk-transfer-chart {
+    height: 400px;
+    max-width: 100%;
+}
+
+/* Specific Styles for GPU Monitoring */
+#gpu-dedicated-memory-chart, #gpu-shared-memory-chart {
+    max-height: 300px;
+    max-width: 100%;
+}
+
+/* Cards and Grids Alignment */
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+h5.card-title {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.card-body ul {
+    padding-left: 0;
+    list-style: none;
+}
+
+.card-body ul li {
+    margin: 0.5rem 0;
+}
+
+/* Prevent unnecessary scroll for entire page */
+body {
+    overflow-x: hidden;
+}
+

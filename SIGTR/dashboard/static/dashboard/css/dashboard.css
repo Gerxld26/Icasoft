@@ -1,0 +1,276 @@
+.sidebar {
+    width: 250px;
+    position: fixed;
+}
+
+.content {
+    margin-left: 250px;
+}
+
+.sidebar .nav-link {
+    padding: 10px 20px;
+    transition: background-color 0.3s ease;
+}
+
+.sidebar .nav-link.active, .sidebar .nav-link:hover {
+    background-color: #495057;
+    color: #fff;
+    border-left: 5px solid #17a2b8;
+}
+
+.header {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    font-weight: 600; /* Mejora la visibilidad de las etiquetas */
+}
+
+.card-body {
+    padding: 20px; /* Asegura espacio dentro de los formularios */
+}
+
+.btn {
+    font-size: 16px; /* Ajusta el tamaño del botón */
+    padding: 10px; /* Proporciona mejor clicabilidad */
+}
+/* Estilo para Small Boxes */
+.small-box {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+    margin-top: 20px;
+}
+
+/* Tabla de Gestión de Usuarios */
+.table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table th, .table td {
+    padding: 15px;
+    text-align: left;
+}
+
+.table th {
+    background-color: #343a40;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.table td {
+    border-bottom: 1px solid #dddddd;
+}
+
+/* Botón Desactivar */
+.button-deactivate {
+    background-color: #ff4d4f;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    font-size: 14px;
+}
+
+.button-deactivate:hover {
+    background-color: #ff7875;
+}
+
+/* Contenedor principal */
+.main-container {
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Botones generales */
+.btn-success {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+/* Estilos Responsivos */
+@media (max-width: 768px) {
+    .card {
+        margin-top: 10px;
+    }
+
+    .table th, .table td {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .main-container {
+        padding: 10px;
+    }
+
+    .small-box {
+        margin-bottom: 15px;
+    }
+
+    .btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .card {
+        margin-top: 5px;
+    }
+
+    .table th, .table td {
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    .main-container {
+        padding: 8px;
+    }
+
+    .btn {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    .small-box {
+        text-align: center;
+    }
+}
+
+.bg-primary {
+    background-color: #007bff !important;
+}
+/* Estilo personalizado para el checkbox y su etiqueta */
+.form-check {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-check-label {
+    font-weight: bold;
+    font-size: 16px;
+    margin-left: 10px;
+    color: #495057;
+}
+
+.form-check-input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+/* Contenedor de las cartas del dashboard */
+.dashboard-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 15px; /* Espaciado entre las cartas */
+    margin-top: 20px;
+}
+
+/* Estilos generales para las cartas */
+.dashboard-card {
+    flex: 1 1 calc(20% - 15px); /* Cinco cartas por fila con espacio entre ellas */
+    max-width: 200px; /* Ancho máximo */
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* Efecto al pasar el mouse por encima de la carta */
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Iconos dentro de las cartas */
+.dashboard-card i {
+    font-size: 3rem; /* Tamaño del icono */
+    margin-bottom: 10px;
+}
+
+/* Título de las cartas */
+.dashboard-card .card-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* Texto dentro de las cartas */
+.dashboard-card .card-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* Colores personalizados para cada tipo de carta */
+.bg-primary {
+    background-color: #007bff;
+}
+
+.bg-info {
+    background-color: #17a2b8;
+}
+
+.bg-success {
+    background-color: #28a745;
+}
+
+.bg-warning {
+    background-color: #ffc107;
+}
+
+/* Responsividad para pantallas pequeñas */
+@media (max-width: 768px) {
+    .dashboard-card {
+        flex: 1 1 calc(45% - 15px); /* Dos cartas por fila en pantallas medianas */
+    }
+}
+
+/* Responsividad para pantallas muy pequeñas */
+@media (max-width: 576px) {
+    .dashboard-card {
+        flex: 1 1 calc(100% - 15px); /* Una carta por fila en pantallas pequeñas */
+        max-width: 100%;
+    }
+}

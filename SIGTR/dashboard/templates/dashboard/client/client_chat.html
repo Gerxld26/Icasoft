@@ -1,0 +1,19 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load  static %}
+{% block title %}Chat Inteligente{% endblock %}
+{% block header %}Chat Inteligente{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Chat Inteligente</h2>
+    <div id="chat-box" class="border p-3 mb-3" style="height: 400px; overflow-y: auto; background: #f8f9fa;">
+        <!-- Mensajes del chat se añadirán aquí -->
+    </div>
+    <form id="chat-form">
+        <div class="input-group">
+            <input type="text" id="user-message" class="form-control" placeholder="Escribe tu mensaje aquí..." required>
+            <button type="submit" class="btn btn-primary">Enviar</button>
+        </div>
+    </form>
+</div>
+<script src="{% static 'dashboard/js/client_chat.js' %}"></script>
+{% endblock %}

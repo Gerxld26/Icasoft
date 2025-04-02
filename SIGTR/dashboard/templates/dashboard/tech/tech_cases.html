@@ -1,0 +1,61 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Casos Asignados{% endblock %}
+{% block header %}Casos Asignados{% endblock %}
+
+{% block content %}
+<h2>Tickets Asignados</h2>
+<table class="table tech-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Cliente</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ticket in tickets_asignados %}
+        <tr>
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.title }}</td>
+            <td>{{ ticket.description }}</td>
+            <td>{{ ticket.client.username }}</td> 
+            <td>{{ ticket.get_status_display }}</td>
+            <td>
+                <form method="post" action="{% url 'tech_cases' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+                    <select name="estado" class="form-select">
+                        {% for status, display in ticket.STATUS_CHOICES %}
+                        <option value="{{ status }}" {% if ticket.status == status %}selected{% endif %}>{{ display }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary mt-2">Actualizar</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination tech-pagination">
+    <span class="step-links">
+        {% if tickets_asignados.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ tickets_asignados.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Página {{ tickets_asignados.number }} de {{ tickets_asignados.paginator.num_pages }}.
+        </span>
+
+        {% if tickets_asignados.has_next %}
+            <a href="?page={{ tickets_asignados.next_page_number }}">next</a>
+            <a href="?page={{ tickets_asignados.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+{% endblock %}

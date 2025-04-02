@@ -1,0 +1,194 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Diagnóstico del Sistema{% endblock %}
+{% block header %}Diagnóstico del Sistema{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center text-primary">Diagnóstico del Sistema</h2>
+    <p class="text-center text-muted">Selecciona el tipo de análisis y ejecuta un diagnóstico completo para evaluar el estado de tu sistema y su seguridad.</p>
+
+    <!-- Selección del tipo de análisis -->
+    <div class="text-center mb-4">
+        <label for="scan-type" class="form-label">Seleccionar tipo de diagnóstico:</label>
+        <select id="scan-type" class="form-select w-auto mx-auto">
+            <option value="QuickScan" selected>Escaneo Rápido</option>
+            <option value="FullScan">Escaneo Completo</option>
+            <option value="CustomScan">Escaneo Personalizado</option>
+        </select>
+    </div>
+
+    <!-- Campo para directorio en Escaneo Personalizado -->
+    <div id="custom-scan-options" class="text-center mb-4 d-none">
+        <label for="custom-scan-path" class="form-label">Ruta del Directorio:</label>
+        <input type="text" id="custom-scan-path" class="form-control w-50 mx-auto" placeholder="Ejemplo: C:\\Carpeta" />
+    </div>
+
+    <!-- Botón de Iniciar Diagnóstico -->
+    <div class="text-center mb-4">
+        <button id="start-diagnosis-btn" class="btn btn-primary btn-lg shadow">
+            <i class="fas fa-stethoscope me-2"></i>Iniciar Diagnóstico
+        </button>
+    </div>
+
+    <!-- Alerta de Carga -->
+    <div id="loading-alert" class="alert alert-info text-center d-none" role="alert">
+        <i class="fas fa-spinner fa-spin me-2"></i>Realizando diagnóstico, por favor espera...
+    </div>
+
+    <!-- Resultados del Diagnóstico -->
+    <div id="diagnosis-results" class="row">
+        <!-- CPU -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card shadow-sm border-info text-center">
+                <div class="card-body">
+                    <i class="fas fa-microchip fa-3x text-info mb-3"></i>
+                    <h5 class="card-title">CPU</h5>
+                    <p id="cpu-usage" class="card-text text-muted">Cargando...</p>
+                </div>
+            </div>
+        </div>
+        <!-- RAM -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card shadow-sm border-success text-center">
+                <div class="card-body">
+                    <i class="fas fa-memory fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">RAM</h5>
+                    <p id="ram-usage" class="card-text text-muted">Cargando...</p>
+                </div>
+            </div>
+        </div>
+        <!-- Disco -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card shadow-sm border-warning text-center">
+                <div class="card-body">
+                    <i class="fas fa-hdd fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">Disco</h5>
+                    <p id="disk-usage" class="card-text text-muted">Cargando...</p>
+                </div>
+            </div>
+        </div>
+        <!-- GPU -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card shadow-sm border-danger text-center">
+                <div class="card-body">
+                    <i class="fas fa-video fa-3x text-danger mb-3"></i>
+                    <h5 class="card-title">GPU</h5>
+                    <p id="gpu-usage" class="card-text text-muted">Cargando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparación con Diagnósticos Previos -->
+    <div class="mt-4">
+        <h3 class="text-primary">Comparación con Diagnósticos Previos</h3>
+        <div id="comparison-results" class="card shadow-sm p-3 border-secondary">
+            <div id="comparison-content" class="text-muted">
+                <p id="cpu-comparison"><strong>CPU:</strong> Comparando resultados...</p>
+                <p id="ram-comparison"><strong>RAM:</strong> Comparando resultados...</p>
+                <p id="disk-comparison"><strong>Disco:</strong> Comparando resultados...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado de Seguridad -->
+    <div class="mt-4">
+        <h3 class="text-primary">Estado de Seguridad</h3>
+        <div id="security-status" class="card shadow-sm p-3 border-secondary">
+            <p id="security-content" class="text-muted">Cargando estado de seguridad...</p>
+        </div>
+    </div>
+
+    <!-- Análisis Detallado por IA -->
+    <div class="mt-4">
+        <h3 class="text-primary">Análisis Detallado por IA</h3>
+        <div id="ai-analysis" class="card shadow-sm p-3 border-secondary">
+            <p id="ai-analysis-content" class="text-muted">La funcionalidad de IA aún no está habilitada.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("start-diagnosis-btn").addEventListener("click", async () => {
+        const scanType = document.getElementById("scan-type").value;
+        const customPath = document.getElementById("custom-scan-path").value.trim();
+        const loadingAlert = document.getElementById("loading-alert");
+        const cpuElem = document.getElementById("cpu-usage");
+        const ramElem = document.getElementById("ram-usage");
+        const diskElem = document.getElementById("disk-usage");
+        const gpuElem = document.getElementById("gpu-usage");
+        const comparisonElem = document.getElementById("comparison-content");
+        const securityElem = document.getElementById("security-content");
+        const aiAnalysisElem = document.getElementById("ai-analysis-content");
+
+        // Validación de ruta personalizada
+        if (scanType === "CustomScan" && !customPath) {
+            alert("Por favor, proporciona un directorio válido para el Escaneo Personalizado.");
+            return;
+        }
+
+        // Mostrar mensaje de carga
+        loadingAlert.classList.remove("d-none");
+        cpuElem.textContent = ramElem.textContent = diskElem.textContent = gpuElem.textContent = "Cargando...";
+        comparisonElem.innerHTML = `
+            <p><strong>CPU:</strong> Cargando...</p>
+            <p><strong>RAM:</strong> Cargando...</p>
+            <p><strong>Disco:</strong> Cargando...</p>
+        `;
+        securityElem.textContent = "Cargando estado de seguridad...";
+        aiAnalysisElem.textContent = "Preparando análisis por IA...";
+
+        try {
+            // Diagnóstico del sistema
+            const diagnosisResponse = await fetch(
+                `{% url 'client_diagnosis_data' %}?scan_type=${scanType}&custom_path=${encodeURIComponent(customPath)}`,
+                { method: "GET", headers: { "Content-Type": "application/json" } }
+            );
+            const diagnosisData = await diagnosisResponse.json();
+
+            if (diagnosisData.status === "success") {
+                const result = diagnosisData.data;
+                cpuElem.textContent = `Uso: ${result.cpu_usage}`;
+                ramElem.textContent = `RAM: ${result.ram_usage.used} / ${result.ram_usage.total} (${result.ram_usage.percent})`;
+                diskElem.textContent = `Disco: ${result.disk_usage.used} / ${result.disk_usage.total} (${result.disk_usage.percent})`;
+                gpuElem.textContent = `${result.gpu_usage?.name || "N/A"} - Uso: ${result.gpu_usage?.usage || "N/A"}, Temp: ${result.gpu_usage?.temperature || "N/A"}`;
+            }
+
+            // Comparación del sistema
+            const comparisonResponse = await fetch("{% url 'client_comparison' %}");
+            const comparisonData = await comparisonResponse.json();
+
+            if (comparisonData.status === "success") {
+                const comparison = comparisonData.comparison;
+
+                comparisonElem.innerHTML = `
+                    <p><strong>El uso de CPU:</strong> ${comparison.cpu_change === "0.00" ? "No cambió" : comparison.cpu_change > 0 ? `Aumentó en ${comparison.cpu_change}%` : `Disminuyó en ${Math.abs(comparison.cpu_change)}%`}</p>
+                    <p><strong>El uso de RAM:</strong> ${comparison.ram_change === "0.00" ? "No cambió" : comparison.ram_change > 0 ? `Aumentó en ${comparison.ram_change}%` : `Disminuyó en ${Math.abs(comparison.ram_change)}%`}</p>
+                    <p><strong>El uso de Disco:</strong> ${comparison.disk_change === "0.00" ? "No cambió" : comparison.disk_change > 0 ? `Aumentó en ${comparison.disk_change}%` : `Disminuyó en ${Math.abs(comparison.disk_change)}%`}</p>
+                `;
+            } else {
+                comparisonElem.innerHTML = "<p>No se encontraron datos de comparación.</p>";
+            }
+
+            // Estado de seguridad
+            const securityResponse = await fetch("{% url 'defender_status_api' %}");
+            const securityData = await securityResponse.json();
+
+            if (securityData.status === "success") {
+                securityElem.innerHTML = `
+                    <p><strong>Antivirus habilitado:</strong> ${securityData.data.AntivirusEnabled ? "Sí" : "No"}</p>
+                    <p><strong>Protección en tiempo real:</strong> ${securityData.data.RealTimeProtectionEnabled ? "Activada" : "Desactivada"}</p>
+                    <p><strong>Versión de firma de antivirus:</strong> ${securityData.data.AntivirusSignatureVersion || "N/A"}</p>
+                `;
+            } else {
+                securityElem.innerHTML = "<p>Error al obtener el estado de seguridad.</p>";
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Ocurrió un error al realizar el diagnóstico.");
+        } finally {
+            // Ocultar mensaje de carga
+            loadingAlert.classList.add("d-none");
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Mis Tickets{% endblock %}
+{% block header %}Mis Tickets{% endblock %}
+
+{% block content %}
+<h2>Tickets Asignados</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ticket in tickets_asignados %}
+        <tr>
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.title }}</td>
+            <td>{{ ticket.description }}</td>
+            <td>{{ ticket.get_status_display }}</td>
+            <td>
+                <form method="post" action="{% url 'tech_tickets' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+                    <select name="estado" class="form-select">
+                        {% for status, display in ticket.STATUS_CHOICES %}
+                        <option value="{{ status }}" {% if ticket.status == status %}selected{% endif %}>{{ display }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary mt-2">Actualizar</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

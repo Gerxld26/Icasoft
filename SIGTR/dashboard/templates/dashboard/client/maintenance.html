@@ -1,0 +1,150 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Mantenimiento del Sistema{% endblock %}
+{% block header %}Mantenimiento del Sistema{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center text-primary">Mantenimiento del Sistema</h2>
+    <p class="text-center text-muted">
+        Selecciona las acciones de mantenimiento para mejorar el rendimiento y la salud de tu sistema.
+    </p>
+
+    <!-- Opciones de Mantenimiento -->
+    <div class="row text-center mt-4">
+        <!-- Liberar espacio en disco -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">Liberar espacio</h5>
+                    <p class="card-text text-muted">Elimina archivos temporales para liberar espacio en disco.</p>
+                    <button data-action="cleanup" class="btn btn-warning maintenance-action-btn w-100">
+                        <i class="fas fa-trash-alt me-2"></i>Liberar espacio
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Actualización de software -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Actualizar software</h5>
+                    <p class="card-text text-muted">Instala las actualizaciones más recientes de software.</p>
+                    <button data-action="update" class="btn btn-primary maintenance-action-btn w-100">
+                        <i class="fas fa-sync-alt me-2"></i>Actualizar software
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Desfragmentación del disco -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-info">Desfragmentar disco</h5>
+                    <p class="card-text text-muted">Organiza los datos en tu disco para mejorar el rendimiento.</p>
+                    <button data-action="defrag" class="btn btn-info maintenance-action-btn w-100">
+                        <i class="fas fa-hdd me-2"></i>Desfragmentar disco
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Reparación del disco -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">Reparar disco</h5>
+                    <p class="card-text text-muted">Busca y repara errores en el disco duro.</p>
+                    <button data-action="repair" class="btn btn-danger maintenance-action-btn w-100">
+                        <i class="fas fa-tools me-2"></i>Reparar disco
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados del Mantenimiento -->
+    <div id="maintenance-results" class="mt-4">
+        <h3 class="text-primary">Resultados del Mantenimiento</h3>
+        <div class="card shadow-sm p-3 border-secondary">
+            <p id="results-content" class="text-muted">Selecciona una acción para ver los resultados.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const resultsContent = document.getElementById("results-content");
+
+    async function executeMaintenance(action) {
+        resultsContent.textContent = "Ejecutando acción, por favor espera...";
+        resultsContent.className = "text-info";
+
+        // Mapeo de acciones a URLs Django
+        const actionUrls = {
+            cleanup: "{% url 'client_clear_space' %}",
+            update: "{% url 'client_update_software' %}",
+            defrag: "{% url 'client_defragment_disk' %}",
+            repair: "{% url 'client_repair_disk' %}",
+        };
+
+        // Verificar si la acción es válida
+        const url = actionUrls[action];
+        if (!url) {
+            resultsContent.textContent = "Acción no válida.";
+            resultsContent.className = "text-danger";
+            return;
+        }
+
+        try {
+            // Realizar petición al backend
+            const response = await fetch(url, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+            });
+
+            // Manejo de errores HTTP
+            if (!response.ok) {
+                throw new Error(`Error del servidor (HTTP ${response.status})`);
+            }
+
+            const data = await response.json();
+
+            // Manejar respuesta JSON según el estado
+            switch (data.status) {
+                case "success":
+                    resultsContent.textContent = data.message;
+                    resultsContent.className = "text-success";
+                    break;
+                case "in_progress":
+                    resultsContent.textContent = "Reparación en curso. Por favor, espera...";
+                    resultsContent.className = "text-warning";
+                    break;
+                case "scheduled":
+                    resultsContent.textContent = "Reparación programada para el próximo reinicio.";
+                    resultsContent.className = "text-success";
+                    break;
+                case "error":
+                default:
+                    resultsContent.innerHTML = `
+                        <strong>Error:</strong> ${data.message || "Error desconocido"}
+                        <p class="text-muted">Contacta con soporte técnico.</p>
+                    `;
+                    resultsContent.className = "text-danger";
+                    break;
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            resultsContent.innerHTML = `
+                <strong>Error inesperado:</strong> ${error.message || "No se pudo ejecutar la acción."}
+                <p class="text-muted">Contacta con soporte técnico.</p>
+            `;
+            resultsContent.className = "text-danger";
+        }
+    }
+
+    // Agregar listeners a los botones
+    document.querySelectorAll(".maintenance-action-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+            const action = button.getAttribute("data-action");
+            executeMaintenance(action);
+        });
+    });
+</script>
+{% endblock %}

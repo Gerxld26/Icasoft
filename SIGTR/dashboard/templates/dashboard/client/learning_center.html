@@ -1,0 +1,85 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Centro de Aprendizaje{% endblock %}
+{% block header %}Centro de Aprendizaje{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center text-primary">Centro de Aprendizaje</h2>
+    <p class="text-center text-muted">Accede a tutoriales, guías y recursos para sacar el máximo provecho de tu sistema.</p>
+
+    <!-- Barra de búsqueda -->
+    <form method="GET" action="" class="mb-4">
+        <div class="input-group">
+            <input 
+                type="text" 
+                name="q" 
+                class="form-control" 
+                placeholder="Buscar videos..." 
+                value="{{ request.GET.q|default:'' }}"
+            >
+            <button class="btn btn-primary" type="submit">
+                <i class="fas fa-search"></i> Buscar
+            </button>
+        </div>
+    </form>
+
+    <!-- Videos -->
+    <div class="row">
+        {% for video in videos %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">{{ video.title }}</h5>
+                    <p class="card-text text-muted">{{ video.description|truncatewords:20 }}</p>
+                </div>
+                <div class="ratio ratio-16x9">
+                    <iframe 
+                        width="560" 
+                        height="315" 
+                        src="{{ video.get_embed_url }}" 
+                        title="{{ video.title }}" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center text-muted">No hay videos disponibles o no se encontraron resultados.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación -->
+    <nav aria-label="Paginación de videos">
+        <ul class="pagination justify-content-center">
+            {% if videos.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ request.GET.q|default:'' }}&page={{ videos.previous_page_number }}" aria-label="Anterior">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in videos.paginator.page_range %}
+            {% if videos.number == num %}
+            <li class="page-item active" aria-current="page">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ request.GET.q|default:'' }}&page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if videos.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ request.GET.q|default:'' }}&page={{ videos.next_page_number }}" aria-label="Siguiente">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}

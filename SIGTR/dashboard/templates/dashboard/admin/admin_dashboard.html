@@ -1,0 +1,136 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+{% block title %}Inicio - Dashboard{% endblock %}
+{% block header %}Inicio{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="dashboard-cards">
+        <!-- Administradores Registrados -->
+        <div class="dashboard-card bg-primary">
+            <i class="fas fa-user-shield"></i>
+            <h5 class="card-title">Administradores Registrados</h5>
+            <p class="card-text">{{ admins_count }}</p>
+        </div>
+        <!-- Técnicos Registrados -->
+        <div class="dashboard-card bg-info">
+            <i class="fas fa-tools"></i>
+            <h5 class="card-title">Técnicos Registrados</h5>
+            <p class="card-text">{{ technicians_count }}</p>
+        </div>
+        <!-- Clientes Registrados -->
+        <div class="dashboard-card bg-success">
+            <i class="fas fa-users"></i>
+            <h5 class="card-title">Clientes Registrados</h5>
+            <p class="card-text">{{ clients_count }}</p>
+        </div>
+        <!-- Tickets Registrados -->
+        <div class="dashboard-card bg-warning">
+            <i class="fas fa-ticket-alt"></i>
+            <h5 class="card-title">Tickets Registrados</h5>
+            <p class="card-text">{{ tickets_count }}</p>
+        </div>
+        <!-- Usuarios en Línea -->
+        <div class="dashboard-card bg-info">
+            <i class="fas fa-user-clock"></i>
+            <h5 class="card-title">Usuarios en Línea</h5>
+            <p class="card-text" id="online-users-count">0</p>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de Filtros -->
+<div class="row mt-4">
+    <!-- Filtro por Fecha -->
+    <div class="col-md-6 mb-3">
+        <label for="startDate">Fecha de Inicio</label>
+        <input type="date" id="startDate" class="form-control">
+    </div>
+    <div class="col-md-6 mb-3">
+        <label for="endDate">Fecha de Fin</label>
+        <input type="date" id="endDate" class="form-control">
+    </div>
+    <!-- Filtro por Técnico -->
+    <div class="col-md-6 mb-3">
+        <label for="technicianSelect">Seleccionar Técnico</label>
+        <select id="technicianSelect" class="form-control">
+            <option value="">Todos</option>
+            {% for technician, count in cases_by_technician.items %}
+                <option value="{{ technician }}">{{ technician }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-6 mb-3">
+        <button id="applyFilter" class="btn btn-primary w-100">Aplicar Filtro</button>
+    </div>
+</div>
+
+<!-- Sección de Reportes -->
+<div class="row mt-4">
+    <!-- Gráfico General -->
+    <div class="col-lg-6 col-md-12 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h6>Reporte General</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="generalChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- Tickets por Mes -->
+    <div class="col-lg-6 col-md-12 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h6>Tickets por Mes</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyTicketsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- Casos por Técnico -->
+    <div class="col-lg-6 col-md-12 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h6>Casos por Técnico</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="techniciansCasesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para pasar datos desde Django -->
+<script type="application/json" id="dashboard-data">
+    {
+        "techniciansCount": {{ technicians_count|default:0 }},
+        "clientsCount": {{ clients_count|default:0 }},
+        "adminsCount": {{ admins_count|default:0 }},
+        "ticketsCount": {{ tickets_count|default:0 }},
+        "ticketsPerMonth": {{ tickets_per_month|default:"{}"|safe }},
+        "casesByTechnician": {{ cases_by_technician|default:"{}"|safe }}
+    }
+</script>
+
+<script>
+    async function fetchOnlineUsersCount() {
+        try {
+            const response = await fetch('/dashboard/online-users/');
+            if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+            const data = await response.json();
+            if (data.count !== undefined) {
+                document.getElementById('online-users-count').textContent = data.count;
+            } else {
+                console.error("Unexpected response:", data);
+            }
+        } catch (error) {
+            console.error('Error fetching online users count:', error);
+        }
+    }
+
+    // Llama a la función al cargar la página
+    fetchOnlineUsersCount();
+</script>
+
+{% endblock %}

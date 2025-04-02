@@ -1,0 +1,155 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+{% block title %}Agregar Administrador{% endblock %}
+{% block header %}Agregar Administrador{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-dark text-white">
+        <h5>Formulario para Agregar Administrador</h5>
+    </div>
+    <div class="card-body">
+        <form id="add-admin-form" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            <!-- Información del usuario -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="username" class="form-label">Username:</label>
+                    <input type="text" id="username" name="username" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="full_name" class="form-label">Nombre Completo:</label>
+                    <input type="text" id="full_name" name="full_name" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email:</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="phone_number" class="form-label">Número de Teléfono:</label>
+                    <input type="text" id="phone_number" name="phone_number" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="password" class="form-label">Contraseña:</label>
+                    <div class="input-group">
+                        <input type="password" id="password" name="password" class="form-control" required>
+                        <button type="button" class="btn btn-outline-secondary" id="toggle-password-visibility">
+                            <i class="fas fa-eye" id="password-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de ubicación -->
+            <div class="row g-3 mt-4">
+                <div class="col-md-6">
+                    <label for="address" class="form-label">Dirección:</label>
+                    <input type="text" id="address" name="address" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="country" class="form-label">País:</label>
+                    <select id="country" name="country" class="form-control" required>
+                        <option value="">Seleccione un país</option>
+                        {% for country in countries %}
+                            <option value="{{ country }}">{{ country }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="department" class="form-label">Departamento:</label>
+                    <select id="department" name="department" class="form-control" disabled required>
+                        <option value="">Seleccione un departamento</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="province" class="form-label">Provincia:</label>
+                    <select id="province" name="province" class="form-control" disabled required>
+                        <option value="">Seleccione una provincia</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="district" class="form-label">Distrito:</label>
+                    <input id="district" name="district" class="form-control" placeholder="Escriba el distrito" required />
+                </div>
+            </div>
+
+            <!-- Latitud y Longitud -->
+            <div class="row g-3 mt-4">
+                <div class="col-md-6">
+                    <label for="latitude" class="form-label">Latitud:</label>
+                    <input type="text" id="latitude" name="latitude" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="longitude" class="form-label">Longitud:</label>
+                    <input type="text" id="longitude" name="longitude" class="form-control" required>
+                </div>
+            </div>
+
+            <!-- Permiso para agregar otros administradores -->
+            <input type="hidden" name="can_add_admin" value="false">
+            <div class="form-check mt-4">
+                <input type="checkbox" id="can_add_admin" name="can_add_admin" class="form-check-input" value="true">
+                <label for="can_add_admin" class="form-check-label">¿Puede agregar otros administradores?</label>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success w-100">Guardar Administrador</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('add-admin-form');
+
+    if (form) {
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            if (!form.checkValidity()) {
+                Swal.fire('Error', 'Por favor, completa todos los campos obligatorios.', 'error');
+                return;
+            }
+
+            const formData = new FormData(form);
+
+            console.log("Datos enviados:");
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+
+            try {
+                const response = await fetch("{% url 'add_admin' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    credentials: 'same-origin',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    Swal.fire('¡Éxito!', data.message || 'Administrador agregado correctamente.', 'success');
+                    form.reset();
+                } else {
+                    console.error("Errores del formulario:", data.errors);
+                    let errorMessages = Object.values(data.errors).flat().join("\n");
+                    Swal.fire('Error', errorMessages || 'Ocurrió un error al guardar el administrador.', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'Ocurrió un error de red o del servidor.', 'error');
+            }
+        });
+    }
+});
+</script>
+<script src="{% static 'dashboard/js/admin_dashboard.js' %}"></script>
+{% endblock %}

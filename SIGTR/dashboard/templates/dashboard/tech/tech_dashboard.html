@@ -1,0 +1,80 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Dashboard Técnico{% endblock %}
+{% block header %}Dashboard del Técnico{% endblock %}
+
+{% block content %}
+<h2>Tickets Asignados</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ticket in tickets_asignados %}
+        <tr>
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.title }}</td>
+            <td>{{ ticket.description }}</td>
+            <td>{{ ticket.get_status_display }}</td>
+            <td>
+                <form method="post" action="{% url 'tech_tickets' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+                    <select name="estado" class="form-select">
+                        {% for status, display in ticket.STATUS_CHOICES %}
+                        <option value="{{ status }}" {% if ticket.status == status %}selected{% endif %}>{{ display }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary mt-2">Actualizar</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Cambiar Estado de Conexión</h2>
+<form id="connection-status-form">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="estado_conexion">Estado de Conexión:</label>
+        <select name="estado_conexion" id="estado_conexion" class="form-select">
+            <option value="online" {% if tecnico.estado_conexion == 'online' %}selected{% endif %}>En Línea</option>
+            <option value="offline" {% if tecnico.estado_conexion == 'offline' %}selected{% endif %}>Fuera de Línea</option>
+        </select>
+    </div>
+    <button type="button" class="btn btn-primary mt-2" onclick="updateConnectionStatus()">Actualizar</button>
+</form>
+
+<script>
+function updateConnectionStatus() {
+    const form = document.getElementById('connection-status-form');
+    const formData = new FormData(form);
+    fetch("{% url 'change_connection_status' %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            "X-CSRFToken": formData.get('csrfmiddlewaretoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Estado de conexión actualizado a ' + data.estado_conexion);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al actualizar el estado de conexión.');
+    });
+}
+</script>
+{% endblock %}

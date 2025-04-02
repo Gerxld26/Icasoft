@@ -1,0 +1,121 @@
+/* Fondo animado */
+section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+    background: url("/static/users/img/background.jpg") no-repeat center center fixed;
+    background-size: cover;
+    animation: animateBg 5s linear infinite;
+}
+
+/* Animación del fondo */
+@keyframes animateBg {
+    100% {
+        filter: hue-rotate(360deg);
+    }
+}
+
+/* Caja de Login */
+.login-box {
+    width: 450px; 
+    padding: 40px; 
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Título */
+.login-box h2 {
+    color: white;
+    font-size: 2rem; 
+    margin-bottom: 20px;
+}
+
+/* Contenedor de entrada */
+.input-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+
+.input-container .icon {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+.input-container input {
+    width: 100%; 
+    padding: 15px 10px 15px 50px; 
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 1rem;
+    outline: none;
+}
+
+/* Opciones */
+.options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.options .form-check-label {
+    color: white;
+    font-size: 0.9rem;
+}
+
+.options .link {
+    color: #00d4ff;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.options .link:hover {
+    text-decoration: underline;
+    color: #007bff;
+}
+
+/* Botón de Login */
+button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(90deg, #00d4ff, #007bff);
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+button:hover {
+    background: linear-gradient(90deg, #007bff, #00d4ff);
+}
+
+/* Texto de registro */
+.register {
+    margin-top: 10px;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.register a {
+    color: #00d4ff;
+    text-decoration: none;
+}
+
+.register a:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
+ 

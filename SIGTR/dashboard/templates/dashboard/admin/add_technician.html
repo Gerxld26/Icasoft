@@ -1,0 +1,204 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Agregar Técnico{% endblock %}
+{% block header %}Agregar Técnico{% endblock %}
+
+{% block content %}
+<!-- Mensajes de éxito/error -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <div id="success-message" data-message="{{ message }}"></div>
+        {% elif message.tags == 'error' %}
+            <div id="error-message" data-message="{{ message }}"></div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5>Formulario para Agregar Técnico</h5>
+    </div>
+    <div class="card-body">
+        <form id="add-technician-form" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            <!-- Información del usuario -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.username.id_for_label }}">Nombre de Usuario:</label>
+                        {{ form.username }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.email.id_for_label }}">Correo Electrónico:</label>
+                        {{ form.email }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.password.id_for_label }}">Contraseña:</label>
+                        <div class="input-group">
+                            {{ form.password }}
+                            <button type="button" class="btn btn-outline-secondary" id="toggle-password-visibility">
+                                <i class="fas fa-eye" id="password-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.specialty.id_for_label }}">Especialidad:</label>
+                        {{ form.specialty }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de ubicación -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label for="country">País:</label>
+                        <select id="country" name="country" class="form-control">
+                            <option value="">Seleccione un país</option>
+                            {% for country in countries %}
+                                <option value="{{ country }}">{{ country }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label for="department">Departamento:</label>
+                        <select id="department" name="department" class="form-control" disabled>
+                            <option value="">Seleccione un departamento</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label for="province">Provincia:</label>
+                        <select id="province" name="province" class="form-control" disabled>
+                            <option value="">Seleccione una provincia</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group mb-3">
+                        <label for="city">Distrito:</label>
+                        <input id="city" name="city" class="form-control" placeholder="Escriba el distrito" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Latitud y Longitud -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="latitude">Latitud:</label>
+                        <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Ingrese la latitud" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="longitude">Longitud:</label>
+                        <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Ingrese la longitud" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horario -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.schedule_start.id_for_label }}">Horario de Inicio:</label>
+                        {{ form.schedule_start }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.schedule_end.id_for_label }}">Horario de Fin:</label>
+                        {{ form.schedule_end }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalles del perfil -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.full_name.id_for_label }}">Nombre Completo:</label>
+                        {{ form.full_name }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.phone_number.id_for_label }}">Número de Teléfono:</label>
+                        {{ form.phone_number }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.address.id_for_label }}">Dirección:</label>
+                        {{ form.address }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.photo.id_for_label }}">Foto:</label>
+                        {{ form.photo }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalles adicionales -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.certifications.id_for_label }}">Certificaciones:</label>
+                        {{ form.certifications }}
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3 w-100">Guardar Técnico</button>
+        </form>
+    </div>
+</div>
+
+<!-- Alertas con SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const successMessage = document.getElementById("success-message");
+    const errorMessage = document.getElementById("error-message");
+
+    if (successMessage) {
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: successMessage.getAttribute("data-message"),
+            timer: 3000,
+            showConfirmButton: false
+        });
+    }
+
+    if (errorMessage) {
+        Swal.fire({
+            icon: 'error',
+            title: '¡Error!',
+            text: errorMessage.getAttribute("data-message"),
+            timer: 3000,
+            showConfirmButton: false
+        });
+    }
+});
+</script>
+{% endblock %}

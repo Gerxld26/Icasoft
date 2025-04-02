@@ -1,0 +1,201 @@
+/* Estilos específicos para el dashboard del técnico */
+
+/* Estilos para las tarjetas del técnico */
+.tech-dashboard-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 15px; /* Espaciado entre las cartas */
+    margin-top: 20px;
+}
+
+.tech-dashboard-card {
+    flex: 1 1 calc(30% - 15px); /* Tres cartas por fila con espacio entre ellas */
+    max-width: 250px; /* Ancho máximo */
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tech-dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tech-dashboard-card i {
+    font-size: 3rem; /* Tamaño del icono */
+    margin-bottom: 10px;
+}
+
+.tech-dashboard-card .card-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.tech-dashboard-card .card-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.bg-primary {
+    background-color: #007bff;
+}
+
+.bg-info {
+    background-color: #17a2b8;
+}
+
+.bg-success {
+    background-color: #28a745;
+}
+
+.bg-warning {
+    background-color: #ffc107;
+}
+
+/* Responsividad para pantallas pequeñas */
+@media (max-width: 768px) {
+    .tech-dashboard-card {
+        flex: 1 1 calc(45% - 15px); /* Dos cartas por fila en pantallas medianas */
+    }
+}
+
+/* Responsividad para pantallas muy pequeñas */
+@media (max-width: 576px) {
+    .tech-dashboard-card {
+        flex: 1 1 calc(100% - 15px); /* Una carta por fila en pantallas pequeñas */
+        max-width: 100%;
+    }
+}
+
+/* Estilos para la tabla de tickets */
+.tech-table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tech-table th, .tech-table td {
+    padding: 15px;
+    text-align: left;
+}
+
+.tech-table th {
+    background-color: #343a40;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.tech-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.tech-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.tech-table td {
+    border-bottom: 1px solid #dddddd;
+}
+
+/* Estilos para la paginación */
+.tech-pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.tech-pagination .step-links {
+    display: flex;
+    gap: 5px;
+}
+
+.tech-pagination .step-links a {
+    padding: 5px 10px;
+    background-color: #343a40;
+    color: #ffffff;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.tech-pagination .step-links a:hover {
+    background-color: #495057;
+}
+
+.tech-pagination .step-links .current {
+    padding: 5px 10px;
+    background-color: #adb5bd;
+    color: #ffffff;
+    border-radius: 5px;
+}
+
+
+/* Estilos específicos para la sección "Mi Perfil" */
+.profile-container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+}
+
+.profile-name {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #343a40;
+}
+
+.profile-info p {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: #495057;
+}
+
+.profile-info p strong {
+    color: #343a40;
+    font-weight: 600;
+}
+
+.profile-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.profile-buttons .btn {
+    font-size: 1rem;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.profile-buttons .btn:hover {
+    opacity: 0.9;
+}

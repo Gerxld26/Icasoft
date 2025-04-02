@@ -1,0 +1,19 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Agregar/Editar Video{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Uso de filtro 'default' para evitar errores de plantilla -->
+    <h2 class="text-center text-primary">{{ video.title|default:"Agregar Video" }}</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary w-100">Guardar</button>
+    </form>
+    <p class="text-muted mt-3">
+        Nota: Puedes agregar una URL estándar de YouTube o un código `iframe` directamente.
+    </p>
+</div>
+{% endblock %}

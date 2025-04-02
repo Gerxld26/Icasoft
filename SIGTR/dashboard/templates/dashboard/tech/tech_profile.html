@@ -1,0 +1,71 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil{% endblock %}
+{% block header %}Mi Perfil{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header d-flex align-items-center mb-4">
+        {% if tecnico.photo %}
+            <img src="{{ tecnico.photo.url }}" alt="Avatar" class="avatar img-fluid rounded-circle me-3">
+        {% else %}
+            <img src="{% static 'images/avatar_placeholder.png' %}" alt="Avatar" class="avatar img-fluid rounded-circle me-3">
+        {% endif %}
+        <h2 class="profile-name">{{ tecnico.full_name }}</h2>
+    </div>
+    <div class="profile-details">
+        <p><strong>Nombre Completo:</strong> {{ tecnico.full_name }}</p>
+        <p><strong>Teléfono:</strong> {{ tecnico.phone_number }}</p>
+        <p><strong>Dirección:</strong> {{ tecnico.address }}</p>
+        <p><strong>Latitud:</strong> {{ tecnico.latitude }}</p>
+        <p><strong>Longitud:</strong> {{ tecnico.longitude }}</p>
+        <p><strong>País:</strong> {{ tecnico.country_name }}</p>
+        <p><strong>Departamento:</strong> {{ tecnico.department_name }}</p>
+        <p><strong>Provincia:</strong> {{ tecnico.province_name }}</p>
+        <p><strong>Distrito:</strong> {{ tecnico.district_name }}</p>
+        <p><strong>Certificaciones:</strong> {{ tecnico.certifications }}</p>
+        <p><strong>Hora de Inicio:</strong> {{ tecnico.schedule_start }}</p>
+        <p><strong>Hora de Fin:</strong> {{ tecnico.schedule_end }}</p>
+        <p><strong>Especialidad:</strong> {{ tecnico.specialty }}</p>
+        <p><strong>Fecha de Actualización:</strong> {{ tecnico.updated_at|date:"d M Y H:i:s" }}</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">Editar Perfil</button>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Editar Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="profile-buttons mt-4">
+                        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 script for handling alerts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messages = JSON.parse('{{ messages_json|escapejs }}');
+    messages.forEach(function(message) {
+        Swal.fire({
+            icon: message.level,
+            title: message.level === 'success' ? 'Éxito' : 'Error',
+            text: message.message,
+            confirmButtonText: 'Ok'
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,19 @@
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="button" onclick="getLocation()">Obtener Ubicación</button>
+    <input type="submit" value="Guardar">
+</form>
+
+<script>
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                document.getElementById("id_latitude").value = position.coords.latitude;
+                document.getElementById("id_longitude").value = position.coords.longitude;
+            });
+        } else {
+            alert("Tu navegador no soporta geolocalización.");
+        }
+    }
+</script>

@@ -1,0 +1,13 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Eliminar Video{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-danger text-center">¿Estás seguro de que deseas eliminar este video?</h2>
+    <p class="text-center">{{ video.title }}</p>
+    <form method="post" class="text-center">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a href="{% url 'video_list' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Reportes de Historial{% endblock %}
+{% block header %}Reportes de Historial{% endblock %}
+
+{% block content %}
+<h2>Historial de Tickets</h2>
+<table class="table tech-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Cliente</th>
+            <th>Estado</th>
+            <th>Fecha de Creación</th>
+            <th>Fecha de Actualización</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ticket in historial_tickets %}
+        <tr>
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.title }}</td>
+            <td>{{ ticket.description }}</td>
+            <td>{{ ticket.client.username }}</td> <!-- Mostrar el nombre del cliente -->
+            <td>{{ ticket.get_status_display }}</td>
+            <td>{{ ticket.created_at|date:"d M Y H:i:s" }}</td>
+            <td>{{ ticket.updated_at|date:"d M Y H:i:s" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination tech-pagination">
+    <span class="step-links">
+        {% if historial_tickets.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ historial_tickets.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Página {{ historial_tickets.number }} de {{ historial_tickets.paginator.num_pages }}.
+        </span>
+
+        {% if historial_tickets.has_next %}
+            <a href="?page={{ historial_tickets.next_page_number }}">next</a>
+            <a href="?page={{ historial_tickets.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+{% endblock %}
