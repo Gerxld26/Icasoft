@@ -1,0 +1,1145 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+
+:root {
+    --fondoDiv: linear-gradient(180deg, rgb(37, 36, 36), rgb(43, 67, 84), rgb(37, 36, 36));
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(90deg, rgb(37, 36, 36), rgb(45, 45, 45), rgb(37, 36, 36));
+    background-size: 600% 600%;
+    /* Hacemos que el gradiente sea más grande para poder moverlo */
+    color: white;
+    font-family: "Segoe UI";
+    font-weight: bold;
+    overflow-x: hidden;
+    animation: gradientAnimation 60s ease infinite;
+    /* Animación para mover el gradiente */
+}
+
+@keyframes gradientAnimation {
+    0% {
+        background-position: 0% 0%;
+    }
+
+    /*posición 0*/
+    50% {
+        background-position: 400% 0%;
+    }
+
+    /*el 400 es del eje x*/
+    100% {
+        background-position: 0% 0%;
+    }
+}
+
+.contenedorPrincipal {
+    min-height: 100vh;
+    padding: 0px 20px 0px 20px;
+}
+
+.container {
+    min-height: 100vh;
+    display: grid;
+    gap: 5px;
+    grid-template-areas:
+        "header"
+        "content-body"
+        "footer";
+}
+
+.content-body {
+    grid-area: content-body;
+    display: grid;
+    grid-template-areas:
+        "primero"
+        "asistente"
+        "asistenteSoporte"
+        "analisis"
+        "ultimo";
+    gap: 15px;
+    /* el / significa que después de eso se determina el tamaño del ancho de cada columna */
+}
+
+.header {
+    grid-area: header;
+    display: grid;
+    grid-template-areas: "contactos datosDesktop";
+    align-items: center;
+    justify-content: space-between;
+}
+
+.contactos {
+    display: grid;
+    grid-template-areas: "correo wstp";
+    justify-content: end;
+    gap: 20px;
+}
+
+.linkCorreo {
+    color: white;
+    font-style: normal;
+    text-decoration: none;
+}
+
+.iconWstp {
+    color: green;
+    font-size: 20px;
+}
+
+.datosDesktop {
+    display: flex;
+    gap: 20px;
+}
+
+.datoHW {
+    display: flex;
+    gap: 10px;
+
+}
+
+.temperaturaCPU {
+    color: rgb(0, 123, 0);
+    font-size: 20px;
+}
+
+.temperaturaRAM {
+    color: rgb(165, 17, 17);
+    font-size: 20px;
+}
+
+.footer {
+    grid-area: footer;
+}
+
+/*primera columna:*/
+.primero {
+    grid-area: primero;
+    display: grid;
+    gap: 20px;
+    grid-template-areas:
+        "logo"
+        "Ubicacion"
+        "asistencia";
+    justify-items: center;
+    width: 100%;
+}
+
+.logo {
+    display: flex;
+    grid-area: logo;
+    align-items: center;
+    /* Centra verticalmente la imagen y el texto */
+    border: 3px solid rgb(42, 76, 89);
+    box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
+    /*el primero izq. -derecha, el segundo es para la dirección arriba o abajo, el tercero la intensidad, el cuarto la intensidad del color*/
+    border-radius: 30px;
+    width: 80%;
+    gap: 10px;
+    justify-content: center;
+    justify-items: center;
+    align-items: center;
+}
+
+.logoIMG {
+    grid-area: logoIMG;
+    justify-items: center;
+    display: flex;
+    justify-content: center;
+    height: 80px;
+}
+
+#logoEmpresa {
+    height: 100%;
+}
+
+
+.nombreLogo {
+    grid-area: nombreLogo;
+    text-align: center;
+    font-size: x-large;
+    width: 100%;
+}
+
+
+/*div de ubicacion y mapa*/
+.Ubicacion {
+    grid-area: Ubicacion;
+    display: grid;
+    grid-template-areas:
+        "nombreUbi"
+        "mapa";
+    gap: 20px;
+    width: 100%;
+}
+
+.nombreUbi {
+    grid-area: nombreUbi;
+    border: 2px solid rgb(42, 76, 89);
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
+    box-shadow: 5px 10px 10px -8px;
+    border-radius: 30px;
+    color: rgb(3, 101, 140);
+    text-align: center;
+    align-content: center;
+    font-family: "Segoe UI";
+    font-weight: 800;
+    font-size: 18px;
+    padding: 7px;
+    width: 50%;
+    margin-left: 24%;
+}
+
+.mapa {
+    grid-area: mapa;
+    width: 85%;
+    margin-left: 8%;
+    height: 100%;
+
+    .mapaUbi {
+        border-radius: 25px;
+    }
+}
+
+.asistencia {
+    grid-area: asistencia;
+    width: 100%;
+}
+
+.asistenciaButton {
+    border: 2px solid rgb(42, 76, 89);
+    background: none;
+    box-shadow: 5px 10px 10px -8px black;
+    border-radius: 30px;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    color: white;
+    padding: 10px 0px 10px 0px;
+    align-items: center;
+}
+
+/*div del cuadro de acciones respaldo y restauración*/
+.Restauracion {
+    grid-area: Restauracion;
+    display: grid;
+    grid-template-areas:
+        "nombreResta"
+        "botonesRest"
+        "verCompleto";
+    justify-items: center;
+    align-items: center;
+    width: 85%;
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
+    border: 3px solid rgb(42, 76, 89);
+    box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
+    border-radius: 30px;
+}
+
+.nombreResta {
+    grid-area: nombreResta;
+    border-bottom: 1px solid white;
+    width: 100%;
+    text-align: center;
+    padding: 10px 0px 10px 0px;
+}
+
+.botonesRest {
+    grid-area: botonesRest;
+    width: 100%;
+    justify-items: center;
+}
+
+.botRest {
+    grid-area: botRest;
+}
+
+.botRespaldo {
+    grid-area: botRespaldo;
+}
+
+.botRest,
+.botRespaldo {
+    border: 2px solid rgb(42, 76, 89);
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
+    box-shadow: 5px 10px 10px -8px;
+    border-radius: 10px;
+    color: rgb(3, 101, 140);
+    text-align: center;
+    align-content: center;
+    font-family: "Segoe UI";
+    font-weight: 700;
+    font-size: 18px;
+    padding: 5px;
+    cursor: pointer;
+    width: 70%;
+    margin-top: 6%;
+    margin-bottom: 6%;
+}
+
+.verCompleto {
+    grid-area: verCompleto;
+    border-top: 1px solid white;
+    width: 100%;
+    text-align: center;
+    cursor: pointer;
+    padding: 10px 0px 10px 0px;
+}
+
+.verCompleto label:hover {
+    color: rgb(3, 101, 140);
+}
+
+/*segunda columna*/
+.asistente {
+    grid-area: asistente;
+    display: grid;
+    gap: 20px;
+    grid-template-areas:
+        "asistVirtual"
+        "botonAsist"
+        "monitoreo"
+        "recomendaciones"
+        "botonesSoporte";
+    justify-items: center;
+    width: 100%;
+}
+
+.asistVirtual {
+    grid-area: asistVirtual;
+    padding: 15px 15px 15px 15px;
+    width: 100%;
+    text-align: center;
+    font-size: 30px;
+    text-shadow: 5px 1px 8px rgb(3, 101, 140);
+    background: var(--fondoDiv);
+}
+
+.botonAsist {
+    grid-area: botonAsist;
+    display: grid;
+    grid-template-areas:
+        "botReg botSolicitud";
+    width: 100%;
+    justify-content: center;
+    gap: 20px;
+}
+
+.botReg {
+    grid-area: botReg;
+
+}
+
+.botSolicitud {
+    grid-area: botSolicitud;
+}
+
+.buttonAsist {
+    border-radius: 20px;
+    border: 1px solid skyblue;
+    background-color: rgb(3, 101, 140);
+    color: white;
+    padding: 10px;
+    box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
+    text-align: center;
+}
+
+.botReg button:hover {
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(29, 46, 46));
+    color: rgb(3, 101, 140);
+}
+
+.botSolicitud button:hover {
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(29, 46, 46));
+    color: rgb(3, 101, 140);
+}
+
+.monitoreo {
+    grid-area: monitoreo;
+    border: 2px solid rgb(42, 76, 89);
+    box-shadow: 5px 10px 10px -8px rgb(1, 1, 1);
+    border-radius: 30px;
+    color: white;
+    width: 60%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    align-content: center;
+    text-align: center;
+}
+
+.btnMonitoreodiv {
+    width: 100%;
+    height: 100%;
+    background: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+}
+
+.graficoMonit {
+    display: flex;
+    height: 80px;
+    justify-content: center;
+}
+
+.imgGrafico {
+    height: 100%;
+    animation: rotarImg 1.5s linear infinite;
+    display: inline-block;
+}
+
+@keyframes rotarImg {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.recomendaciones {
+    grid-area: recomendaciones;
+    border: 3px solid rgb(42, 76, 89);
+    box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
+    border-radius: 30px;
+    align-content: center;
+    width: 60%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+.nombreCatalogo {
+    border-bottom: 3px solid rgb(42, 76, 89);
+}
+
+.catalogo {
+    display: flex;
+    height: 80px;
+    gap: 20px;
+    justify-content: center;
+}
+
+.cat1,
+.cat2 {
+    display: flex;
+    height: 80px;
+    justify-content: center;
+}
+
+.security {
+    height: 100%;
+    border-radius: 15px;
+}
+
+.btnVerCompleto {
+    width: 80%;
+    height: 30px;
+    border-radius: 30px;
+    background: rgb(3, 101, 140);
+    color: white;
+    cursor: pointer;
+}
+
+.catVerComp button:hover {
+    color: rgb(3, 101, 140);
+    background: white;
+    box-shadow: 0px 0px 15px 5px;
+    font-weight: 800;
+}
+
+.botonesSoporte {
+    grid-area: botonesSoporte;
+    justify-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.botResp {
+    grid-area: botResp;
+}
+
+.botCentro {
+    grid-area: botCentro;
+}
+
+.botResp,
+.botCentro {
+    border: 2px solid rgb(42, 76, 89);
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
+    box-shadow: 5px 10px 10px -8px;
+    border-radius: 30px;
+    color: rgb(3, 101, 140);
+    text-align: center;
+    align-content: center;
+    padding: 7px;
+    cursor: pointer;
+    margin-top: 6%;
+    margin-bottom: 6%;
+
+}
+
+/*tercera columna:*/
+.asistenteSoporte {
+    grid-area: asistenteSoporte;
+    display: grid;
+    grid-template-areas:
+        "nombreAsistente"
+        "imagenIA"
+        "mensajeIA"
+        "vozIA ";
+    gap: 10px;
+    justify-items: center;
+    width: 100%;
+}
+
+.nombreAsistente {
+    grid-area: nombreAsistente;
+    width: 100%;
+    text-align: center;
+    text-shadow: 5px 1px 8px rgb(3, 101, 140);
+    background: var(--fondoDiv);
+}
+
+.spanNombreAsistente {
+    position: relative;
+    /* Para el reflejo */
+    font-size: 48px;
+    outline: none;
+    letter-spacing: 5px;
+    /*espacio entre letras*/
+    animation: animacionLetra 2s linear infinite;
+    /* Animación para el texto */
+}
+
+@keyframes animacionLetra {
+    0% {
+        text-shadow: 0 0 5px rgba(3, 101, 140, 0.8), 0 0 10px rgba(3, 101, 140, 0.8), 0 0 15px rgba(3, 101, 140, 0.8);
+    }
+
+    50% {
+        text-shadow: 0 0 20px rgba(3, 101, 140, 1), 0 0 30px rgba(3, 101, 140, 1), 0 0 40px rgba(3, 101, 140, 1);
+    }
+
+    100% {
+        text-shadow: 0 0 5px rgba(3, 101, 140, 0.8), 0 0 10px rgba(3, 101, 140, 0.8), 0 0 15px rgba(3, 101, 140, 0.8);
+    }
+}
+
+.imagenIA {
+    grid-area: imagenIA;
+    width: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.robot {
+    width: 70%;
+    height: 100%;
+    filter: drop-shadow(6px 6px 10px rgb(72, 100, 128));
+}
+
+.mensajeIA {
+    grid-area: mensajeIA;
+    width: 80%;
+}
+
+.textIA {
+    border: 1px solid;
+    border-radius: 30px;
+    height: 60%;
+    width: 100%;
+    color: black;
+    text-align: center;
+    font-size: 20px;
+    font-style: oblique;
+    padding: 10px 0px 10px 0px;
+}
+
+.vozIA {
+    grid-area: vozIA;
+    width: 80%;
+    padding: 10px 0px 10px 0px;
+    text-align: center;
+    border: 2px solid rgb(42, 76, 89);
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
+    box-shadow: 5px 10px 10px -8px;
+    border-radius: 30px;
+    color: rgb(3, 101, 140);
+    cursor: pointer;
+}
+
+.vozIA:hover {
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(53, 53, 53));
+}
+
+/*cuarta columna:*/
+.analisis {
+    justify-items: center;
+    grid-area: analisis;
+    display: grid;
+    gap: 20px;
+    grid-template-areas:
+        "analisisCompleto"
+        "diagnostico"
+        "optimizar"
+        "mantenimiento"
+        "recomendacSW"
+        "monitoreoSop"
+        "historial";
+    text-align: center;
+
+    .analisisCompleto {
+        grid-area: analisisCompleto;
+    }
+
+    .diagnostico {
+        grid-area: diagnostico;
+    }
+
+    .optimizar {
+        grid-area: optimizar;
+    }
+
+    .mantenimiento {
+        grid-area: mantenimiento;
+    }
+
+    .recomendacSW {
+        grid-area: recomendacSW;
+    }
+
+    .historial {
+        grid-area: historial;
+    }
+
+    .monitoreoSop {
+        grid-area: monitoreoSop;
+    }
+}
+
+.analisisComp {
+    text-shadow: 5px 1px 8px rgb(3, 101, 140);
+    box-shadow: 5px 10px 10px -8px rgb(42, 76, 89);
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
+    border: 2px solid rgb(42, 76, 89);
+    border-radius: 30px;
+    align-content: center;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    padding: 15px 0px 15px 0px;
+    color: white;
+}
+
+.analisisCompleto {
+    width: 80%;
+}
+
+.analisisButton {
+    border: 2px solid rgb(42, 76, 89);
+    background: none;
+    box-shadow: 5px 10px 10px -8px black;
+    border-radius: 30px;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    color: white;
+    padding: 10px 0px 10px 0px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+
+    .textDiagnosticoDet {
+        text-align: center;
+        font-size: medium;
+    }
+}
+
+.imgBtnAnalisis {
+    display: flex;
+    flex-direction: row;
+    height: 60px;
+    justify-content: center;
+}
+
+.imgBtnAnalisisComp {
+    height: 100%;
+}
+
+.diagnostico,
+.optimizar,
+.mantenimiento,
+.recomendacSW,
+.historial,
+.monitoreoSop {
+    width: 80%;
+}
+
+.analisisCompleto button:hover,
+.diagnostico:hover button,
+.optimizar:hover button,
+.mantenimiento:hover button,
+.recomendacSW:hover button,
+.historial:hover button,
+.monitoreoSop:hover button {
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(42, 76, 89));
+}
+
+.iconAnalisis {
+    color: rgb(0, 187, 255);
+}
+
+/*quinta columna:*/
+.ultimo {
+    grid-area: ultimo;
+    display: grid;
+    grid-template-areas:
+        "detdiagnostico"
+        "antivirus"
+        "ultMant"
+        "ultHist";
+    text-align: center;
+    gap: 10px;
+    grid-template-rows: auto;
+    justify-items: center;
+    width: 100%;
+}
+
+.detdiagnostico {
+    grid-area: detdiagnostico;
+}
+
+.antivirus {
+    grid-area: antivirus;
+}
+
+.ultMant {
+    grid-area: ultMant;
+
+}
+
+.ultHist {
+    grid-area: ultHist;
+}
+
+.detdiagnostico,
+.antivirus,
+.ultMant,
+.ultHist {
+    gap: 10px;
+    border: 2px solid rgb(42, 76, 89);
+    box-shadow: 5px 10px 10px -8px black;
+    border-radius: 30px;
+    align-content: center;
+    cursor: pointer;
+    color: white;
+    width: 60%;
+}
+
+.detdiagnostico,
+.antivirus,
+.ultMant,
+.ultHist {
+    width: 100%;
+}
+
+.detdiagnostico:hover,
+.antivirus:hover,
+.ultMant:hover,
+.ultHist:hover {
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(42, 76, 89));
+}
+
+/* Modo tablet. falta arreglar */
+@media (min-width: 768px) {}
+
+/* Modo desktop */
+@media (min-width: 992px) {
+    body {
+        overflow: hidden;
+        background: rgb(37, 36, 36);
+    }
+
+    .container {
+        grid-template-rows: 30px auto 10px;
+    }
+
+    .content-body {
+        grid-template-areas:
+            "primero asistente asistenteSoporte analisis ultimo";
+        grid-template-columns: 1fr 1fr 2fr 1fr 1fr !important;
+        /* el / significa que después de eso se determina el tamaño del ancho de cada columna */
+        gap: 25px;
+    }
+
+    /* .idiomas .listaIdiomas {
+        height: max-content;
+        background-color: #27272a;
+        border-radius: 30px;
+    }
+
+    .listaIdiomas {
+        display: none;
+        position: absolute;
+        top: 100%;
+        color: white;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        z-index: 1000;
+        width: 30%;
+    }
+
+    .listaIdiomas li {
+        border: 2px solid white;
+        border-radius: 30px;
+        box-shadow: 10px 5px 5px black;
+        margin: 5px;
+        padding: 8px 12px;
+        cursor: pointer;
+    }
+
+    /* Estilo del contenedor de idiomas 
+    .idiomas {
+        color: white;
+        position: relative;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .idiomas:hover .listaIdiomas {
+        display: block;
+    }
+
+    .listaIdiomas li:hover {
+        background: linear-gradient(180deg, rgb(37, 36, 36), rgb(43, 67, 84));
+    } */
+
+    /*primera columna:*/
+    .primero {
+        grid-template-rows: 15% 70% auto !important;
+        justify-items: center;
+    }
+
+    .logo {
+        width: 100%;
+    }
+
+    .logoIMG {
+        padding-left: 10px;
+    }
+
+    .nombreLogo {
+        padding: 0px;
+        text-align: center;
+        font-size: medium;
+        width: auto;
+    }
+
+    /*div de ubicacion y mapa*/
+    .Ubicacion {
+        grid-template-areas:
+            "nombreUbi"
+            "mapa";
+        gap: 15px;
+        grid-auto-rows: 15% auto;
+        width: 100%;
+    }
+
+    .nombreUbi {
+        font-size: 18px;
+        width: 100%;
+        padding: 0px;
+        margin-left: 0%;
+    }
+
+    .mapa {
+        margin-left: 0%;
+        height: 100%;
+        width: 100%;
+    }
+
+    .tecnicosDisponibilidad {
+        width: 100%;
+    }
+
+    .selectTecnico {
+        border: 2px solid rgb(42, 76, 89);
+        background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
+        box-shadow: 5px 10px 10px -8px;
+        border-radius: 30px;
+        color: rgb(3, 101, 140);
+        text-align: center;
+        align-content: center;
+        font-family: "Segoe UI";
+        font-weight: 800;
+        font-size: 18px;
+        width: 100%;
+        height: 50px;
+    }
+
+    /*div del cuadro de acciones respaldo y restauración*/
+    /* .Restauracion {
+        grid-template-areas:
+            "nombreResta"
+            "botonesRest"
+            "verCompleto";
+        grid-template-rows: 30% auto 30%;
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+    }
+
+    .verCompleto {
+        font-size: 17px;
+    } */
+
+    .nombreResta {
+        grid-area: nombreResta;
+        border-bottom: 1px solid white;
+        width: 100%;
+        text-align: center;
+        padding: 5px 0px 5px 0px;
+    }
+
+    .botRest,
+    .botRespaldo {
+        margin-top: 4%;
+        margin-bottom: 4%;
+    }
+
+    /*segunda columna*/
+    .asistente {
+        grid-template-rows: 15% auto auto auto auto !important;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .asistVirtual {
+        padding: 0px;
+        width: 100%;
+        text-align: center;
+        font-size: 20px;
+        text-shadow: 5px 1px 8px rgb(3, 101, 140);
+        border-radius: 30px;
+        align-content: center;
+        border: 3px solid rgb(42, 76, 89);
+        background: none;
+        box-shadow: 5px 10px 10px -8px black;
+    }
+
+    .botonAsist {
+        align-items: center;
+    }
+
+    .monitoreo,
+    .recomendaciones {
+        width: 100%;
+    }
+
+    .recomendaciones {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .monitoreo {
+        cursor: pointer;
+    }
+
+    #btnMonitoreo {
+        width: 100%;
+        height: 100%;
+        background: none;
+        color: white;
+        display: flex;
+        gap: 10px;
+        flex-direction: column;
+    }
+
+    .graficoMonit {
+        display: flex;
+        height: 80px;
+        justify-content: center;
+    }
+
+    .imgGrafico {
+        height: 100%;
+    }
+
+    .botonesSoporte {
+        gap: 10px;
+        width: 100%;
+    }
+
+    .botResp,
+    .botCentro {
+        padding: 0px;
+        margin-top: 0%;
+        margin-bottom: 0%;
+        height: 40px;
+    }
+
+    /*tercera columna:*/
+    .asistenteSoporte {
+        grid-template-areas:
+            "nombreAsistente"
+            "imagenIA"
+            "mensajeIA"
+            "vozIA ";
+        gap: 10px;
+        grid-template-rows: auto !important;
+        justify-items: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .nombreAsistente {
+        padding: 0px;
+        text-align: center;
+        font-size: 45px;
+        text-shadow: 5px 1px 8px rgb(3, 101, 140);
+        background: none;
+    }
+
+    .imagenIA {
+        grid-area: imagenIA;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .robot {
+        width: 80%;
+        height: 100%;
+        filter: drop-shadow(6px 6px 10px rgb(72, 100, 128));
+    }
+
+    .microfono {
+        border: 1px solid rgb(72, 100, 128);
+        padding: 8px;
+        border-radius: 100%;
+    }
+
+    /*cuarta columna*/
+    .analisisCompleto {
+        width: 100%;
+    }
+
+    .analisisComp {
+        display: flex;
+        align-items: center;
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .analisisButton {
+        width: 100%;
+        padding: 0px;
+    }
+
+    .iconDiagnostico {
+        padding-left: 10px;
+    }
+
+    .textDiagnosticoDet {
+        padding-right: 10px;
+    }
+
+    #textPrimeroDiag {}
+
+    .diagnostico,
+    .optimizar,
+    .mantenimiento,
+    .recomendacSW,
+    .historial,
+    .monitoreoSop {
+        width: 100%;
+    }
+
+    /*Quinta columna:*/
+    .ultimo {
+        display: grid;
+        grid-template-areas:
+            "detdiagnostico"
+            "antivirus"
+            "ultMant"
+            "ultHist";
+        grid-template-rows: auto !important;
+        text-align: center;
+        gap: 10px;
+        justify-items: center;
+    }
+
+    .btnUlt {
+        width: 100%;
+        height: 100%;
+        background: none;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        align-items: center;
+        justify-content: center;
+
+    }
+
+    .imgDetDiag,
+    .imgDetAnt,
+    .imgDetMant,
+    .imgDetHist {
+        display: flex;
+        height: 70px;
+        justify-content: center;
+    }
+
+    .imgDiagnostico,
+    .imgAntivirus,
+    .imgMant,
+    .imgHist {
+        height: 100%;
+    }
+
+    /*progress bar*/
+    .progress-bar {
+        position: relative;
+        width: 80%;
+        height: 23px;
+        border-radius: 30px;
+        background-color: white;
+        box-shadow: 5px 5px 10px rgb(3, 101, 140);
+    }
+
+    .progress-bar span {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: 100%;
+        color: white;
+        text-align: center;
+        align-items: center;
+        line-height: 1.7;
+        border-radius: 30px;
+        background: linear-gradient(120deg, rgb(3, 80, 111), rgb(0, 187, 255));
+        transition: width .5s linear;
+    }
+}
