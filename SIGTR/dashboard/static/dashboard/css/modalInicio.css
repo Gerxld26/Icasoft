@@ -1,0 +1,432 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+:root {
+    --fondoDiv: linear-gradient(180deg, rgb(37, 36, 36), rgb(43, 67, 84), rgb(37, 36, 36));
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    /*fondo que va a ocupar toda la pantalla, el 0.3 es la transparencia*/
+    filter: drop-shadow(6px 6px 10px rgb(28, 29, 29));
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: var(--fondoDiv);
+    padding: 20px;
+    border-radius: 5px;
+    width: 80%;
+    height: 80%;
+    max-width: 800px;
+    max-height: 500px;
+    position: relative;
+    border: 3px solid rgb(43, 67, 84);
+    border-radius: 30px;
+}
+
+.modal .modal-content::before {
+    content: '';
+    background: linear-gradient(45deg, rgb(29, 46, 87), rgb(17, 115, 172), rgb(58, 58, 58), rgb(76, 136, 239));
+    background-size: 800%;
+    /* Cambia el tamaño del fondo */
+    filter: blur(15px);
+    /* Cambia el desenfoque */
+    animation: glowing 20s linear infinite;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    /* para que esté detrás del div */
+    width: 100%;
+    height: 100%;
+    border-radius: 30px;
+}
+
+@keyframes glowing {
+
+    /*creación de la animación glowing*/
+    0% {
+        background-position: 0% 0%;
+    }
+
+    /*posición 0*/
+    50% {
+        background-position: 400% 0%;
+    }
+
+    /*el 400 es del eje x*/
+    100% {
+        background-position: 0% 0%;
+    }
+
+    /*regresa a la posición 0 cuando termina*/
+}
+
+/*MODAL MONITOREO*/
+#modalMonitoreo .modal-content {
+    display: grid;
+    grid-template-areas:
+        "headerModal"
+        "contentDataMonitoreo";
+    gap: 10px;
+}
+
+.contentDataMonitoreo {
+    display: grid;
+    grid-template-areas:
+        "detalleGraficoMonitoreo detalleHW";
+    justify-items: center;
+    grid-auto-columns: 50% auto;
+}
+
+#donutsTickets {
+    width: 400px;
+    height: 400px;
+
+}
+
+.detalleHW {
+    display: grid;
+    grid-template-areas:
+        "textDetalle"
+        "componentes";
+    grid-auto-rows: 10% auto;
+    justify-items: center;
+    width: 100%;
+}
+
+.textDetalle {
+    display: grid;
+    align-items: center;
+}
+
+.componentes {
+    display: grid;
+    grid-template-areas:
+        "cpu"
+        "memoriaRAM"
+        "Disco";
+    width: 100%;
+}
+
+.textCompMonitoreo {
+    text-align: center;
+}
+
+.contentCompHW {
+    display: grid;
+    grid-template-areas:
+        "compImg progress-bar";
+    grid-template-columns: 30% auto;
+    align-items: center;
+    justify-items: center;
+}
+
+.compImg {
+    display: flex;
+    height: 90px;
+    justify-content: center;
+}
+
+.imgHW {
+    height: 100%;
+}
+
+/*progress bar*/
+.progress-bar-Monitoreo {
+    position: relative;
+    height: 25px;
+    width: 80%;
+    border-radius: 30px;
+    background-color: white;
+    box-shadow: 5px 5px 10px rgb(3, 101, 140);
+    text-align: center;
+}
+
+.progress-bar-Monitoreo span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 100%;
+    color: white;
+    align-items: center;
+    line-height: 1.7;
+    border-radius: 30px;
+    background: white;
+    transition: width .5s linear;
+}
+
+/*MODAL DIAGNÓSTICO:*/
+.headerModal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.close {
+    position: absolute;
+    right: 10px;
+    font-size: 34px;
+    cursor: pointer;
+    color: azure;
+    font-weight: 800;
+}
+
+/*Contenido del modal diagnóstico*/
+#modalDiagnostico .contentData {
+    display: grid;
+    grid-template-areas:
+        "comparacionHW"
+        "comparacionHW"
+        "analisisIA";
+    gap: 20px;
+}
+
+.comparacionHW {
+    display: grid;
+    grid-template-areas:
+        "textHW"
+        "cardComparacionHW";
+    gap: 20px;
+}
+
+.textHW {
+    font-size: 30px;
+    padding: 0px;
+    text-align: center;
+    text-shadow: 5px 1px 8px rgb(3, 101, 140);
+    background: none;
+
+}
+
+.cardComparacionHW {
+    border-radius: 30px;
+    border: 3px solid rgb(3, 101, 140);
+    box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
+    padding: 10px 20px 10px 20px;
+    margin-top: 10px;
+}
+
+.componentesHW {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 5px;
+}
+
+.textComponente {
+    font-size: 20px;
+    font-weight: 600;
+    color: azure;
+}
+
+.btnAnalisis {
+    background: none;
+    font-size: 30px;
+    padding: 0px;
+    text-align: center;
+    text-shadow: 5px 1px 8px rgb(3, 101, 140);
+    color: white;
+}
+
+.verAnalisis {
+    padding-left: 15px;
+}
+
+.textRespuestaIA {
+    width: 100%;
+    border-radius: 30px;
+    border: 3px solid rgb(3, 101, 140);
+    box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
+}
+
+/*MODAL ANTIVIRUS*/
+/*MODAL MANTENIMIENTO*/
+#modalMantenimiento .modal-content .contentData {
+    display: grid;
+    grid-template-areas:
+        "cardDataSuperior"
+        "cardDataInferior";
+    gap: 20px;
+}
+
+#modalMantenimiento .headerModal {
+    margin-bottom: 10px;
+}
+
+.cardDataSuperior {
+    display: grid;
+    grid-template-areas:
+        "cardData1 cardData2";
+}
+
+.cardDataInferior {
+    display: grid;
+    grid-template-areas:
+        "cardData3 cardData4";
+}
+
+.cardDataSuperior,
+.cardDataInferior {
+    gap: 20px;
+    justify-items: center;
+    text-align: center;
+}
+
+#cardData1,
+#cardData2,
+#cardData3,
+#cardData4 {
+    display: grid;
+    border-radius: 30px;
+    padding: 10px;
+    width: 300px;
+    height: 130px;
+    box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
+    border: 3px solid rgb(3, 101, 140);
+}
+
+#cardData1 .btnCardData button {
+    background-color: rgb(225, 215, 33);
+    color: black;
+}
+
+#cardData2 .btnCardData button {
+    background-color: rgb(11, 40, 184);
+    color: rgb(255, 255, 255);
+}
+
+#cardData3 .btnCardData button {
+    background-color: rgb(4, 169, 177);
+    color: black;
+}
+
+#cardData4 .btnCardData button {
+    background-color: rgb(184, 11, 11);
+    color: rgb(255, 255, 255);
+}
+
+.btnCardData button {
+    cursor: pointer;
+    border: none;
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    position: relative;
+    border-radius: 30px;
+    padding: 10px;
+    width: 60%;
+}
+
+/*MODAL RECOMENDACIONES*/
+
+#modalRecomendaciones .modal-content {
+    display: grid;
+    grid-template-areas:
+        "apartado" "apartado";
+    padding: 0px 20px 20px 20px;
+}
+
+#modalRecomendaciones .apartado {
+    display: grid;
+    grid-template-areas:
+        "headerModal" "contentApartado";
+    gap: 5px;
+}
+
+#modalRecomendaciones .apartado .textHW {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#modalRecomendaciones .contentApartado {
+    display: grid;
+    grid-template-areas:
+        "productSW productSW productSW";
+    gap: 20px;
+    width: 100%;
+    justify-items: center;
+}
+
+#modalRecomendaciones .detalleProducto {
+    display: flex;
+    gap: 15px;
+}
+
+#modalRecomendaciones .productSW {
+    display: grid;
+    justify-items: center;
+    align-items: center;
+    border: 3px solid rgb(3, 101, 140);
+    border-radius: 30px;
+    box-shadow: 5px 5px 9px 2px rgb(1, 1, 1);
+    width: 240px;
+}
+
+.contentImg {
+    display: flex;
+    height: 80px;
+    justify-content: center;
+}
+
+.imgSW {
+    height: 100%;
+    border-radius: 15px;
+}
+
+.btnComprar {
+    border-radius: 30px;
+    background: rgb(3, 101, 140);
+    color: white;
+    cursor: pointer;
+    width: 150px;
+    height: 30px;
+}
+
+.btnComprar:hover {
+    color: rgb(3, 101, 140);
+    background: white;
+    box-shadow: 0px 0px 15px 5px;
+    font-weight: 800;
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        max-width: 500px;
+        max-height: 600px;
+    }
+
+    .contentDataMonitoreo {
+        grid-template-areas: "detalleGraficoMonitoreo" "detalleHW";
+        justify-items: center;
+        grid-template-rows: auto auto;
+    }
+
+    .detalleGraficoMonitoreo {
+        display: flex;
+        align-items: center;
+    }
+
+    #donutsTickets {
+        width: 250px;
+        height: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        max-width: 600px;
+        max-height: 600px;
+    }
+}

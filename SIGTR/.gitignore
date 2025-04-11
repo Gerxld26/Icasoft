@@ -30,7 +30,7 @@ instance/
 Thumbs.db
 
 # Proyecto específico
-flask_service.py  # Si contiene configuraciones sensibles
+flask_service.py  
 pyenv.cfg
 
 # Archivos de configuración local

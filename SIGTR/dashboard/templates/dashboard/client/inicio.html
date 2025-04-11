@@ -1,0 +1,234 @@
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'dashboard/css/principal.css' %}">
+</head>
+
+<body>
+    <div class="contenedorPrincipal">
+        <div class="container">
+            <div class="header">
+                <!--<div class="idiomas">
+                        <a><i class="fa-solid fa-earth-americas mundo"></i> <i class="fa-solid fa-caret-down"></i></a>
+                        <!-- <ul class="listaIdiomas">
+                            <li class="ES">ES</li>
+                            <li class="EN">EN</li>
+                        </ul> 
+                    </div>-->
+                <div class="contactos">
+                    <div class="correo"><a href="mailto:company.icasofti21@gmail.com" class="linkCorreo">Correo</a>
+                    </div>
+                    <div class="wstp"><a href=""><i class="fa-brands fa-whatsapp fa-fade iconWstp"></i></a></div>
+                </div>
+                <div class="datosDesktop">
+                    <div class="datoHW">
+                        <div class="IconHW"><i class="fa-solid fa-temperature-arrow-down temperaturaCPU"></i></div>
+                        <div class="valorHW">CPU: 60°C</div>
+                    </div>
+                    <div class="datoHW">
+                        <div class="IconHW"><i class="fa-solid fa-temperature-arrow-up temperaturaRAM"></i></div>
+                        <div class="valorHW">ARCHIVOS TEMPORALES: 435 MB</div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-body">
+                <div class="primero">
+                    <div class="logo">
+                        <div class="logoIMG">
+                            <img src="{% static 'dashboard/img/logoICASOFT.webp' %}" alt="logo" id="logoEmpresa">
+                        </div>
+                        <div class="nombreLogo">ICASOFT INGENIERÍA 21</div>
+                    </div>
+                    <div class="Ubicacion">
+                        <div class="nombreUbi">UBICACIÓN</div>
+                        <div class="mapa">
+                            <iframe class="mapaUbi"
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3870.2186740547177!2d-75.7278443!3d-14.0642606!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9110e2bd0f99f96f%3A0x21a304d4341e31e2!2sIcasoft%20i21!5e0!3m2!1ses-419!2spe!4v1742567745922!5m2!1ses-419!2spe"
+                                width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade">
+                            </iframe>
+                        </div>
+                    </div>
+                    <div class="asistencia">
+                        <button class="asistenciaButton" id="btnAsistencia">
+                            <i class="fa-solid fa-users-gear iconAnalisis"></i> ASISTENCIA TÉCNICA
+                        </button>
+                    </div>
+                    <!-- <div class="tecnicosDisponibilidad">
+                        <div class="opcionesTecnicos">
+                            <select name="select" class="selectTecnico">
+                                <option value="value1" selected>Seleccione un técnico</option>
+                                <option value="value2">Pedro</option>
+                                <option value="value3">Alejandro</option>
+                            </select>
+                        </div>
+                    </div> -->
+                    <!-- <div class="Restauracion">
+                            <div class="nombreResta">RESPALDO Y RESTAURACIÓN</div>
+                            <div class="botonesRest">
+                                <div class="botRespaldo">Crear respaldo</div>
+                                <div class="botRest">Restaurar</div>
+                            </div>
+                            <div class="verCompleto"><label for="">VER COMPLETO</label></div>
+                        </div>  -->
+                </div>
+                <div class="asistente">
+                    <div class="asistVirtual">ASISTENTE VIRTUAL DE SOPORTE TÉCNICO</div>
+                    <div class="botonAsist">
+                        <div class="botReg"><button class="buttonAsist">REGISTRARSE</button></div>
+                        <div class="botSolicitud"><button class="buttonAsist">SOLICITUD</button></div>
+                    </div>
+                    <div class="monitoreo">
+                        <button id="btnMonitoreo" class="btnMonitoreodiv">
+                            <div class="nombreMonit">MONITOREO DEL SISTEMA</div>
+                            <div class="graficoMonit"><img src="{% static 'dashboard/img/monitoreo.webp' %}" alt=""
+                                    class="imgGrafico"></div>
+                            <div class="progress-bar">
+                                <span data-width="80%"></span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="recomendaciones">
+                        <div class="nombreCatalogo">RECOMENDACIONES DE SOFTWARE</div>
+                        <div class="catalogo">
+                            <div class="cat1"><img src="{% static 'dashboard/img/security.webp' %}" alt=""
+                                    class="security">
+                            </div>
+                            <div class="cat2"><img src="{% static 'dashboard/img//windows.webp' %}" alt=""
+                                    class="security">
+                            </div>
+                        </div>
+                        <div class="catVerComp"><button class="btnVerCompleto" id="btnVerCompleto">VER COMPLETO</button>
+                        </div>
+                    </div>
+                    <div class="botonesSoporte">
+                        <button class="botResp" id="btnRespRest">RESPALDO Y RESTAURACIÓN</button>
+                        <button  class="botCentro" id="btnCentro">CENTRO DE APRENDIZAJES</button>
+                    </div>
+                </div>
+                <div class="asistenteSoporte">
+                    <div class="nombreAsistente">
+                        <h2 class="spanNombreAsistente">ASISTENTE DE SOPORTE</h2>
+                    </div>
+                    <div class="imagenIA">
+                        <img class="robot" src="{% static 'dashboard/img/robotIA.webp' %}" alt="">
+                    </div>
+                    <div class="mensajeIA"><input class="textIA" type="text"
+                            placeholder="Envía un mensaje a ICASOFT IA">
+                    </div>
+                    <div class="vozIA">
+                        <label for="" class="textoVoz">AYÚDAME</label>
+                        <i class="fa-solid fa-microphone microfono"></i>
+                    </div>
+                </div>
+                <div class="analisis">
+                    <div class="analisisCompleto">
+                        <button class="analisisComp">
+                            <div class="textButton">ANÁLISIS COMPLETO DEL SISTEMA</div>
+                            <div class="imgBtnAnalisis"><img src="{% static 'dashboard/img/actualizarSistema.webp' %}"
+                                    class="imgBtnAnalisisComp">
+                            </div>
+                        </button>
+                    </div>
+                    <div class="diagnostico">
+                        <button class="analisisButton">
+                            <div class="iconDiagnostico"><i class="fa-brands fa-searchengin fa-lg iconAnalisis"></i></div>
+                            <div class="textDiagnosticoDet" id="textPrimeroDiag">DIAGNÓSTICO</div>
+                        </button>
+                    </div>
+                    <div class="optimizar">
+                        <button class="analisisButton">
+                            <div class="iconDiagnostico"><i class="fa-solid fa-shield-halved iconAnalisis"></i></div>
+                            <div class="textDiagnosticoDet">ANALIZAR ANTIVIRUS</div>
+                        </button>
+                    </div>
+                    <div class="mantenimiento">
+                        <button class="analisisButton">
+                            <div class="iconDiagnostico"><i class="fa-solid fa-gears iconAnalisis"></i></div>
+                            <div class="textDiagnosticoDet">MANTENIMIENTO</div>
+                        </button>
+                    </div>
+                    <div class="recomendacSW">
+                        <button class="analisisButton">
+                            <div class="iconDiagnostico"><i class="fa-solid fa-laptop-code iconAnalisis"></i> </div>
+                            <div class="textDiagnosticoDet">RECOMENDACIONES DE SOFTWARE</div>
+                        </button>
+                    </div>
+                    <div class="monitoreoSop">
+                        <button class="analisisButton">
+                            <div class="iconDiagnostico"><i class="fa-solid fa-chart-line iconAnalisis"></i></div>
+                            <div class="textDiagnosticoDet">MONITOREO DEL SISTEMA</div>
+                        </button>
+                    </div>
+                    <div class="historial">
+                        <button class="analisisButton">
+                            <div class="iconDiagnostico"><i class="fa-solid fa-file iconAnalisis"></i></div>
+                            <div class="textDiagnosticoDet"  id="textPrimeroDiag">HISTORIAL</div>
+                        </button>
+                    </div>
+                </div>
+                <div class="ultimo">
+                    <div class="detdiagnostico">
+                        <button id="btnAbrirModalDiagnostico" class="btnUlt">
+                            <div class="textDiag">DIAGNÓSTICO</div>
+                            <div class="imgDetDiag">
+                                <img class="imgDiagnostico" src="{% static 'dashboard/img/diagnostico.webp' %}" alt="">
+                            </div>
+                            <div class="progress-bar">
+                                <span data-width="100%"></span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="antivirus">
+                        <button class="btnUlt" id="btnAbrirModalAntivirus">
+                            <div class="textAnt">ANTIVIRUS</div>
+                            <div class="imgDetAnt"><img class="imgAntivirus"
+                                    src="{% static 'dashboard/img/antivirus.webp' %}" alt="">
+                            </div>
+                            <div class="progress-bar">
+                                <span data-width="70%"></span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="ultMant">
+                        <button class="btnUlt" id="btnAbrirModalMantenimiento">
+                            <div class="textMant">MANTENIMIENTO</div>
+                            <div class="imgDetMant"><img class="imgMant"
+                                    src="{% static 'dashboard/img/mantenimiento.webp' %}" alt="">
+                            </div>
+                            <div class="progress-bar">
+                                <span data-width="60%"></span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="ultHist">
+                        <button class="btnUlt" id="btnHist">
+                            <div class="textHist">HISTORIAL</div>
+                            <div class="imgDetHist"><img src="{% static 'dashboard/img/historial.webp' %}"
+                                    class="imgHist" alt="">
+                            </div>
+                            <div class="progress-bar">
+                                <span data-width="90%"></span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="footer"></div>
+        </div>
+    </div>
+    <!--MODALS:-->
+    {% include "dashboard/client/modalInicio.html" %}
+
+    <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
+    <script src="{% static 'dashboard/js/clientes/inicio.js' %}"></script>
+    <script src="{% static 'dashboard/js/clientes/graficos.js' %}"></script>
+</body>
+
+</html>
+{% endblock %}
