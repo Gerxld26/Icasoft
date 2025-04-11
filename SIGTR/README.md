@@ -20,6 +20,9 @@ El proyecto requiere los siguientes paquetes de Python:
 Para instalar los paquetes requeridos, ejecute:
 ```bash
 pip install -r requirements.txt
+python manage.py shell: ingresar a la consola del yango.
+1- python manage.py makemigrations
+2-  python manage.py migrate :pasar a la bd.
 ```
 
 ## Uso
@@ -32,3 +35,15 @@ Este proyecto está licenciado bajo la Licencia MIT.
 
 ## Desarrollador
 Gerald Atuncar Flores.
+
+## Dashboard:
+views: ahí se define las rutas para que se puedan visualizar los diseños y funcionamiento.
+urls: se define las vistas.
+templates: se ubica los htmls.
+
+## DATOS LIBRERÍA:
+el cpuinfo trae toda la data referente.
+## DATOS CSS: 
+display:
+grid: ancho fijo
+flex: sin ancho fijo

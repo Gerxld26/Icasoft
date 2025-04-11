@@ -1,0 +1,315 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'dashboard/css/modalInicio.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+<!--MODDAL ASISTENCIA TÉCNICA-->
+<div id="modalAsistencia" class="modal">
+    <div class="modal-content">
+        <div class="headerModal">
+            <span id="closeModalAsis" class="close">&times;</span>
+            <div class="textHW">ASISTENCIA TÉCNICA</div>
+        </div>
+        <div class="contentData">
+            <div class="textAsistencia">¿Necesitas asistencia técnica?</div>
+            <div class="contentAsistencia">
+                <button class="btnAsistencia">Solicitar Asistencia</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--MODAL MONITOREO:-->
+<div id="modalMonitoreo" class="modal">
+    <div class="modal-content" id="contentMonitoreo">
+        <div class="headerModal">
+            <span id="closeModal" class="close">&times;</span>
+            <div class="textHW">RENDIMIENTO DEL HARDWARE</div>
+        </div>
+        <div class="contentDataMonitoreo">
+            <div class="detalleGraficoMonitoreo">
+                <canvas id="donutsTickets"></canvas>
+            </div>
+            <div class="detalleHW">
+                <div class="textDetalle">ALERTA</div>
+                <div class="componentes">
+                    <div class="cpu">
+                        <div class="textCompMonitoreo">CPU</div>
+                        <div class="contentCompHW">
+                            <div class="compImg"><img src="{% static 'dashboard/img/cpu.webp' %}" alt="" class="imgHW">
+                            </div>
+                            <div class="progress-bar-Monitoreo">
+                                <div id="cpu-name"></div>
+                                <span id="cpu-progress-bar" data-width="0%"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="memoriaRAM">
+                        <div class="textCompMonitoreo">MEMORIA</div>
+                        <div class="contentCompHW">
+                            <div class="compImg">
+                                <img src="{% static 'dashboard/img/memoriaRAM.webp' %}" alt="" class="imgHW">
+                            </div>
+                            <div class="contentHW">
+                                <div id="sistemaOperativotext"></div>
+                                <div class="progress-bar-Monitoreo" id="progress-bar-ram">
+                                <span id="ram-progress-bar" data-width="0%"></span>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="Disco">
+                        <div class="textCompMonitoreo">DISCO</div>
+                        <div class="contentCompHW">
+                            <div class="compImg"><img src="{% static 'dashboard/img/discoSSD.webp' %}" alt=""
+                                    class="imgHW"></div>
+                            <div class="progress-bar-Monitoreo">
+                                <span id="disco-progress-bar" data-width="0%"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--MODAL DIAGNOSTICO-->
+<div id="modalDiagnostico" class="modal">
+    <div class="modal-content">
+        <div class="headerModal">
+            <span id="closeModalDiagn" class="close">&times;</span>
+            <!-- <div class="textDiagnostico">DIAGNÓSTICO</div> -->
+        </div>
+        <div class="contentData">
+            <div class="comparacionHW">
+                <div class="textHW">COMPARACIÓN CON DIAGNÓSTICOS PREVIOS</div>
+                <div class="cardComparacionHW">
+                    <div class="componentesHW">
+                        <div class="textComponente">USO DE CPU:</div>
+                        <div class="resultComponente">Disminuyó en 4.1%</div>
+                    </div>
+                    <div class="componentesHW">
+                        <div class="textComponente">USO DE RAM:</div>
+                        <div class="resultComponente">Disminuyó en 4.1%</div>
+                    </div>
+                    <div class="componentesHW">
+                        <div class="textComponente">USO DEL DISCO:</div>
+                        <div class="resultComponente">Disminuyó en 4.1%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="comparacionHW">
+                <div class="textHW">ESTADO DE SEGURIDAD</div>
+                <div class="cardComparacionHW">
+                    <div class="componentesHW">
+                        <div class="textComponente">Antivirus Habilitado:</div>
+                        <div class="resultComponente">Sí</div>
+                    </div>
+                    <div class="componentesHW">
+                        <div class="textComponente">Protección en tiempo real:</div>
+                        <div class="resultComponente">Activado</div>
+                    </div>
+                    <div class="componentesHW">
+                        <div class="textComponente">Versión de firma de Antivirus:</div>
+                        <div class="resultComponente">1.427.00</div>
+                    </div>
+                </div>
+            </div>
+            <div class="analisisIA">
+                <div class="textHW">ANÁLISIS DETALLADO POR IA <button class="btnAnalisis"><i
+                            class="fa-solid fa-eye verAnalisis"></i></button></div>
+                <!-- <div class="respuestaIA"><input class="textRespuestaIA" type="text"></div> -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--MODAL ANTIVIRUS-->
+<div id="modalAntivirus" class="modal">
+    <div class="modal-content">
+        <div class="headerModal">
+            <span id="closeModalAnt" class="close">&times;</span>
+        </div>
+        <div class="contentDataAnt">
+            <div class="textHW">ESTADO DE SEGURIDAD</div>
+            <div class="antivirusHab">
+                <div>Anitivirus habilitado:</div>
+                <div>Sí</div>
+            </div>
+            <div class="protTiempo">
+                <div>Protección en tiempo real:</div>
+                <div>Activado</div>
+            </div>
+            <div class="version">
+                <div>VERSIÓN DE FIRMA DE ANTIVIRUS:</div>
+                <div>1.427.00</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--MODAL MANTENIMIENTO-->
+<div id="modalMantenimiento" class="modal">
+    <div class="modal-content">
+
+        <div class="headerModal">
+            <span id="closeModalMant" class="close">&times;</span>
+            <div class="textHW">MANTENIMIENTO DEL SISTEMA</div>
+        </div>
+        <div class="contentData">
+
+            <div class="cardDataSuperior">
+                <div class="cardData" id="cardData1">
+                    <div class="textcardData">Liberar Espacio</div>
+                    <div class="contentCardData">Eliminar archivos temporales</div>
+                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-trash"></i>
+                            Liberar Espacio</button></div>
+                </div>
+                <div class="cardData" id="cardData2">
+                    <div class="textcardData">Actualizar Software</div>
+                    <div class="contentCardData">Instalar las actualizaciones más recientes</div>
+                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-upload"></i>
+                            Actualizar</button></div>
+                </div>
+            </div>
+            <div class="cardDataInferior">
+                <div class="cardData" id="cardData3">
+                    <div class="textcardData">Desfragmentar Disco</div>
+                    <div class="contentCardData">Organizar los datos en el disco</div>
+                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-hard-drive"></i>
+                            Desfragmentar</button></div>
+                </div>
+                <div class="cardData" id="cardData4">
+                    <div class="textcardData">Reparar Disco</div>
+                    <div class="contentCardData">Buscar y reparar errores</div>
+                    <div class="btnCardData"><button class="btnCardDataFunction"><i
+                                class="fa-solid fa-screwdriver-wrench"></i> Reparar</button></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!--MODAL RECOMENDACIONES SW-->
+<div id="modalRecomendaciones" class="modal">
+    <div class="modal-content">
+        <div class="apartado">
+            <div class="headerModal">
+                <span id="closeModalRecom" class="close">&times;</span>
+                <div class="textHW">SEGURIDAD</div>
+            </div>
+            <div class="contentApartado">
+                <div class="productSW">
+                    <div class="detalleProducto">
+                        <div class="contentImg"><img src="{% static 'dashboard/img/antivirus.webp' %}" alt="antivirus"
+                                class="imgSW"></div>
+                        <div class="nombreProducto">
+                            <div class="textProducto">NOD 32 Antivirus</div>
+                            <div class="precioProducto">s/. 122</div>
+                        </div>
+                    </div>
+                    <div class="opciones">
+                        <button class="btnComprar">COMPRAR</button>
+                    </div>
+                </div>
+                <div class="productSW">
+                    <div class="detalleProducto">
+                        <div class="contentImg"><img src="{% static 'dashboard/img/antivirus.webp' %}" alt="antivirus"
+                                class="imgSW"></div>
+                        <div class="nombreProducto">
+                            <div class="textProducto">NOD 32 Antivirus</div>
+                            <div class="precioProducto">s/. 122</div>
+                        </div>
+                    </div>
+                    <div class="opciones">
+                        <button class="btnComprar">COMPRAR</button>
+                    </div>
+                </div>
+                <div class="productSW">
+                    <div class="detalleProducto">
+                        <div class="contentImg"><img src="{% static 'dashboard/img/antivirus.webp' %}" alt="antivirus"
+                                class="imgSW"></div>
+                        <div class="nombreProducto">
+                            <div class="textProducto">NOD 32 Antivirus</div>
+                            <div class="precioProducto">s/. 122</div>
+                        </div>
+                    </div>
+                    <div class="opciones">
+                        <button class="btnComprar">COMPRAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="apartado">
+            <div class="textHW">MICROSOFT</div>
+            <div class="contentApartado">
+                <div class="productSW">
+                    <div class="detalleProducto">
+                        <div class="contentImg"><img src="{% static 'dashboard/img/windows.webp' %}" alt="antivirus"
+                                class="imgSW"></div>
+                        <div class="nombreProducto">
+                            <div class="textProducto">WINDOWS 10</div>
+                            <div class="precioProducto">s/. 50</div>
+                        </div>
+                    </div>
+                    <div class="opciones">
+                        <button class="btnComprar">COMPRAR</button>
+                    </div>
+                </div>
+                <div class="productSW">
+                    <div class="detalleProducto">
+                        <div class="contentImg"><img src="{% static 'dashboard/img/windows.webp' %}" alt="antivirus"
+                                class="imgSW"></div>
+                        <div class="nombreProducto">
+                            <div class="textProducto">OFFICE 2024</div>
+                            <div class="precioProducto">s/. 80</div>
+                        </div>
+                    </div>
+                    <div class="opciones">
+                        <button class="btnComprar">COMPRAR</button>
+                    </div>
+                </div>
+                <div class="productSW">
+                    <div class="detalleProducto">
+                        <div class="contentImg"><img src="{% static 'dashboard/img/windows.webp' %}" alt="antivirus"
+                                class="imgSW"></div>
+                        <div class="nombreProducto">
+                            <div class="textProducto">NOD 32 Antivirus</div>
+                            <div class="precioProducto">s/. 122</div>
+                        </div>
+                    </div>
+                    <div class="opciones">
+                        <button class="btnComprar">COMPRAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--MODAL RESPALDO Y RESTAURACIÓN-->
+
+<!--MODAL CENTRO DE APRENDIZAJE-->
+<div id="modalAprendizaje" class="modal">
+    <div class="modal-content">
+        <div class="headerModal">
+            <span id="closeModalAprendizaje" class="close">&times;</span>
+        </div>
+        <div class="contentData">
+            <div class="textHW">CENTRO DE APRENDIZAJE</div>
+            <div class="antivirusHab">
+                <div>Anitivirus habilitado:</div>
+                <div>Sí</div>
+            </div>
+            <div class="protTiempo">
+                <div>Protección en tiempo real:</div>
+                <div>Activado</div>
+            </div>
+            <div class="version">
+                <div>VERSIÓN DE FIRMA DE ANTIVIRUS:</div>
+                <div>1.427.00</div>
+            </div>
+        </div>
+    </div>
+</div>

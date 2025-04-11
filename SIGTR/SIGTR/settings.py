@@ -110,7 +110,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'soporte_tecnico_v3',
         'USER': 'root',
-        'PASSWORD': 'Gerald26',
+        'PASSWORD': 'Haylu123*_',
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }
@@ -149,7 +149,7 @@ LOGIN_REDIRECT_URL = "/"
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'es'
+LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'America/Lima'
 
