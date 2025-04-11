@@ -38,17 +38,22 @@
                             <div class="compImg"><img src="{% static 'dashboard/img/cpu.webp' %}" alt="" class="imgHW">
                             </div>
                             <div class="progress-bar-Monitoreo">
-                                <span data-width="100%"></span>
+                                <div id="cpu-name"></div>
+                                <span id="cpu-progress-bar" data-width="0%"></span>
                             </div>
                         </div>
                     </div>
                     <div class="memoriaRAM">
                         <div class="textCompMonitoreo">MEMORIA</div>
                         <div class="contentCompHW">
-                            <div class="compImg"><img src="{% static 'dashboard/img/memoriaRAM.webp' %}" alt=""
-                                    class="imgHW"></div>
-                            <div class="progress-bar-Monitoreo">
-                                <span data-width="30%"></span>
+                            <div class="compImg">
+                                <img src="{% static 'dashboard/img/memoriaRAM.webp' %}" alt="" class="imgHW">
+                            </div>
+                            <div class="contentHW">
+                                <div id="sistemaOperativotext"></div>
+                                <div class="progress-bar-Monitoreo" id="progress-bar-ram">
+                                <span id="ram-progress-bar" data-width="0%"></span>
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -58,7 +63,7 @@
                             <div class="compImg"><img src="{% static 'dashboard/img/discoSSD.webp' %}" alt=""
                                     class="imgHW"></div>
                             <div class="progress-bar-Monitoreo">
-                                <span data-width="57%"></span>
+                                <span id="disco-progress-bar" data-width="0%"></span>
                             </div>
                         </div>
                     </div>
@@ -111,7 +116,8 @@
                 </div>
             </div>
             <div class="analisisIA">
-                <div class="textHW">ANÁLISIS DETALLADO POR IA <button class="btnAnalisis"><i class="fa-solid fa-eye verAnalisis"></i></button></div>
+                <div class="textHW">ANÁLISIS DETALLADO POR IA <button class="btnAnalisis"><i
+                            class="fa-solid fa-eye verAnalisis"></i></button></div>
                 <!-- <div class="respuestaIA"><input class="textRespuestaIA" type="text"></div> -->
             </div>
         </div>
@@ -156,24 +162,28 @@
                 <div class="cardData" id="cardData1">
                     <div class="textcardData">Liberar Espacio</div>
                     <div class="contentCardData">Eliminar archivos temporales</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-trash"></i> Liberar Espacio</button></div>
+                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-trash"></i>
+                            Liberar Espacio</button></div>
                 </div>
                 <div class="cardData" id="cardData2">
                     <div class="textcardData">Actualizar Software</div>
                     <div class="contentCardData">Instalar las actualizaciones más recientes</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-upload"></i> Actualizar</button></div>
+                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-upload"></i>
+                            Actualizar</button></div>
                 </div>
             </div>
             <div class="cardDataInferior">
                 <div class="cardData" id="cardData3">
                     <div class="textcardData">Desfragmentar Disco</div>
                     <div class="contentCardData">Organizar los datos en el disco</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-hard-drive"></i> Desfragmentar</button></div>
+                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-hard-drive"></i>
+                            Desfragmentar</button></div>
                 </div>
                 <div class="cardData" id="cardData4">
                     <div class="textcardData">Reparar Disco</div>
                     <div class="contentCardData">Buscar y reparar errores</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-screwdriver-wrench"></i> Reparar</button></div>
+                    <div class="btnCardData"><button class="btnCardDataFunction"><i
+                                class="fa-solid fa-screwdriver-wrench"></i> Reparar</button></div>
                 </div>
             </div>
 
