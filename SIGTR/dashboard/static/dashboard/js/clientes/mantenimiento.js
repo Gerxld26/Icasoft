@@ -3,7 +3,9 @@ const modalMantenimiento = document.getElementById('modalMantenimiento');
 const openModalMantenimiento = document.getElementById('btnAbrirModalMantenimiento');
 const closeModalMantenimiento = document.getElementById('closeModalMant');
 const progressBarMantenimiento = document.getElementById('progressBarMantenimiento');
-const imgMant = document.getElementById('imgMantDet');
+
+const imgMant = document.getElementById('imgMant');
+const imgMantGIF = document.getElementById('imgMantGIF');
 const btnMantFunction = document.getElementById('btnMantFunction');
 
 btnMantFunction.addEventListener('click', function () {
@@ -11,7 +13,9 @@ btnMantFunction.addEventListener('click', function () {
     openModalMantenimiento.addEventListener('click', function () {
         modalMantenimiento.style.display = 'flex';
     })
-    imgMant.style.height = '70px';
+
+    imgMant.style.display = 'none';
+    imgMantGIF.style.display = 'flex';
     openModalMantenimiento.style.fontSize = '18px';
     progressBarMantenimiento.style.display = 'flex';
 });

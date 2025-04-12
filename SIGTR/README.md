@@ -34,7 +34,7 @@ python manage.py shell: ingresar a la consola del yango.
 Este proyecto está licenciado bajo la Licencia MIT.
 
 ## Desarrollador
-Gerald Atuncar Flores.
+Gerald Atuncar Flores y Haylú Vicuña.
 
 ## Dashboard:
 views: ahí se define las rutas para que se puedan visualizar los diseños y funcionamiento.

@@ -173,7 +173,8 @@
                         <button id="btnAbrirModalDiagnostico" class="btnUlt">
                             <div class="textDiag">DIAGNÓSTICO</div>
                             <div class="imgDetDiag" id="imgDiagnosticoDet">
-                                <img class="imgDiagnostico" src="{% static 'dashboard/img/diagnostico.webp' %}" alt="">
+                                <img class="imgDiagnostico" id="imgDiag" src="{% static 'dashboard/img/diagnostico.webp' %}" alt="">
+                                <!-- <img class="imgDiagnosticoGIF" id="imgDiagGIF" src="{% static 'dashboard/img/diagnosticoGIF.gif' %}" alt=""> -->
                             </div>
                             <div class="progress-bar" id="progressBarDiagnostico">
                                 <span data-width="100%"></span>
@@ -195,7 +196,8 @@
                         <button class="btnUlt" id="btnAbrirModalMantenimiento">
                             <div class="textMant">MANTENIMIENTO</div>
                             <div class="imgDetDiag" id="imgMantDet"><img class="imgMant"
-                                    src="{% static 'dashboard/img/mantenimiento.webp' %}" alt="">
+                                    src="{% static 'dashboard/img/mantenimientoDet.webp' %}" id="imgMant" alt="">
+                                    <img src="{% static 'dashboard/img/mantenimientoGIF.gif' %}" class="imgMantGIF" id="imgMantGIF" alt="">
                             </div>
                             <div class="progress-bar" id="progressBarMantenimiento">
                                 <span data-width="60%"></span>
@@ -222,6 +224,7 @@
     {% include "dashboard/client/modalInicio.html" %}
 
     <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!--para la ubicación en tiempo real-->
     <script src="{% static 'dashboard/js/clientes/inicio.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/monitoreo.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/antivirus.js' %}"></script>

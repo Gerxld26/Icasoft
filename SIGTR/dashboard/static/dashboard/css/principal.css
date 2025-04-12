@@ -15,31 +15,14 @@
 
 body {
     min-height: 100vh;
-    background: linear-gradient(90deg, rgb(37, 36, 36), rgb(45, 45, 45), rgb(37, 36, 36));
+    background:  rgb(24, 23, 23);
     background-size: 600% 600%;
     /* Hacemos que el gradiente sea más grande para poder moverlo */
     color: white;
     font-family: "Segoe UI";
     font-weight: bold;
     overflow-x: hidden;
-    animation: gradientAnimation 60s ease infinite;
     /* Animación para mover el gradiente */
-}
-
-@keyframes gradientAnimation {
-    0% {
-        background-position: 0% 0%;
-    }
-
-    /*posición 0*/
-    50% {
-        background-position: 400% 0%;
-    }
-
-    /*el 400 es del eje x*/
-    100% {
-        background-position: 0% 0%;
-    }
 }
 
 .contenedorPrincipal {
@@ -758,7 +741,17 @@ body {
 .ultHist:hover {
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(42, 76, 89));
 }
-
+.imgMantGIF{
+    display: none;
+    filter: drop-shadow(7px 7px 9px rgb(6, 11, 54));
+}
+.imgMant{
+    filter: drop-shadow(7px 7px 9px rgb(6, 11, 54));
+}
+.imgDiagnosticoGIF{
+    display: none;
+    filter: drop-shadow(7px 7px 9px rgb(6, 11, 54));
+}
 /* Modo tablet. falta arreglar */
 @media (min-width: 768px) {}
 
@@ -1103,6 +1096,8 @@ body {
     .imgDiagnostico,
     .imgAntivirus,
     .imgMant,
+    .imgMantGIF,
+    .imgDiagnosticoGIF,
     .imgHist {
         height: 100%;
     }

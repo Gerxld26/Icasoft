@@ -2,6 +2,7 @@
 <link rel="stylesheet" href="{% static 'dashboard/css/modalInicio.css' %}">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!--MODDAL ASISTENCIA TÉCNICA-->
 <div id="modalAsistencia" class="modal">
@@ -29,43 +30,46 @@
             <div class="detalleGraficoMonitoreo">
                 <canvas id="donutsTickets"></canvas>
             </div>
-            <div class="detalleHW">
-                <div class="textDetalle">ALERTA</div>
-                <div class="componentes">
-                    <div class="cpu">
+            <div class="componentes">
+                <div class="cpu">
+                    <div class="contentCompHW">
                         <div class="textCompMonitoreo">CPU</div>
-                        <div class="contentCompHW">
-                            <div class="compImg"><img src="{% static 'dashboard/img/cpu.webp' %}" alt="" class="imgHW">
-                            </div>
-                            <div class="progress-bar-Monitoreo">
-                                <div id="cpu-name"></div>
-                                <span id="cpu-progress-bar" data-width="0%"></span>
-                            </div>
+                        <div class="compImg">
+                            <img src="{% static 'dashboard/img/cpu.webp' %}" alt="" class="imgHW">
                         </div>
                     </div>
-                    <div class="memoriaRAM">
+                    <div class="contentHW">
+                        <div id="cpu-name" class="textContentHW"></div>
+                        <div class="progress-bar-Monitoreo" id="progress-bar-cpu">
+                            <span data-width="0%"></span>
+                            <div class="progress-text" id="cpu-progress-text">0%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="memoriaRAM">
+                    <div class="contentCompHW">
                         <div class="textCompMonitoreo">MEMORIA</div>
-                        <div class="contentCompHW">
-                            <div class="compImg">
-                                <img src="{% static 'dashboard/img/memoriaRAM.webp' %}" alt="" class="imgHW">
-                            </div>
-                            <div class="contentHW">
-                                <div id="sistemaOperativotext"></div>
-                                <div class="progress-bar-Monitoreo" id="progress-bar-ram">
-                                <span id="ram-progress-bar" data-width="0%"></span>
-                            </div>
-                            </div>
+                        <div class="compImg">
+                            <img src="{% static 'dashboard/img/memoriaRAM.webp' %}" alt="" class="imgHW">
                         </div>
                     </div>
-                    <div class="Disco">
-                        <div class="textCompMonitoreo">DISCO</div>
-                        <div class="contentCompHW">
-                            <div class="compImg"><img src="{% static 'dashboard/img/discoSSD.webp' %}" alt=""
-                                    class="imgHW"></div>
-                            <div class="progress-bar-Monitoreo">
-                                <span id="disco-progress-bar" data-width="0%"></span>
-                            </div>
+                    <div class="contentHW">
+                        <div id="sistemaOperativotext" class="textContentHW"></div>
+                        <div class="progress-bar-Monitoreo" id="progress-bar-ram">
+                            <span data-width="0%"></span>
                         </div>
+                    </div>
+                </div>
+                <div class="Disco">
+                    <div class="contentCompHW">
+                        <div class="textCompMonitoreo">DISCO</div>
+                        <div class="compImg">
+                            <img src="{% static 'dashboard/img/discoSSD.webp' %}" alt="" class="imgHW">
+                        </div>
+                    </div>
+
+                    <div class="contentHW" id="contentDisco">
+                        <!--Contenido dinámico js-->
                     </div>
                 </div>
             </div>
