@@ -116,10 +116,25 @@
                         <h2 class="spanNombreAsistente">ASISTENTE DE SOPORTE</h2>
                     </div>
                     <div class="imagenIA">
-                        <img class="robot" src="{% static 'dashboard/img/robotIA.webp' %}" alt="">
+                        <img class="robot" src="{% static 'dashboard/img/robotIA.webp' %}" alt="" id="robotimg">
+
+                        <div class="video-container" id="video-container">
+                            <video class="robot" id="robotGIF" autoplay muted>
+                                <source src="{% static 'dashboard/video/robotHablando.mp4' %}" type="video/mp4">
+                            </video>
+                        </div>
+                        <div class="video-container" id="video-container2">
+                            <video class="robot" id="robotGIFOjos" autoplay muted>
+                                <source src="{% static 'dashboard/video/robotOjos.mp4' %}" type="video/mp4">
+                            </video>
+                        </div>
+                        <audio controls autoplay muted id="audioRobot">
+                            <source src="{% static 'dashboard/audio/audioRobot.mp3' %}">
+                            no se encontró ningún audio
+                        </audio>
                     </div>
-                    <div class="mensajeIA"><input class="textIA" type="text"
-                            placeholder="Envía un mensaje a ICASOFT IA">
+                    <div class="mensajeIA">
+                        <input class="textIA" id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA">
                     </div>
                     <div class="vozIA">
                         <label for="" class="textoVoz">AYÚDAME</label>
@@ -173,7 +188,8 @@
                         <button id="btnAbrirModalDiagnostico" class="btnUlt">
                             <div class="textDiag">DIAGNÓSTICO</div>
                             <div class="imgDetDiag" id="imgDiagnosticoDet">
-                                <img class="imgDiagnostico" id="imgDiag" src="{% static 'dashboard/img/diagnostico.webp' %}" alt="">
+                                <img class="imgDiagnostico" id="imgDiag"
+                                    src="{% static 'dashboard/img/diagnostico.webp' %}" alt="">
                                 <!-- <img class="imgDiagnosticoGIF" id="imgDiagGIF" src="{% static 'dashboard/img/diagnosticoGIF.gif' %}" alt=""> -->
                             </div>
                             <div class="progress-bar" id="progressBarDiagnostico">
@@ -197,7 +213,8 @@
                             <div class="textMant">MANTENIMIENTO</div>
                             <div class="imgDetDiag" id="imgMantDet"><img class="imgMant"
                                     src="{% static 'dashboard/img/mantenimientoDet.webp' %}" id="imgMant" alt="">
-                                    <img src="{% static 'dashboard/img/mantenimientoGIF.gif' %}" class="imgMantGIF" id="imgMantGIF" alt="">
+                                <img src="{% static 'dashboard/img/mantenimientoGIF.gif' %}" class="imgMantGIF"
+                                    id="imgMantGIF" alt="">
                             </div>
                             <div class="progress-bar" id="progressBarMantenimiento">
                                 <span data-width="60%"></span>
@@ -207,8 +224,8 @@
                     <div class="ultHist">
                         <button class="btnUlt" id="btnHist">
                             <div class="textHist">HISTORIAL</div>
-                            <div class="imgDetDiag" id="imgHistDet"><img src="{% static 'dashboard/img/historial.webp' %}"
-                                    class="imgHist" alt="">
+                            <div class="imgDetDiag" id="imgHistDet"><img
+                                    src="{% static 'dashboard/img/historial.webp' %}" class="imgHist" alt="">
                             </div>
                             <div class="progress-bar" id="progressBarHistorial">
                                 <span data-width="90%"></span>

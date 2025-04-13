@@ -4,6 +4,7 @@ const btnHistFunction = document.getElementById('btnHistFunction');
 const modalHistorial = document.getElementById('btnHist');
 
 btnHistFunction.addEventListener('click', function () {
+    modalHistorial.style.cursor = 'pointer';
     imgHist.style.height = '70px';
     modalHistorial.style.fontSize = '18px';
     progressBarHistorial.style.display = 'flex';

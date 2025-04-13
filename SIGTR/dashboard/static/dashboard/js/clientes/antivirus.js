@@ -16,6 +16,7 @@ window.addEventListener('click', function (event) {
     }
 })
 btnOptimizarAntivirus.addEventListener('click', function () {
+    openModalAntivirus.style.cursor = 'pointer';
     openModalAntivirus.addEventListener('click', function () {
         modalAntivirus.style.display = 'flex';
     })

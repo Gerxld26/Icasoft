@@ -9,7 +9,7 @@ const imgMantGIF = document.getElementById('imgMantGIF');
 const btnMantFunction = document.getElementById('btnMantFunction');
 
 btnMantFunction.addEventListener('click', function () {
-
+    openModalMantenimiento.style.cursor = 'pointer';
     openModalMantenimiento.addEventListener('click', function () {
         modalMantenimiento.style.display = 'flex';
     })

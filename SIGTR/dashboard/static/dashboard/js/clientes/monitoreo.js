@@ -147,6 +147,7 @@ $(document).ready(function () {
 
     btnMonitoreoFunction.addEventListener('click', function () {
         modalOpen = true;
+        openModalMonitoreo.style.cursor = 'pointer';
         /*MODAL MONITOREO*/
         openModalMonitoreo.addEventListener('click', function () {
             modalMonitoreo.style.display = 'flex';

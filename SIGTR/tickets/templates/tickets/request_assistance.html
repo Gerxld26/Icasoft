@@ -27,7 +27,7 @@
             </div>
             <small class="form-text text-muted">Ingresa una dirección o usa tu ubicación actual</small>
         </div>
-        
+
         <!-- Mostrar Técnicos Disponibles -->
         <div class="mb-3">
             <label for="technician">Selecciona un Técnico:</label>
@@ -35,8 +35,10 @@
                 <select name="technician" id="technician" class="form-control">
                     <option value="">-- Elige un técnico --</option>
                     {% for technician in technicians %}
-                    <option value="{{ technician.technician.id }}" {% if not technician.is_nearby %}disabled="disabled"{% endif %}>
-                        {{ technician.technician.username }} - {{ technician.distance }} km - {{ technician.district_name }}
+                    <option value="{{ technician.technician.id }}" {% if not technician.is_nearby %}disabled="disabled"
+                        {% endif %}>
+                        {{ technician.technician.username }} - {{ technician.distance }} km - {{
+                        technician.district_name }}
                         {% if not technician.is_nearby %}(demasiado lejos){% endif %}
                     </option>
                     {% empty %}
@@ -46,7 +48,8 @@
             </div>
             <div id="no-nearby-technicians" class="alert alert-danger mt-2 d-none">
                 <i class="fas fa-exclamation-triangle me-2"></i>
-                No hay técnicos disponibles en tu zona (dentro de {{ max_distance }} km). Por favor, ajusta tu ubicación o contacta al soporte.
+                No hay técnicos disponibles en tu zona (dentro de {{ max_distance }} km). Por favor, ajusta tu ubicación
+                o contacta al soporte.
             </div>
             <div id="loading-technicians" class="mt-2 d-none">
                 <div class="spinner-border spinner-border-sm text-primary" role="status">
@@ -67,7 +70,8 @@
             </div>
             <div class="card-footer bg-light d-flex justify-content-between align-items-center">
                 <small class="text-muted">
-                    <i class="fas fa-info-circle"></i> Puedes arrastrar el marcador azul para ajustar tu ubicación.
+                    <i class="fas fa-info-circle"></i> 
+                    Puedes arrastrar el marcador azul para ajustar tu ubicación.
                     Los técnicos disponibles dentro de {{ max_distance }} km se muestran como marcadores rojos.
                 </small>
                 <div>
@@ -87,7 +91,8 @@
         <!-- Límite de distancia admisible -->
         <div class="alert alert-info mb-3">
             <i class="fas fa-info-circle me-2"></i>
-            Solo puedes solicitar asistencia técnica si hay un técnico disponible dentro de {{ max_distance }} km de tu ubicación.
+            Solo puedes solicitar asistencia técnica si hay un técnico disponible dentro de {{ max_distance }} km de tu
+            ubicación.
         </div>
 
         <!-- Campos ocultos para latitud/longitud -->
@@ -99,7 +104,8 @@
 </div>
 
 <!-- Cargar CSS de Leaflet primero -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
 <!-- Cargar Font Awesome para íconos -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -107,22 +113,26 @@
 <!-- Estilos adicionales para resolver problemas de visualización -->
 <style>
     #map {
-        z-index: 1; /* Asegurar que el mapa no sea tapado por otros elementos */
-        background-color: #f8f9fa; /* Color de fondo para el mapa */
-        min-height: 400px; /* Altura mínima */
+        z-index: 1;
+        /* Asegurar que el mapa no sea tapado por otros elementos */
+        background-color: #f8f9fa;
+        /* Color de fondo para el mapa */
+        min-height: 400px;
+        /* Altura mínima */
     }
+
     .leaflet-container {
         height: 400px;
         width: 100%;
     }
-    
+
     /* Estilos para opciones deshabilitadas */
     option:disabled {
         color: #dc3545;
         font-style: italic;
         background-color: #f8d7da;
     }
-    
+
     /* Estilo para el círculo de radio */
     .radius-circle {
         stroke-dasharray: 5, 5;
@@ -131,14 +141,15 @@
 </style>
 
 <!-- Cargar JavaScript de Leaflet después del CSS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     // Verificar si Leaflet se carga correctamente
     document.addEventListener("DOMContentLoaded", function () {
         console.log("DOM cargado, verificando Leaflet...");
-        
+
         // Comprobar si Leaflet está disponible
         if (typeof L === 'undefined') {
             console.error("¡Leaflet no está cargado!");
@@ -155,66 +166,66 @@
             });
             return;
         }
-        
+
         console.log("Leaflet cargado correctamente. Inicializando mapa...");
-        
+
         // Registrar estado del elemento del mapa
         const mapElement = document.getElementById("map");
         console.log("Elemento del mapa:", mapElement);
         console.log("Dimensiones del mapa:", mapElement.offsetWidth, "x", mapElement.offsetHeight);
-        
+
         // Inicializar mapa con un timeout pequeño para asegurar que el DOM esté listo
         setTimeout(initMap, 100);
     });
-    
+
     // Función para inicializar el mapa
     function initMap() {
         try {
             // Valores predeterminados para el mapa
             const defaultLat = -12.0464; // Lima, Perú
             const defaultLng = -77.0428;
-            const MAX_DISTANCE_KM = {{ max_distance }}; // Usar el valor del servidor
-            
+            const MAX_DISTANCE_KM = "{{ max_distance }}"; // Usar el valor del servidor {{}} sin comillas
+
             let latField = document.getElementById("id_latitude");
             let lonField = document.getElementById("id_longitude");
             let addressField = document.getElementById("id_address");
             let submitButton = document.getElementById("btn-submit");
-            
+
             // Variables para mantener el estado del mapa
             let currentZoomLevel = 13;
             let userPosition = [defaultLat, defaultLng];
-            
+
             // Inicializar mapa con coordenadas predeterminadas
             var map = L.map("map", {
                 center: userPosition,
                 zoom: currentZoomLevel,
                 zoomControl: false // Desactivar controles predeterminados de zoom
             });
-            
+
             console.log("Mapa inicializado:", map);
-            
+
             // Verificar si el mapa se ha inicializado correctamente
             if (!map._loaded) {
                 console.error("El mapa no se cargó correctamente");
                 return;
             }
-            
+
             // Añadir capa base de OpenStreetMap
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: "© OpenStreetMap contributors",
                 maxZoom: 19
             }).addTo(map);
-            
+
             // Añadir control de zoom personalizado
             L.control.zoom({
                 position: 'topright'
             }).addTo(map);
-            
+
             // Variables para los marcadores
             var userMarker = null;
             let techMarkers = []; // Array para almacenar los marcadores de los técnicos
             let radiusCircle = null; // Para el círculo de radio
-            
+
             // Iconos personalizados
             var userIcon = L.icon({
                 iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
@@ -233,14 +244,14 @@
                 popupAnchor: [1, -34],
                 shadowSize: [41, 41]
             });
-            
+
             // Funciones auxiliares
             function updateLocation(lat, lon, preserveZoom = true) {
                 if (preserveZoom) {
                     // Guardar el nivel de zoom actual antes de actualizar
                     currentZoomLevel = map.getZoom();
                 }
-                
+
                 latField.value = lat.toFixed(6);
                 lonField.value = lon.toFixed(6);
                 userPosition = [lat, lon];
@@ -264,7 +275,7 @@
                     map.removeLayer(marker);
                 });
                 techMarkers = [];
-                
+
                 // Eliminar el círculo de radio si existe
                 if (radiusCircle) {
                     map.removeLayer(radiusCircle);
@@ -276,7 +287,7 @@
                 document.getElementById('loading-technicians').classList.remove('d-none');
                 document.getElementById('no-nearby-technicians').classList.add('d-none');
                 clearTechMarkers(); // Limpiar marcadores existentes
-                
+
                 fetch(`/tickets/get_nearby_technicians/?lat=${lat}&lon=${lon}`, {
                     headers: {
                         "X-Requested-With": "XMLHttpRequest"
@@ -290,8 +301,8 @@
                     })
                     .then(data => {
                         console.log("Técnicos recibidos:", data);
-                        
-                        // Verificar si hay técnicos dentro del límite permitido
+
+                        //Verificar si hay técnicos dentro del límite permitido
                         if (!data.has_nearby_technicians) {
                             document.getElementById('no-nearby-technicians').classList.remove('d-none');
                             submitButton.disabled = true;
@@ -299,7 +310,7 @@
                             document.getElementById('no-nearby-technicians').classList.add('d-none');
                             submitButton.disabled = false;
                         }
-                        
+
                         updateTechniciansList(data.technicians);
                         displayTechniciansOnMap(data.technicians, data.max_distance || MAX_DISTANCE_KM);
                         document.getElementById('loading-technicians').classList.add('d-none');
@@ -313,14 +324,14 @@
 
             function displayTechniciansOnMap(technicians, maxDistance) {
                 clearTechMarkers();
-                
+
                 if (!technicians || technicians.length === 0) {
                     console.log("No hay técnicos para mostrar en el mapa");
                     return;
                 }
-                
+
                 console.log("Mostrando técnicos en el mapa, radio máximo:", maxDistance, "km");
-                
+
                 // Añadir un círculo que representa la distancia máxima
                 radiusCircle = L.circle(userPosition, {
                     color: 'rgba(220, 53, 69, 0.6)',
@@ -331,20 +342,20 @@
                     radius: maxDistance * 1000 // convertir a metros
                 }).addTo(map);
                 techMarkers.push(radiusCircle);
-                
+
                 // Filtrar solo técnicos cercanos para mostrar en el mapa
                 const nearbyTechs = technicians.filter(tech => tech.is_nearby);
-                
+
                 if (nearbyTechs.length === 0) {
                     console.log("No hay técnicos cercanos para mostrar en el mapa");
                     return;
                 }
-                
+
                 nearbyTechs.forEach(tech => {
                     try {
                         const lat = parseFloat(tech.latitude);
                         const lng = parseFloat(tech.longitude);
-                        
+
                         if (!isNaN(lat) && !isNaN(lng)) {
                             console.log(`Añadiendo técnico en [${lat}, ${lng}]`);
                             const marker = L.marker([lat, lng], { icon: techIcon }).addTo(map);
@@ -361,7 +372,7 @@
                         console.error("Error al mostrar técnico en mapa:", e);
                     }
                 });
-                
+
                 // Ajustar el zoom para mostrar al usuario y los técnicos cercanos
                 if (nearbyTechs.length > 0 && userMarker) {
                     const markers = [userMarker, ...techMarkers.filter(m => m !== radiusCircle)];
@@ -374,36 +385,36 @@
                 const select = document.getElementById('technician');
                 // Limpiar opciones actuales
                 select.innerHTML = '<option value="">-- Elige un técnico --</option>';
-                
+
                 if (!technicians || technicians.length === 0) {
                     select.innerHTML += '<option>No hay técnicos disponibles en línea.</option>';
                     return;
                 }
-                
+
                 // Dividir en cercanos y lejanos
                 const nearbyTechs = technicians.filter(tech => tech.is_nearby);
                 const distantTechs = technicians.filter(tech => !tech.is_nearby);
-                
+
                 // Agregar técnicos cercanos (habilitados)
                 if (nearbyTechs.length > 0) {
                     const nearbyGroup = document.createElement('optgroup');
                     nearbyGroup.label = 'Técnicos disponibles';
-                    
+
                     nearbyTechs.forEach(tech => {
                         const option = document.createElement('option');
                         option.value = tech.id;
                         option.textContent = `${tech.username} - ${tech.distance} km - ${tech.district_name}`;
                         nearbyGroup.appendChild(option);
                     });
-                    
+
                     select.appendChild(nearbyGroup);
                 }
-                
+
                 // Agregar técnicos lejanos (deshabilitados)
                 if (distantTechs.length > 0) {
                     const distantGroup = document.createElement('optgroup');
                     distantGroup.label = 'Técnicos fuera de rango (no disponibles)';
-                    
+
                     distantTechs.forEach(tech => {
                         const option = document.createElement('option');
                         option.value = tech.id;
@@ -411,7 +422,7 @@
                         option.textContent = `${tech.username} - ${tech.distance} km - ${tech.district_name} (demasiado lejos)`;
                         distantGroup.appendChild(option);
                     });
-                    
+
                     select.appendChild(distantGroup);
                 }
 
@@ -423,23 +434,23 @@
                     select.value = "";
                 }
             }
-            
+
             // Función para actualizar el mapa manteniendo el zoom
             function updateMapWithoutZoomReset(lat, lon) {
                 // Guardar el nivel de zoom actual
                 let currentZoom = map.getZoom();
-                
+
                 // Actualizar posición del usuario
                 map.setView([lat, lon], currentZoom);
-                
+
                 if (userMarker) {
                     userMarker.setLatLng([lat, lon]);
                 } else {
-                    userMarker = L.marker([lat, lon], { 
-                        draggable: true, 
-                        icon: userIcon 
+                    userMarker = L.marker([lat, lon], {
+                        draggable: true,
+                        icon: userIcon
                     }).addTo(map);
-                    
+
                     userMarker.on("dragend", function () {
                         var newPos = userMarker.getLatLng();
                         updateLocation(newPos.lat, newPos.lng, true);
@@ -447,27 +458,27 @@
                         fetchNearbyTechnicians(newPos.lat, newPos.lng);
                     });
                 }
-                
+
                 updateLocation(lat, lon, true);
                 updateAddress(lat, lon);
                 fetchNearbyTechnicians(lat, lon);
             }
-            
+
             // Obtener ubicación del usuario
             function success(position) {
                 var lat = position.coords.latitude;
                 var lon = position.coords.longitude;
-                
+
                 // Usar la función que preserva el zoom
                 updateMapWithoutZoomReset(lat, lon);
             }
 
             function error() {
                 console.warn("Error al obtener la ubicación del usuario");
-                
+
                 // Usar coordenadas predeterminadas
                 updateMapWithoutZoomReset(defaultLat, defaultLng);
-                
+
                 Swal.fire({
                     title: "Ubicación no disponible",
                     text: "No se pudo obtener tu ubicación. Se ha colocado un marcador predeterminado que puedes arrastrar.",
@@ -475,47 +486,47 @@
                     confirmButtonText: "Entendido"
                 });
             }
-            
+
             // Evento para el botón "Usar mi ubicación"
-            document.getElementById('btn-usar-ubicacion').addEventListener('click', function() {
+            document.getElementById('btn-usar-ubicacion').addEventListener('click', function () {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(success, error);
                 } else {
                     error();
                 }
             });
-            
+
             // Eventos para los botones de control del mapa
-            document.getElementById('btn-zoom-in').addEventListener('click', function() {
+            document.getElementById('btn-zoom-in').addEventListener('click', function () {
                 map.zoomIn();
             });
-            
-            document.getElementById('btn-zoom-out').addEventListener('click', function() {
+
+            document.getElementById('btn-zoom-out').addEventListener('click', function () {
                 map.zoomOut();
             });
-            
-            document.getElementById('btn-center-map').addEventListener('click', function() {
+
+            document.getElementById('btn-center-map').addEventListener('click', function () {
                 if (userMarker) {
                     map.setView(userMarker.getLatLng(), 15);
                 }
             });
-            
+
             // Evento cuando cambia el zoom del mapa
-            map.on('zoomend', function() {
+            map.on('zoomend', function () {
                 currentZoomLevel = map.getZoom();
                 console.log("Nuevo nivel de zoom:", currentZoomLevel);
             });
-            
+
             // Iniciar con geolocalización
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(success, error);
             } else {
                 error();
             }
-            
+
             // Evento para cambiar la dirección manualmente
             if (addressField) {
-                addressField.addEventListener('change', function() {
+                addressField.addEventListener('change', function () {
                     if (this.value.trim() !== '') {
                         // Simple implementación para búsqueda de direcciones
                         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.value)}`)
@@ -525,7 +536,7 @@
                                     const result = data[0];
                                     const lat = parseFloat(result.lat);
                                     const lon = parseFloat(result.lon);
-                                    
+
                                     // Preservar el zoom actual
                                     updateMapWithoutZoomReset(lat, lon);
                                 } else {
@@ -539,27 +550,26 @@
                     }
                 });
             }
-            
+
             // Para depuración, verificar si el mapa se ha renderizado correctamente
-            setTimeout(function() {
+            setTimeout(function () {
                 console.log("Verificando mapa después de 1 segundo...");
                 console.log("Dimensiones del mapa:", document.getElementById("map").offsetWidth, "x", document.getElementById("map").offsetHeight);
                 console.log("¿Mapa cargado?", map._loaded);
                 // Invalidar tamaño para forzar el renderizado
                 map.invalidateSize();
             }, 1000);
-            
+
             // Redimensionar el mapa cuando la ventana cambia de tamaño
-            window.addEventListener('resize', function() {
+            window.addEventListener('resize', function () {
                 map.invalidateSize();
             });
-            
         } catch (e) {
             console.error("Error al inicializar el mapa:", e);
             Swal.fire("Error", "No se pudo inicializar el mapa. Por favor, recarga la página.", "error");
         }
     }
-    
+
     // Manejo del formulario con AJAX
     document.getElementById("assistance-form").addEventListener("submit", function (event) {
         event.preventDefault();
@@ -583,11 +593,11 @@
             document.querySelector('button[type="submit"]').disabled = false;
             return;
         }
-        
+
         // Verificar que el técnico no esté deshabilitado
         const techSelect = document.getElementById('technician');
         const selectedOption = techSelect.options[techSelect.selectedIndex];
-        
+
         if (selectedOption.disabled) {
             Swal.fire({
                 icon: "error",

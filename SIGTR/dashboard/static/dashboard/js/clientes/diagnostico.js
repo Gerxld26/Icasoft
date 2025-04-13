@@ -8,6 +8,7 @@ const imgDiagGIF = document.getElementById('imgDiagGIF');
 const btnDiagnostico = document.getElementById('btnDiagnosticoDet');
 
 btnDiagnostico.addEventListener('click', function () {
+    openModalDiagnostico.style.cursor ='pointer';
     openModalDiagnostico.addEventListener('click', function () {
         modalDiagnostico.style.display = 'flex';
     })
