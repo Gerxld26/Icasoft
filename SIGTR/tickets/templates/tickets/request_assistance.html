@@ -275,7 +275,7 @@
             function fetchNearbyTechnicians(lat, lon) {
                 document.getElementById('loading-technicians').classList.remove('d-none');
                 document.getElementById('no-nearby-technicians').classList.add('d-none');
-                clearTechMarkers(); // Limpiar marcadores existentes
+                clearTechMarkers(); 
                 
                 fetch(`/tickets/get_nearby_technicians/?lat=${lat}&lon=${lon}`, {
                     headers: {
@@ -419,7 +419,7 @@
                 if (nearbyTechs.length > 0) {
                     select.value = nearbyTechs[0].id;
                 } else {
-                    // No seleccionar ninguno si todos están fuera de rango
+ 
                     select.value = "";
                 }
             }
@@ -517,7 +517,7 @@
             if (addressField) {
                 addressField.addEventListener('change', function() {
                     if (this.value.trim() !== '') {
-                        // Simple implementación para búsqueda de direcciones
+
                         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.value)}`)
                             .then(response => response.json())
                             .then(data => {
@@ -526,7 +526,7 @@
                                     const lat = parseFloat(result.lat);
                                     const lon = parseFloat(result.lon);
                                     
-                                    // Preservar el zoom actual
+                          
                                     updateMapWithoutZoomReset(lat, lon);
                                 } else {
                                     Swal.fire("Dirección no encontrada", "No se pudo encontrar la dirección ingresada", "warning");
@@ -545,7 +545,7 @@
                 console.log("Verificando mapa después de 1 segundo...");
                 console.log("Dimensiones del mapa:", document.getElementById("map").offsetWidth, "x", document.getElementById("map").offsetHeight);
                 console.log("¿Mapa cargado?", map._loaded);
-                // Invalidar tamaño para forzar el renderizado
+    
                 map.invalidateSize();
             }, 1000);
             
@@ -629,7 +629,7 @@
                     }
                 });
 
-                // Reactivar el botón después de la respuesta
+
                 document.querySelector('button[type="submit"]').disabled = false;
             })
             .catch(error => {
@@ -641,7 +641,7 @@
                     confirmButtonColor: "#d33",
                     confirmButtonText: "Cerrar"
                 });
-                // Reactivar el botón si hay un error
+
                 document.querySelector('button[type="submit"]').disabled = false;
             });
     });
