@@ -107,14 +107,14 @@ WSGI_APPLICATION = 'SIGTR.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': config('DB_ENGINE', default='django.db.backends.mysql'),
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST', default='127.0.0.1'),
-        'PORT': config('DB_PORT', default='3306'),
-        }
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'soporte_tecnico_v3',
+        'USER': 'root',
+        'PASSWORD': 'Haylu123*_',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
     }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

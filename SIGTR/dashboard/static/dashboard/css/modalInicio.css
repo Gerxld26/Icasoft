@@ -83,7 +83,7 @@
 .contentDataMonitoreo {
     display: grid;
     grid-template-areas:
-        "detalleGraficoMonitoreo detalleHW";
+        "detalleGraficoMonitoreo componentes";
     justify-items: center;
     grid-auto-columns: 50% auto;
 }
@@ -118,25 +118,50 @@
     width: 100%;
 }
 
+.cpu,
+.memoriaRAM,
+.Disco {
+    display: grid;
+    grid-template-areas:
+        "contentCompHW contentHW";
+    grid-template-columns: 30% auto;
+    width: 100%;
+}
+
+.cpu .contentHW {
+    gap: 0px;
+}
+
+.memoriaRAM .contentHW {
+    gap: 0px;
+    width: 100%;
+}
+
 .textCompMonitoreo {
     text-align: center;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .contentCompHW {
     display: grid;
     grid-template-areas:
-        "compImg contentHW";
-    grid-template-columns: 30% auto;
-    align-items: center;
-    justify-items: center;
+        "textCompMonitoreo"
+        "compImg";
 }
-
+.memoriaRAM .contentCompHW {
+    grid-template-rows: 30% auto;
+}
 .compImg {
     display: flex;
-    height: 90px;
+    height: 78px;
     justify-content: center;
 }
-
+.Disco .compImg {
+    height: 90px;
+}
 .imgHW {
     height: 100%;
 }
@@ -146,16 +171,29 @@
     flex-direction: column;
     justify-items: center;
     width: 100%;
-    gap:10px;
+    gap: 10px;
 }
 
-#sistemaOperativotext {
+.textContentHW {
     font-weight: 600;
     color: azure;
-    text-align: center;
     display: grid;
     width: 80%;
     justify-items: start;
+}
+
+.progress-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    top: 0;
+    left: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    pointer-events: none;
 }
 
 /*progress bar*/
@@ -177,7 +215,6 @@
     height: 100%;
     color: white;
     align-items: center;
-    line-height: 1.7;
     border-radius: 30px;
     background: white;
     transition: width .5s linear;

@@ -15,31 +15,14 @@
 
 body {
     min-height: 100vh;
-    background: linear-gradient(90deg, rgb(37, 36, 36), rgb(45, 45, 45), rgb(37, 36, 36));
+    background:  rgb(24, 23, 23);
     background-size: 600% 600%;
     /* Hacemos que el gradiente sea más grande para poder moverlo */
     color: white;
     font-family: "Segoe UI";
     font-weight: bold;
     overflow-x: hidden;
-    animation: gradientAnimation 60s ease infinite;
     /* Animación para mover el gradiente */
-}
-
-@keyframes gradientAnimation {
-    0% {
-        background-position: 0% 0%;
-    }
-
-    /*posición 0*/
-    50% {
-        background-position: 400% 0%;
-    }
-
-    /*el 400 es del eje x*/
-    100% {
-        background-position: 0% 0%;
-    }
 }
 
 .contenedorPrincipal {
@@ -381,7 +364,6 @@ body {
     height: 100%;
     background: none;
     color: white;
-    cursor: pointer;
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -546,14 +528,33 @@ body {
     position: relative;
     display: flex;
     justify-content: center;
+    cursor: pointer;
 }
 
-.robot {
-    width: 70%;
-    height: 100%;
-    filter: drop-shadow(6px 6px 10px rgb(72, 100, 128));
+#robotimg {
+    width: 80%;
+    display: flex;
+    filter: drop-shadow(1px 1px 15px rgba(42, 147, 189, 0.8));
 }
-
+#video-container, #video-container2{
+    width: 100%;
+    position: relative;
+    display: none;
+    justify-content: center;
+    filter: drop-shadow(1px 1px 15px rgba(42, 147, 189, 0.8));
+}
+#robotGIF{
+    display: flex;
+    clip-path: circle(50% at 50% 50%);
+    object-fit: cover; /*ajustar el contenido (como imágenes o videos) dentro de un contenedor*/
+    width: 80%;
+}
+#robotGIFOjos{
+    display: flex;
+    clip-path: circle(50% at 50% 50%);
+    object-fit: cover; /*ajustar el contenido (como imágenes o videos) dentro de un contenedor*/
+    width: 80%;
+}
 .mensajeIA {
     grid-area: mensajeIA;
     width: 80%;
@@ -758,7 +759,17 @@ body {
 .ultHist:hover {
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(42, 76, 89));
 }
-
+.imgMantGIF{
+    display: none;
+    filter: drop-shadow(7px 7px 9px rgb(6, 11, 54));
+}
+.imgMant{
+    filter: drop-shadow(7px 7px 9px rgb(6, 11, 54));
+}
+.imgDiagnosticoGIF{
+    display: none;
+    filter: drop-shadow(7px 7px 9px rgb(6, 11, 54));
+}
 /* Modo tablet. falta arreglar */
 @media (min-width: 768px) {}
 
@@ -953,10 +964,6 @@ body {
         gap: 10px;
     }
 
-    .monitoreo {
-        cursor: pointer;
-    }
-
     #btnMonitoreo {
         width: 100%;
         height: 100%;
@@ -1017,14 +1024,32 @@ body {
         width: 100%;
         display: flex;
         justify-content: center;
+        align-items: center;
     }
-
-    .robot {
+    .img-container{
+        width: 100%;
+    }
+    #robotimg {
         width: 80%;
-        height: 100%;
-        filter: drop-shadow(6px 6px 10px rgb(72, 100, 128));
+        display: flex;
+        filter: drop-shadow(1px 1px 12px rgba(42, 147, 189, 3));
     }
-
+    .video-container {
+        width: 100%;
+        position: relative;
+        display: none;
+        justify-content: center;
+        filter: drop-shadow(1px 1px 12px rgba(42, 147, 189, 3));
+    }
+    #robotGIF{
+        display: flex;
+        clip-path: circle(50% at 50% 50%);
+        object-fit: cover; /*ajustar el contenido (como imágenes o videos) dentro de un contenedor*/
+        width: 80%;
+    }
+    #audioRobot{
+        display: none;
+    }
     .microfono {
         border: 1px solid rgb(72, 100, 128);
         padding: 8px;
@@ -1085,7 +1110,6 @@ body {
         height: 100%;
         background: none;
         color: white;
-        cursor: pointer;
         display: flex;
         flex-direction: column;
         gap: 5px;
@@ -1103,6 +1127,8 @@ body {
     .imgDiagnostico,
     .imgAntivirus,
     .imgMant,
+    .imgMantGIF,
+    .imgDiagnosticoGIF,
     .imgHist {
         height: 100%;
     }

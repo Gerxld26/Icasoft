@@ -3,14 +3,16 @@ const modalDiagnostico = document.getElementById('modalDiagnostico');
 const openModalDiagnostico = document.getElementById('btnAbrirModalDiagnostico');
 const closeModalDiagnostico = document.getElementById('closeModalDiagn');
 const progressBarDiagnostico = document.getElementById('progressBarDiagnostico');
-const imgDiag =document.getElementById('imgDiagnosticoDet');
+const imgDiag = document.getElementById('imgDiagnosticoDet');
+const imgDiagGIF = document.getElementById('imgDiagGIF');
 const btnDiagnostico = document.getElementById('btnDiagnosticoDet');
 
 btnDiagnostico.addEventListener('click', function () {
+    openModalDiagnostico.style.cursor ='pointer';
     openModalDiagnostico.addEventListener('click', function () {
         modalDiagnostico.style.display = 'flex';
     })
-    imgDiag.style.height = '70px';
+    imgDiag.style.display = '70px';
     openModalDiagnostico.style.fontSize = '18px';
     progressBarDiagnostico.style.display = 'flex';
 });
