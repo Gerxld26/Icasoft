@@ -59,23 +59,6 @@
                             <i class="fa-solid fa-users-gear iconAnalisis"></i> ASISTENCIA TÉCNICA
                         </button>
                     </div>
-                    <!-- <div class="tecnicosDisponibilidad">
-                        <div class="opcionesTecnicos">
-                            <select name="select" class="selectTecnico">
-                                <option value="value1" selected>Seleccione un técnico</option>
-                                <option value="value2">Pedro</option>
-                                <option value="value3">Alejandro</option>
-                            </select>
-                        </div>
-                    </div> -->
-                    <!-- <div class="Restauracion">
-                            <div class="nombreResta">RESPALDO Y RESTAURACIÓN</div>
-                            <div class="botonesRest">
-                                <div class="botRespaldo">Crear respaldo</div>
-                                <div class="botRest">Restaurar</div>
-                            </div>
-                            <div class="verCompleto"><label for="">VER COMPLETO</label></div>
-                        </div>  -->
                 </div>
                 <div class="asistente">
                     <div class="asistVirtual">ASISTENTE VIRTUAL DE SOPORTE TÉCNICO</div>
@@ -143,10 +126,10 @@
                 </div>
                 <div class="analisis">
                     <div class="analisisCompleto">
-                        <button class="analisisComp">
+                        <button class="analisisComp" id="btnAnalisiCompleto">
                             <div class="textButton">ANÁLISIS COMPLETO DEL SISTEMA</div>
                             <div class="imgBtnAnalisis"><img src="{% static 'dashboard/img/actualizarSistema.webp' %}"
-                                    class="imgBtnAnalisisComp">
+                                    class="imgBtnAnalisisComp" id="imgAnalisisComp">
                             </div>
                         </button>
                     </div>
@@ -239,7 +222,7 @@
     </div>
     <!--MODALS:-->
     {% include "dashboard/client/modalInicio.html" %}
-
+    {% include "dashboard/client/notificaciones.html" %}
     <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!--para la ubicación en tiempo real-->
     <script src="{% static 'dashboard/js/clientes/inicio.js' %}"></script>

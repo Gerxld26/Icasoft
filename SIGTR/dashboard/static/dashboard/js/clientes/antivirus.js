@@ -4,7 +4,7 @@ const closeModalAntivirus = document.getElementById('closeModalAnt');
 const progressBarAnt = document.getElementById('progressBarAntivirus');
 const imgDetDiag =document.getElementById('imgAntivirusDet');
 const btnOptimizarAntivirus = document.getElementById('btnOptimizarAntivirus');
-
+const btnAnalisisAnt = document.getElementById('btnAnalisiCompleto');
 
 closeModalAntivirus.addEventListener('click', function () {
     modalAntivirus.style.display = 'none';
@@ -15,7 +15,7 @@ window.addEventListener('click', function (event) {
         modalAntivirus.style.display = 'none';
     }
 })
-btnOptimizarAntivirus.addEventListener('click', function () {
+function configurarAntivirus (){
     openModalAntivirus.style.cursor = 'pointer';
     openModalAntivirus.addEventListener('click', function () {
         modalAntivirus.style.display = 'flex';
@@ -23,4 +23,6 @@ btnOptimizarAntivirus.addEventListener('click', function () {
     imgDetDiag.style.height = '70px';
     openModalAntivirus.style.fontSize = '18px';
     progressBarAnt.style.display = 'flex';
-});
+}
+btnOptimizarAntivirus.addEventListener('click',configurarAntivirus);
+btnAnalisisAnt.addEventListener('click', configurarAntivirus);

@@ -6,8 +6,9 @@ const progressBarDiagnostico = document.getElementById('progressBarDiagnostico')
 const imgDiag = document.getElementById('imgDiagnosticoDet');
 const imgDiagGIF = document.getElementById('imgDiagGIF');
 const btnDiagnostico = document.getElementById('btnDiagnosticoDet');
+const btnAnalisisDiag = document.getElementById('btnAnalisiCompleto');
 
-btnDiagnostico.addEventListener('click', function () {
+function configurarDiagnostico() {
     openModalDiagnostico.style.cursor ='pointer';
     openModalDiagnostico.addEventListener('click', function () {
         modalDiagnostico.style.display = 'flex';
@@ -15,7 +16,10 @@ btnDiagnostico.addEventListener('click', function () {
     imgDiag.style.display = '70px';
     openModalDiagnostico.style.fontSize = '18px';
     progressBarDiagnostico.style.display = 'flex';
-});
+}
+
+btnDiagnostico.addEventListener('click', configurarDiagnostico);
+btnAnalisisDiag.addEventListener('click', configurarDiagnostico); 
 
 closeModalDiagnostico.addEventListener('click', function () {
     modalDiagnostico.style.display = 'none';

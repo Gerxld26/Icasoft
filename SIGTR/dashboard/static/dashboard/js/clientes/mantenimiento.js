@@ -7,8 +7,9 @@ const progressBarMantenimiento = document.getElementById('progressBarMantenimien
 const imgMant = document.getElementById('imgMant');
 const imgMantGIF = document.getElementById('imgMantGIF');
 const btnMantFunction = document.getElementById('btnMantFunction');
+const btnAnalisiMant = document.getElementById('btnAnalisiCompleto');
 
-btnMantFunction.addEventListener('click', function () {
+function configurarMantenimiento(){
     openModalMantenimiento.style.cursor = 'pointer';
     openModalMantenimiento.addEventListener('click', function () {
         modalMantenimiento.style.display = 'flex';
@@ -18,7 +19,9 @@ btnMantFunction.addEventListener('click', function () {
     imgMantGIF.style.display = 'flex';
     openModalMantenimiento.style.fontSize = '18px';
     progressBarMantenimiento.style.display = 'flex';
-});
+}
+btnMantFunction.addEventListener('click', configurarMantenimiento);
+btnAnalisiMant.addEventListener('click', configurarMantenimiento);
 
 closeModalMantenimiento.addEventListener('click', function () {
     modalMantenimiento.style.display = 'none';

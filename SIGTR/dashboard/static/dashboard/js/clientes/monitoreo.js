@@ -10,6 +10,7 @@ $(document).ready(function () {
     const btnMonitoreoFunction = document.getElementById('btnMonitoreioAnalisis');
     const imgGrafico = document.getElementById('imgGraficoMonitoreo');
     const progressBar = document.getElementById('progressBarMonitoreo');
+    const btnAnalisisMonitoreo = document.getElementById('btnAnalisiCompleto');
 
     // Función que obtiene los datos de RAM y actualiza el progreso
     async function fetchCpuData() {
@@ -144,8 +145,7 @@ $(document).ready(function () {
             }
         }
     }
-
-    btnMonitoreoFunction.addEventListener('click', function () {
+    function configurarMonitoreo(){
         modalOpen = true;
         openModalMonitoreo.style.cursor = 'pointer';
         /*MODAL MONITOREO*/
@@ -159,7 +159,9 @@ $(document).ready(function () {
 
         imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
         progressBar.style.display = 'flex';
-    });
+    }
+    btnMonitoreoFunction.addEventListener('click', configurarMonitoreo);
+    btnAnalisisMonitoreo.addEventListener('click', configurarMonitoreo);
 
     closeModalbtn.addEventListener('click', function () {
         modalMonitoreo.style.display = 'none';

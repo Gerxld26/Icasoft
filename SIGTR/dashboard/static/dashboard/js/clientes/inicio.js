@@ -8,6 +8,8 @@ $(document).ready(function () {
     const videoRobot = document.getElementById("video-container");
     const videoRobotInput = document.getElementById("video-container2");
     const input = document.querySelector('.textIA');
+    const btnAnalisis = document.getElementById('btnAnalisiCompleto');
+    const imgAnalisis = document.getElementById('imgAnalisisComp');
 
     $("#robotimg").on('click', function () {
         audio.muted = false;
@@ -38,5 +40,8 @@ $(document).ready(function () {
         span.style.width = span.dataset.width;
         span.innerHTML = span.dataset.width;
     });
+    btnAnalisis.addEventListener('click', function(){
+        imgAnalisis.style.animation = "rotarImg 2s linear infinite";
+    })
 });
 
