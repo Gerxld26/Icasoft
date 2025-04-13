@@ -1,4 +1,4 @@
-// tech_dashboard.js
+
 
 // Función para mostrar una alerta de éxito
 function showSuccessAlert(message) {
