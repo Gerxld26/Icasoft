@@ -20,7 +20,7 @@ danger.classList.add("danger");
 let contador = 0;
 
 function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', index) {
-    
+
     let elemento; // almacenar temporalmente el div correspondiente a la notificación 
     if (tipo === 'success') {
         success.innerHTML = `
@@ -106,6 +106,7 @@ $(document).ready(function () {
     btnAnalisis.addEventListener('click', function () {
         const allImgs = document.querySelectorAll('.imgDetDiag');
         const allTextsTitulo = document.getElementById('textMonitoreo');
+        const imgGraficoMon = document.getElementById('imgGraficoMonitoreo');
         const allTexts = document.querySelectorAll('.btnUlt'); //cambia el tamaño de letra de la barra de progreso
         const allProgress = document.querySelectorAll('.progress-bar');
         const allSpans = document.querySelectorAll('.progress-bar span'); //Selecciona todos los elementos <span> que están dentro de un .progress-bar.
@@ -126,10 +127,10 @@ $(document).ready(function () {
         allImgs.forEach((img) => {
             img.style.height = '70px';
         });
-        
-        allTextsTitulo.style.fontSize = '17px';
-        allTextsTitulo.style.padding ='0';
 
+        allTextsTitulo.style.fontSize = '17px';
+        allTextsTitulo.style.padding = '0';
+        imgGraficoMon.style.animation = "rotarImg 1.5s linear infinite";
         allTexts.forEach((btn) => {
             btn.style.fontSize = '18px';
         });
@@ -139,7 +140,12 @@ $(document).ready(function () {
         });
 
         if (progressBar100) {
-            mostrarNotificacion('success', 'Análisis completo del sistema',0);
+            mostrarNotificacion('success', 'Análisis completo del sistema', 0);
+            btnMonitoreoFunction.click();
+            btnDiagnostico.click();
+            btnOptimizarAntivirus.click();
+            btnMantFunction.click();
+            btnHistFunction.click();
         }
 
     })
