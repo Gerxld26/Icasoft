@@ -7,6 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{% static 'dashboard/css/principal.css' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'dashboard/icon/iconICASOFT.ico' %}">
 </head>
 
 <body>
@@ -63,16 +64,18 @@
                 <div class="asistente">
                     <div class="asistVirtual">ASISTENTE VIRTUAL DE SOPORTE TÉCNICO</div>
                     <div class="botonAsist">
-                        <div class="botReg"><button class="buttonAsist">REGISTRARSE</button></div>
-                        <div class="botSolicitud"><button class="buttonAsist">SOLICITUD</button></div>
+                        <button class="buttonAsist">
+                            <div class="iconLogin"><i class="fa-solid fa-user"></i></div>
+                            <div class="textLogin">INICIAR SESIÓN</div>
+                        </button>
                     </div>
                     <div class="monitoreo">
-                        <button id="btnMonitoreo" class="btnMonitoreodiv">
-                            <div class="nombreMonit">MONITOREO DEL SISTEMA</div>
+                        <button id="btnMonitoreo" class="btnUlt">
+                            <div class="textDiag" id="textMonitoreo">MONITOREO DEL SISTEMA</div>
                             <div class="graficoMonit"><img src="{% static 'dashboard/img/monitoreo.webp' %}" alt=""
-                                    class="imgGrafico" id="imgGraficoMonitoreo"></div>
+                                    class="imgDiagnostico" id="imgGraficoMonitoreo"></div>
                             <div class="progress-bar" id="progressBarMonitoreo">
-                                <span data-width="80%"></span>
+                                <span data-width="100%"></span>
                             </div>
                         </button>
                     </div>
@@ -182,36 +185,36 @@
                     </div>
                     <div class="antivirus">
                         <button class="btnUlt" id="btnAbrirModalAntivirus">
-                            <div class="textAnt">ANTIVIRUS</div>
-                            <div class="imgDetDiag" id="imgAntivirusDet"><img class="imgAntivirus"
-                                    src="{% static 'dashboard/img/antivirus.webp' %}" alt="">
+                            <div class="textDiag">ANTIVIRUS</div>
+                            <div class="imgDetDiag" id="imgAntivirusDet">
+                                <img class="imgDiagnostico" src="{% static 'dashboard/img/antivirus.webp' %}" alt="">
                             </div>
                             <div class="progress-bar" id="progressBarAntivirus">
-                                <span data-width="70%"></span>
+                                <span data-width="100%"></span>
                             </div>
                         </button>
                     </div>
                     <div class="ultMant">
                         <button class="btnUlt" id="btnAbrirModalMantenimiento">
-                            <div class="textMant">MANTENIMIENTO</div>
-                            <div class="imgDetDiag" id="imgMantDet"><img class="imgMant"
+                            <div class="textDiag">MANTENIMIENTO</div>
+                            <div class="imgDetDiag" id="imgMantDet"><img class="imgDiagnostico"
                                     src="{% static 'dashboard/img/mantenimientoDet.webp' %}" id="imgMant" alt="">
                                 <img src="{% static 'dashboard/img/mantenimientoGIF.gif' %}" class="imgMantGIF"
                                     id="imgMantGIF" alt="">
                             </div>
                             <div class="progress-bar" id="progressBarMantenimiento">
-                                <span data-width="60%"></span>
+                                <span data-width="100%"></span>
                             </div>
                         </button>
                     </div>
                     <div class="ultHist">
                         <button class="btnUlt" id="btnHist">
-                            <div class="textHist">HISTORIAL</div>
-                            <div class="imgDetDiag" id="imgHistDet"><img
-                                    src="{% static 'dashboard/img/historial.webp' %}" class="imgHist" alt="">
+                            <div class="textDiag">HISTORIAL</div>
+                            <div class="imgDetDiag" id="imgHistDet">
+                                <img src="{% static 'dashboard/img/historial.webp' %}" class="imgDiagnostico" alt="">
                             </div>
                             <div class="progress-bar" id="progressBarHistorial">
-                                <span data-width="90%"></span>
+                                <span data-width="100%"></span>
                             </div>
                         </button>
                     </div>

@@ -7,9 +7,23 @@ const progressBarMantenimiento = document.getElementById('progressBarMantenimien
 const imgMant = document.getElementById('imgMant');
 const imgMantGIF = document.getElementById('imgMantGIF');
 const btnMantFunction = document.getElementById('btnMantFunction');
-const btnAnalisiMant = document.getElementById('btnAnalisiCompleto');
 
-function configurarMantenimiento(){
+function notificacionMantenimiento() {
+    let progressBar100Mant = true;
+    const spanMant = progressBarMantenimiento.querySelector('span');
+    const width = spanMant.dataset.width.replace('%', '');
+    spanMant.style.width = spanMant.dataset.width;
+    spanMant.innerHTML = spanMant.dataset.width;
+
+    if (parseInt(width) < 100) {
+        progressBar100Mant = false;
+    }
+    if (progressBar100Mant) {
+        mostrarNotificacion('success', 'Análisis completo del mantenimiento',4);
+    }
+}
+
+btnMantFunction.addEventListener('click', function(){
     openModalMantenimiento.style.cursor = 'pointer';
     openModalMantenimiento.addEventListener('click', function () {
         modalMantenimiento.style.display = 'flex';
@@ -19,9 +33,8 @@ function configurarMantenimiento(){
     imgMantGIF.style.display = 'flex';
     openModalMantenimiento.style.fontSize = '18px';
     progressBarMantenimiento.style.display = 'flex';
-}
-btnMantFunction.addEventListener('click', configurarMantenimiento);
-btnAnalisiMant.addEventListener('click', configurarMantenimiento);
+    notificacionMantenimiento();
+});
 
 closeModalMantenimiento.addEventListener('click', function () {
     modalMantenimiento.style.display = 'none';

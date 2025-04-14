@@ -6,20 +6,32 @@ const progressBarDiagnostico = document.getElementById('progressBarDiagnostico')
 const imgDiag = document.getElementById('imgDiagnosticoDet');
 const imgDiagGIF = document.getElementById('imgDiagGIF');
 const btnDiagnostico = document.getElementById('btnDiagnosticoDet');
-const btnAnalisisDiag = document.getElementById('btnAnalisiCompleto');
 
-function configurarDiagnostico() {
-    openModalDiagnostico.style.cursor ='pointer';
+function notificacionDiagnostico() {
+    let progressBar100Diag = true;
+    const spanDiagnostico = progressBarDiagnostico.querySelector('span');
+    const width = spanDiagnostico.dataset.width.replace('%', '');
+    spanDiagnostico.style.width = spanDiagnostico.dataset.width;
+    spanDiagnostico.innerHTML = spanDiagnostico.dataset.width;
+    
+    if (parseInt(width) < 100) {
+        progressBar100Diag = false;
+    }
+    if (progressBar100Diag) {
+        mostrarNotificacion('success', 'Análisis completo del diagnóstico',2);
+    }
+}
+
+btnDiagnostico.addEventListener('click', function(){
+    openModalDiagnostico.style.cursor = 'pointer';
     openModalDiagnostico.addEventListener('click', function () {
         modalDiagnostico.style.display = 'flex';
     })
     imgDiag.style.display = '70px';
     openModalDiagnostico.style.fontSize = '18px';
     progressBarDiagnostico.style.display = 'flex';
-}
-
-btnDiagnostico.addEventListener('click', configurarDiagnostico);
-btnAnalisisDiag.addEventListener('click', configurarDiagnostico); 
+    notificacionDiagnostico();
+});
 
 closeModalDiagnostico.addEventListener('click', function () {
     modalDiagnostico.style.display = 'none';

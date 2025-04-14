@@ -10,7 +10,6 @@ $(document).ready(function () {
     const btnMonitoreoFunction = document.getElementById('btnMonitoreioAnalisis');
     const imgGrafico = document.getElementById('imgGraficoMonitoreo');
     const progressBar = document.getElementById('progressBarMonitoreo');
-    const btnAnalisisMonitoreo = document.getElementById('btnAnalisiCompleto');
 
     // Función que obtiene los datos de RAM y actualiza el progreso
     async function fetchCpuData() {
@@ -46,16 +45,19 @@ $(document).ready(function () {
 
             } else if (parseInt(dataCPU.usage) > 15 && parseInt(dataCPU.usage) <= 50) {
                 //CPU
+                textCPU.style.display = 'none'; // para que no se nota la etiqueta del centro
                 spanCPU.style.width = dataCPU.usage + '%';
                 spanCPU.innerHTML = dataCPU.usage + '%';
                 spanCPU.style.backgroundColor = "green";
             } else if (parseInt(dataCPU.usage) > 50 && parseInt(dataCPU.usage) <= 79) {
                 //CPU
+                textCPU.style.display = 'none';
                 spanCPU.style.width = dataCPU.usage + '%';
                 spanCPU.innerHTML = dataCPU.usage + '%';
                 spanCPU.style.backgroundColor = "orange";
             } else {
                 //CPU
+                textCPU.style.display = 'none';
                 spanCPU.style.width = dataCPU.usage + '%';
                 spanCPU.innerHTML = dataCPU.usage + '%';
                 spanCPU.style.backgroundColor = "red";
@@ -137,17 +139,34 @@ $(document).ready(function () {
                 chartGlobal.data.datasets[0].data = [cpuValue, ramValue, totalDiskPercent];
                 chartGlobal.update();
             }
-            if (errorMessage) errorMessage.style.display = 'none';
+            
         } catch (error) {
-            if (errorMessage) {
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = "Error al cargar datos de la RAM. Reintentando...";
-            }
+            console.log('Error al cargar datos de la RAM: ', error);
         }
     }
-    function configurarMonitoreo(){
+    function notificacionMonitoreo() {
+        let progressBarMon = true;
+        const spanMonitoreo = progressBar.querySelector('span');
+        const width = spanMonitoreo.dataset.width.replace('%', '');
+        spanMonitoreo.style.width = spanMonitoreo.dataset.width;
+        spanMonitoreo.innerHTML = spanMonitoreo.dataset.width;
+        if (parseInt(width) < 100) {
+            progressBarMon = false;
+        }
+        if (progressBarMon) {
+            mostrarNotificacion('success', 'Análisis completo del Monitoreo del sistema',1);
+        }
+    }
+    
+    btnMonitoreoFunction.addEventListener('click', function(){
+        const textDivMonitoreo = document.getElementById('textMonitoreo');
         modalOpen = true;
         openModalMonitoreo.style.cursor = 'pointer';
+        imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
+        progressBar.style.display = 'flex';
+        imgGrafico.style.height = '80px';
+        textDivMonitoreo.style.fontSize = '17px';
+        textDivMonitoreo.style.padding='0';
         /*MODAL MONITOREO*/
         openModalMonitoreo.addEventListener('click', function () {
             modalMonitoreo.style.display = 'flex';
@@ -156,13 +175,9 @@ $(document).ready(function () {
             intervalId = setInterval(fetchCpuData, 5000);
         });
         fetchCpuData();
-
-        imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
-        progressBar.style.display = 'flex';
-    }
-    btnMonitoreoFunction.addEventListener('click', configurarMonitoreo);
-    btnAnalisisMonitoreo.addEventListener('click', configurarMonitoreo);
-
+        notificacionMonitoreo();
+    });
+    
     closeModalbtn.addEventListener('click', function () {
         modalMonitoreo.style.display = 'none';
         modalOpen = false;
