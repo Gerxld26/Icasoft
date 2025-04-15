@@ -106,10 +106,11 @@ urlpatterns = [
     path("client/chat/", client_chat, name="client_chat"),
 
     # Maintenance routes
-    path("client/maintenance/clear-space/", client_clear_space, name="client_clear_space"),
-    path("client/maintenance/update-software/", client_update_software, name="client_update_software"),
-    path("client/maintenance/defragment-disk/", client_defragment_disk, name="client_defragment_disk"),
-    path("client/maintenance/repair-disk/", client_repair_disk, name="client_repair_disk"),
+   # Mantenimiento
+path("client/maintenance/clear-space/", client_clear_space, name="client_clear_space"),
+path("client/maintenance/update-software/", client_update_software, name="client_update_software"),
+path("client/maintenance/defragment-disk/", client_defragment_disk, name="client_defragment_disk"),
+path("client/maintenance/repair-disk/", client_repair_disk, name="client_repair_disk"),
 
     # Monitoring routes (pages)
     path("client/monitoring/cpu/", client_monitoring_cpu, name="client_monitoring_cpu"),

@@ -1,5 +1,3 @@
-# En tu archivo urls.py de la aplicación tickets
-
 from django.urls import path
 from . import views
 

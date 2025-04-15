@@ -15,8 +15,7 @@ from users.models import UserProfile
 from geopy.distance import geodesic
 from django.http import JsonResponse, HttpResponseNotAllowed
 
-# Definir constantes para la lógica de proximidad - Un solo límite
-MAX_DISTANCE_KM = 20  # Distancia máxima para considerar a un técnico como "cercano" y permitir crear tickets
+MAX_DISTANCE_KM = 8  
 
 @login_required
 @user_passes_test(lambda user: user.role == "client")
@@ -91,9 +90,8 @@ def request_assistance(request):
     client_lat = request.GET.get('latitude', None)
     client_lon = request.GET.get('longitude', None)
     
-    # Si no hay coordenadas en la solicitud, usar valores predeterminados
     if not client_lat or not client_lon:
-        client_location = (-12.0464, -77.0428)  # Coordenadas predeterminadas (Lima, Perú)
+        client_location = (-12.0464, -77.0428)  
     else:
         client_location = (float(client_lat), float(client_lon))
 
@@ -103,7 +101,7 @@ def request_assistance(request):
     return render(request, 'tickets/request_assistance.html', {
         'form': TicketRequestForm(),
         'technicians': technician_distances,
-        'max_distance': MAX_DISTANCE_KM  # Pasar la constante al template
+        'max_distance': MAX_DISTANCE_KM  
     })
 
 @login_required
@@ -122,7 +120,7 @@ def get_nearby_technicians_view(request):
         client_location = (lat, lon)
         technicians_data = get_nearby_technicians_list(client_location)
         
-        # Formatear para la respuesta JSON
+        # Formatear 
         technicians_list = []
         for tech in technicians_data:
             technicians_list.append({
@@ -160,7 +158,6 @@ def get_nearby_technicians_list(client_location):
             tech_location = (float(tech.latitude), float(tech.longitude))
             distance = geodesic(client_location, tech_location).km
             
-            # Determinar si el técnico está realmente cerca
             is_nearby = distance <= MAX_DISTANCE_KM
             
             technician_distances.append({
@@ -186,7 +183,6 @@ def assign_nearest_technician(ticket):
     if not ticket.latitude or not ticket.longitude:
         return None
 
-    # Filtrar técnicos que estén online y tengan coordenadas
     technicians = UserProfile.objects.filter(
         user__role="tech", 
         estado_conexion="online",  
@@ -203,7 +199,6 @@ def assign_nearest_technician(ticket):
             client_location = (float(ticket.latitude), float(ticket.longitude))
             distance = geodesic(client_location, tech_location).km
 
-            # Solo considerar técnicos que estén dentro del límite permitido
             if distance < min_distance and distance <= MAX_DISTANCE_KM:
                 min_distance = distance
                 nearest_technician = tech.user
@@ -211,7 +206,6 @@ def assign_nearest_technician(ticket):
             logger.error(f"Error al calcular distancia para técnico {tech.user.username}: {str(e)}")
             continue
 
-    # Si no se encontró un técnico dentro del límite permitido, return None
     if not nearest_technician:
         logger.warning(f"No se encontró ningún técnico dentro del límite permitido de {MAX_DISTANCE_KM} km")
     
