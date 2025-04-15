@@ -3,7 +3,201 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    window.ACTION_URLS = {
+        cleanup: "{% url 'client_clear_space' %}",
+        update: "{% url 'client_update_software' %}",
+        defrag: "{% url 'client_defragment_disk' %}",
+        repair: "{% url 'client_repair_disk' %}"
+    };
+</script>
+<style>
+    /* Estilos adicionales para la nueva sección de resultado */
+    #mantenimientoResultado {
+        margin-top: 20px;
+        border-radius: 15px;
+        width: 100%;
+        overflow: hidden;
+        background-color: rgba(25, 33, 41, 0.5);
+        border: 2px solid #0d6efd;
+    }
 
+    /* Para resultados exitosos */
+    #mantenimientoResultado.resultado-success {
+        border: 2px solid #198754;
+    }
+
+    /* Para advertencias */
+    #mantenimientoResultado.resultado-warning {
+        border: 2px solid #ffc107;
+    }
+
+    /* Para errores */
+    #mantenimientoResultado.resultado-error {
+        border: 2px solid #dc3545;
+    }
+
+    /* Para resultados normales */
+    #mantenimientoResultado.resultado-info {
+        border: 2px solid #0dcaf0;
+    }
+
+    .headerResultado {
+        padding: 10px 15px;
+        background-color: rgba(3, 101, 140, 0.2);
+        display: flex;
+        align-items: center;
+    }
+
+    .resultadoTitle {
+        font-size: 20px !important;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .contentResultado {
+        padding: 15px;
+    }
+
+    .resultadoMensaje {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    /* Estilos para la nueva información en las tarjetas */
+    .cardDataInfo {
+        margin-top: 8px;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .infoSpace {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .spaceValue,
+    .stateValue,
+    .fragValue {
+        font-weight: bold;
+    }
+
+    /* Estilos para los estados de resultado */
+    #mantenimientoResultado.resultado-success .headerResultado {
+        background-color: rgba(40, 167, 69, 0.2);
+    }
+
+    #mantenimientoResultado.resultado-warning .headerResultado {
+        background-color: rgba(255, 193, 7, 0.2);
+    }
+
+    #mantenimientoResultado.resultado-error .headerResultado {
+        background-color: rgba(220, 53, 69, 0.2);
+    }
+
+    /* Mejoras a los botones existentes */
+    .btnCardDataFunction {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btnCardDataFunction:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .btnCardDataFunction:active {
+        transform: translateY(0);
+    }
+
+    /* Efecto de onda al hacer clic */
+    .btnCardDataFunction::after {
+        content: '';
+        display: block;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+        background-repeat: no-repeat;
+        background-position: 50%;
+        transform: scale(10, 10);
+        opacity: 0;
+        transition: transform .3s, opacity .5s;
+    }
+
+    .btnCardDataFunction:active::after {
+        transform: scale(0, 0);
+        opacity: .3;
+        transition: 0s;
+    }
+    
+    /* Estilos para el spinner y animaciones */
+    .spinner {
+        width: 40px;
+        height: 40px;
+        margin: 10px auto;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #0d6efd;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .progress-indicator {
+        text-align: center;
+    }
+
+    .countdown {
+        font-size: 14px;
+        color: #ffc107;
+        margin-top: 10px;
+    }
+
+    .btn-outline-warning {
+        color: #ffc107;
+        border-color: #ffc107;
+        background-color: transparent;
+        padding: 5px 15px;
+        border-radius: 15px;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .btn-outline-warning:hover {
+        color: #000;
+        background-color: #ffc107;
+    }
+    
+    /* Estilos de estados visuales */
+    .resultado-icon {
+        font-size: 24px;
+        margin-right: 10px;
+    }
+    
+    .resultado-success .resultado-icon {
+        color: #198754;
+    }
+    
+    .resultado-warning .resultado-icon {
+        color: #ffc107;
+    }
+    
+    .resultado-error .resultado-icon {
+        color: #dc3545;
+    }
+    
+    .resultado-info .resultado-icon {
+        color: #0dcaf0;
+    }
+</style>
 <!--MODDAL ASISTENCIA TÉCNICA-->
 <div id="modalAsistencia" class="modal">
     <div class="modal-content">
@@ -180,10 +374,9 @@
     </div>
 </div>
 
-<!--MODAL MANTENIMIENTO-->
+<!-- MODAL MANTENIMIENTO MEJORADO -->
 <div id="modalMantenimiento" class="modal">
     <div class="modal-content">
-
         <div class="headerModal">
             <span id="closeModalMant" class="close">&times;</span>
             <div class="textHW">MANTENIMIENTO DEL SISTEMA</div>
@@ -192,36 +385,70 @@
             <div class="cardDataSuperior">
                 <div class="cardData" id="cardData1">
                     <div class="textcardData">Liberar Espacio</div>
-                    <div class="contentCardData">Eliminar archivos temporales</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-trash"></i>
-                            Liberar Espacio</button></div>
+                    <div class="contentCardData">
+                        Elimina archivos temporales para liberar espacio en disco.
+                       
+                    </div>
+                    <div class="btnCardData">
+                        <button class="btnCardDataFunction" data-action="cleanup">
+                            <i class="fa-solid fa-trash"></i> Liberar Espacio
+                        </button>
+                    </div>
                 </div>
                 <div class="cardData" id="cardData2">
                     <div class="textcardData">Actualizar Software</div>
-                    <div class="contentCardData">Instalar las actualizaciones más recientes</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-upload"></i>
-                            Actualizar</button></div>
+                    <div class="contentCardData">
+                        Instala las actualizaciones más recientes de software.
+                    </div>
+                    <div class="btnCardData">
+                        <button class="btnCardDataFunction" data-action="update">
+                            <i class="fa-solid fa-upload"></i> Actualizar
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="cardDataInferior">
                 <div class="cardData" id="cardData3">
                     <div class="textcardData">Desfragmentar Disco</div>
-                    <div class="contentCardData">Organizar los datos en el disco</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-hard-drive"></i>
-                            Desfragmentar</button></div>
+                    <div class="contentCardData">
+                        Organiza los datos en tu disco para mejorar el rendimiento.
+                    </div>
+                    <div class="btnCardData">
+                        <button class="btnCardDataFunction" data-action="defrag">
+                            <i class="fa-solid fa-hard-drive"></i> Desfragmentar
+                        </button>
+                    </div>
                 </div>
                 <div class="cardData" id="cardData4">
                     <div class="textcardData">Reparar Disco</div>
-                    <div class="contentCardData">Buscar y reparar errores</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i
-                                class="fa-solid fa-screwdriver-wrench"></i> Reparar</button></div>
+                    <div class="contentCardData">
+                        Busca y repara errores en el disco duro.
+                       
+                    </div>
+                    <div class="btnCardData">
+                        <button class="btnCardDataFunction" data-action="repair">
+                            <i class="fa-solid fa-screwdriver-wrench"></i> Reparar
+                        </button>
+                    </div>
                 </div>
             </div>
 
+            <!-- Sección de resultados -->
+            <div id="mantenimientoResultado" class="resultado-success" style="display: none;">
+                <div class="headerResultado">
+                    <i class="fas fa-check-circle" style="font-size: 24px; margin-right: 10px;"></i>
+                    <div class="textHW">Resultado de la Operación</div>
+                </div>
+                <div class="contentResultado">
+                    <div id="resultadoMensaje">
+                        <!-- Aquí va el mensaje del resultado -->
+                        Operación completada con éxito.
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
 <!--MODAL RECOMENDACIONES SW-->
 <div id="modalRecomendaciones" class="modal">
     <div class="modal-content">
@@ -365,3 +592,4 @@
         </div>
     </div>
 </div>
+

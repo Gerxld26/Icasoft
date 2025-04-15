@@ -575,30 +575,30 @@ def client_clear_space(request):
     try:
         # Directorios de archivos temporales comunes
         temp_directories = [
-            os.getenv('TEMP', '/tmp'),  # Windows o Unix-like
-            os.path.expanduser('~/.cache'),  # Directorio de cache del usuario
+            os.getenv('TEMP', '/tmp'),  
+            os.path.expanduser('~/.cache'), 
         ]
 
-        # Contadores
+       
         total_deleted = 0
         total_failed = 0
-        failed_files = []  # Para almacenar los archivos que no pudieron eliminarse
+        failed_files = []  
 
-        # Recorremos los directorios temporales
+      
         for temp_dir in temp_directories:
             if os.path.exists(temp_dir):
                 for root, dirs, files in os.walk(temp_dir):
                     for file in files:
                         file_path = os.path.join(root, file)
                         try:
-                            os.remove(file_path)  # Intentamos eliminar el archivo
+                            os.remove(file_path)  
                             total_deleted += 1
                         except Exception as e:
                             total_failed += 1
-                            failed_files.append(file_path)  # Agregamos el archivo a la lista de errores
+                            failed_files.append(file_path) 
                             print(f"Error al eliminar {file_path}: {e}")
 
-        # Mensaje final
+
         message = (
             f"Espacio liberado exitosamente. Archivos eliminados: {total_deleted}. "
             f"Archivos no eliminados: {total_failed}."
@@ -619,10 +619,10 @@ def client_update_software(request):
     redirige a la configuración de Windows Update.
     """
     try:
-        system_platform = platform.system().lower()  # Detectar el sistema operativo
+        system_platform = platform.system().lower()  
 
         if "windows" in system_platform:
-            # Intentamos abrir Windows Update directamente
+      
             try:
                 subprocess.run(
                     ["start", "ms-settings:windowsupdate"],
@@ -703,8 +703,8 @@ def client_defragment_disk(request):
     - Verifica que la unidad esté disponible.
     """
     try:
-        system_platform = platform.system().lower()  # Detectar el sistema operativo
-        drive = request.GET.get("drive", "C:")  # Unidad predeterminada: C:
+        system_platform = platform.system().lower()  
+        drive = request.GET.get("drive", "C:")  
 
         if "windows" in system_platform:
             # Validar que la unidad esté disponible en Windows
@@ -798,7 +798,7 @@ def client_defragment_disk(request):
                 }, status=500)
 
             # Ejecutar desfragmentación en Linux
-            drive_path = request.GET.get("drive", "/")  # Por defecto, la raíz del sistema
+            drive_path = request.GET.get("drive", "/")  
             try:
                 result = subprocess.run(
                     ["e4defrag", drive_path],
