@@ -385,39 +385,38 @@ if (closeModalMantenimiento) {
     });
 }
 
-// Cerrar modal al hacer clic fuera
-window.addEventListener('click', function(event) {
-function notificacionMantenimiento() {
-    let progressBar100Mant = true;
-    const spanMant = progressBarMantenimiento.querySelector('span');
-    const width = spanMant.dataset.width.replace('%', '');
-    spanMant.style.width = spanMant.dataset.width;
-    spanMant.innerHTML = spanMant.dataset.width;
 
-    if (parseInt(width) < 100) {
-        progressBar100Mant = false;
-    }
-    if (progressBar100Mant) {
-        mostrarNotificacion('success', 'Análisis completo del mantenimiento',4);
-    }
-}
+// function notificacionMantenimiento() {
+//     let progressBar100Mant = true;
+//     const spanMant = progressBarMantenimiento.querySelector('span');
+//     const width = spanMant.dataset.width.replace('%', '');
+//     spanMant.style.width = spanMant.dataset.width;
+//     spanMant.innerHTML = spanMant.dataset.width;
 
-btnMantFunction.addEventListener('click', function(){
-    openModalMantenimiento.style.cursor = 'pointer';
-    openModalMantenimiento.addEventListener('click', function () {
-        modalMantenimiento.style.display = 'flex';
-    })
+//     if (parseInt(width) < 100) {
+//         progressBar100Mant = false;
+//     }
+//     if (progressBar100Mant) {
+//         mostrarNotificacion('success', 'Análisis completo del mantenimiento',4);
+//     }
+// }
 
-    imgMant.style.display = 'none';
-    imgMantGIF.style.display = 'flex';
-    openModalMantenimiento.style.fontSize = '18px';
-    progressBarMantenimiento.style.display = 'flex';
-    notificacionMantenimiento();
-});
+// btnMantFunction.addEventListener('click', function(){
+//     openModalMantenimiento.style.cursor = 'pointer';
+//     openModalMantenimiento.addEventListener('click', function () {
+//         modalMantenimiento.style.display = 'flex';
+//     })
 
-closeModalMantenimiento.addEventListener('click', function () {
-    modalMantenimiento.style.display = 'none';
-})
+//     imgMant.style.display = 'none';
+//     imgMantGIF.style.display = 'flex';
+//     openModalMantenimiento.style.fontSize = '18px';
+//     progressBarMantenimiento.style.display = 'flex';
+//     notificacionMantenimiento();
+// });
+
+// closeModalMantenimiento.addEventListener('click', function () {
+//     modalMantenimiento.style.display = 'none';
+// })
 
 window.addEventListener('click', function (event) {
     if (event.target == modalMantenimiento) {
