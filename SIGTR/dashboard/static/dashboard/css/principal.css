@@ -833,21 +833,6 @@ body {
         width: 100%;
     }
 
-    .selectTecnico {
-        border: 2px solid rgb(42, 76, 89);
-        background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
-        box-shadow: 5px 10px 10px -8px;
-        border-radius: 30px;
-        color: rgb(3, 101, 140);
-        text-align: center;
-        align-content: center;
-        font-family: "Segoe UI";
-        font-weight: 800;
-        font-size: 18px;
-        width: 100%;
-        height: 50px;
-    }
-
     /*segunda columna*/
     .asistente {
         grid-template-rows: 15% auto auto auto auto !important;

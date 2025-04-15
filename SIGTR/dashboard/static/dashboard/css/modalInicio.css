@@ -151,17 +151,21 @@
         "textCompMonitoreo"
         "compImg";
 }
+
 .memoriaRAM .contentCompHW {
     grid-template-rows: 30% auto;
 }
+
 .compImg {
     display: flex;
     height: 78px;
     justify-content: center;
 }
+
 .Disco .compImg {
     height: 90px;
 }
+
 .imgHW {
     height: 100%;
 }
@@ -453,6 +457,182 @@
     background: white;
     box-shadow: 0px 0px 15px 5px;
     font-weight: 800;
+}
+
+/*MODAL CENTRO DE APRENDIZAJE*/
+#modalAprendizaje .modal-content {
+    display: grid;
+    grid-template-areas: "headerModal" "contentData";
+    gap: 10px;
+}
+
+#modalAprendizaje .textHW {
+    font-size: 42px;
+    position: relative;
+}
+
+#modalAprendizaje .textHW::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 55%;
+    /* ancho del borde */
+    height: 2px;
+    /* el grosor del borde */
+    background-color: currentColor;
+    /* Usa el color del texto o puedes cambiarlo */
+}
+
+#modalAprendizaje .contentData {
+    display: grid;
+    grid-template-areas: "imgCentro contentConsejos";
+    grid-template-columns: 45% auto;
+}
+
+.imgCentro {
+    display: flex;
+    height: 100%;
+    max-height: 400px;
+    justify-content: start;
+}
+
+#imgCentroAprend {
+    height: 100%;
+}
+
+.contentConsejos {
+    display: grid;
+    grid-template-areas: "centro" "centro" "centro";
+}
+
+.centro {
+    display: grid;
+    grid-template-areas: "contentImg contentCentro";
+    grid-template-columns: 30% auto;
+    gap: 10px;
+}
+
+#modalAprendizaje .contentImg {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 15px;
+    height: 100%;
+}
+
+.ytCentro {
+    font-size: 70px;
+    color: red;
+}
+
+.contentCentro {
+    display: grid;
+    grid-template-areas: "textConsejo" "contentBtnCnetro";
+    align-items: center;
+}
+
+.contentCentro .textConsejo {
+    font-size: 20px;
+    background: #fafafa10;
+    backdrop-filter: blur(0.4rem);
+    -webkit-backdrop-filter: blur(0.4rem);
+    padding: 10px 15px 10px 15px;
+    border-radius: 10px;
+}
+
+.btnAsistencia,
+.contentCentro .btnCnetro {
+    height: 40px;
+    border-radius: 30px;
+    background: rgb(3, 101, 140);
+    color: white;
+    cursor: pointer;
+    display: grid;
+    align-items: center;
+    width: 100%;
+}
+
+.contentBtnCnetro {
+    display: grid;
+    justify-items: center;
+    font-size: 16px;
+}
+
+.btnAsistencia:hover,
+.contentCentro button:hover {
+    background: white;
+    color: rgb(3, 101, 140);
+    box-shadow: 1px 1px 10px rgb(3, 101, 140);
+    font-weight: 800;
+}
+
+/*MODAL ASISTENCIA TÉCNICA*/
+#modalAsistencia .modal-content {
+    display: grid;
+    grid-template-areas: "headerModal" "contentData";
+    grid-template-rows: 10% auto;
+    gap: 10px;
+}
+
+#modalAsistencia .contentData {
+    display: grid;
+    grid-template-areas: "asistencia1" "asistencia1" "asistencia2" "asistencia4" "asistencia5";
+    gap: 15px;
+}
+
+.asistencia1 {
+    display: grid;
+    grid-template-areas: "textDescrip" "inputDescrip";
+    gap: 10px;
+}
+
+.asistencia2 {
+    display: grid;
+    grid-template-areas: "textDescrip inputDescrip";
+    grid-template-columns: auto 65%;
+}
+
+.asistencia2 .inputDescrip {
+    width: 100%;
+}
+
+.textDescrip {
+    font-size: 20px;
+    display: grid;
+    align-items: center;
+}
+
+.textAsistencia {
+    width: 100%;
+    border-radius: 30px;
+    height: 30px;
+    box-shadow: 5px 10px 10px -8px rgb(3, 101, 140);
+}
+
+.selectTecnico {
+    border-radius: 30px;
+    height: 30px;
+    width: 100%;
+    box-shadow: 5px 10px 10px -8px rgb(3, 101, 140);
+}
+
+/*.selectTecnico {
+        border: 2px solid rgb(42, 76, 89);
+        background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
+        box-shadow: 5px 10px 10px -8px;
+        border-radius: 30px;
+        color: rgb(3, 101, 140);
+        text-align: center;
+        align-content: center;
+        font-family: "Segoe UI";
+        font-weight: 800;
+        font-size: 18px;
+        width: 100%;
+        height: 50px;
+}*/
+.mapaUbiCliente {
+    border-radius: 20px;
 }
 
 @media (max-width: 480px) {

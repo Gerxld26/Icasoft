@@ -9,12 +9,40 @@
     <div class="modal-content">
         <div class="headerModal">
             <span id="closeModalAsis" class="close">&times;</span>
-            <div class="textHW">ASISTENCIA TÉCNICA</div>
+            <div class="textHW">¿Necesitas asistencia técnica?</div>
         </div>
         <div class="contentData">
-            <div class="textAsistencia">¿Necesitas asistencia técnica?</div>
-            <div class="contentAsistencia">
-                <button class="btnAsistencia">Solicitar Asistencia</button>
+            <div class="asistencia1">
+                <div class="textDescrip">Describe el problema</div>
+                <div class="inputDescrip">
+                    <input type="text" class="textAsistencia">
+                </div>
+            </div>
+            <div class="asistencia1">
+                <div class="textDescrip">Dirección para la asistencia</div>
+                <div class="inputDescrip"><input type="text" class="textAsistencia"></div>
+            </div>
+            <div class="asistencia2">
+                <div class="textDescrip">Técnicos cerca a tu dirección:</div>
+                <div class="inputDescrip">
+                    <select name="" id="" class="selectTecnico">
+                        <option value="">Selecciona un técnico</option>
+                        <option value="">Juan</option>
+                    </select>
+                </div>
+            </div>
+            <div class="asistencia4">
+                <div>
+                    <iframe class="mapaUbiCliente"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3870.2186740547177!2d-75.7278443!3d-14.0642606!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9110e2bd0f99f96f%3A0x21a304d4341e31e2!2sIcasoft%20i21!5e0!3m2!1ses-419!2spe!4v1742567745922!5m2!1ses-419!2spe"
+                        width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+                <div style="font-style: italic; color: beige;">* Deslice la localización a la dirección que desee la asistencia *</div>
+            </div>
+            <div class="asistencia5">
+                <button class="btnAsistencia">SOLICITAR</button>
             </div>
         </div>
     </div>
@@ -161,7 +189,6 @@
             <div class="textHW">MANTENIMIENTO DEL SISTEMA</div>
         </div>
         <div class="contentData">
-
             <div class="cardDataSuperior">
                 <div class="cardData" id="cardData1">
                     <div class="textcardData">Liberar Espacio</div>
@@ -299,20 +326,41 @@
     <div class="modal-content">
         <div class="headerModal">
             <span id="closeModalAprendizaje" class="close">&times;</span>
+            <div class="textHW">CONSEJOS</div>
         </div>
         <div class="contentData">
-            <div class="textHW">CENTRO DE APRENDIZAJE</div>
-            <div class="antivirusHab">
-                <div>Anitivirus habilitado:</div>
-                <div>Sí</div>
+            <div class="imgCentro">
+                <img src="{% static 'dashboard/img/consejos.png' %}" alt="" id="imgCentroAprend">
             </div>
-            <div class="protTiempo">
-                <div>Protección en tiempo real:</div>
-                <div>Activado</div>
-            </div>
-            <div class="version">
-                <div>VERSIÓN DE FIRMA DE ANTIVIRUS:</div>
-                <div>1.427.00</div>
+            <div class="contentConsejos">
+                <div class="centro">
+                    <div class="contentImg">
+                        <i class="fa-brands fa-youtube ytCentro"></i>
+                    </div>
+                    <div class="contentCentro">
+                        <div class="textConsejo">Consejos de ciberseguridad...</div>
+                        <div class="contentBtnCnetro"><button class="btnCnetro">VER</button></div>
+                    </div>
+                </div>
+                <div class="centro">
+                    <div class="contentImg">
+                        <i class="fa-brands fa-youtube ytCentro"></i>
+                    </div>
+                    <div class="contentCentro">
+                        <div class="textConsejo">Si tu computadora suena y está muy lenta...</div>
+                        <div class="contentBtnCnetro"><button class="btnCnetro">VER</button></div>
+                    </div>
+                </div>
+                <div class="centro">
+                    <div class="contentImg">
+                        <i class="fa-brands fa-youtube ytCentro"></i>
+                    </div>
+                    <div class="contentCentro">
+                        <div class="textConsejo">Para desarmar tu laptop...</div>
+                        <div class="contentBtnCnetro"><button class="btnCnetro">VER</button></div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
