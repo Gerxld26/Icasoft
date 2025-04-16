@@ -39,7 +39,7 @@
                         type="email" 
                         name="email" 
                         placeholder="Correo Electrónico" 
-                        value="{{ form.email.value|default:'' }}" 
+                        value="{{ form.email.value|default:'' }}" > <!--esto se define en models-->
                         class="{% if form.email.errors %}is-invalid{% endif %}" 
                         required>
                 </div>

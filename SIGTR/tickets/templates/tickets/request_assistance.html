@@ -1,5 +1,5 @@
 {% extends "dashboard/base_dashboard.html" %}
-
+{% load static %}
 {% block title %}Solicitar Asistencia Técnica{% endblock %}
 
 {% block content %}
@@ -19,136 +19,113 @@
         </div>
         <div class="mb-3">
             {{ form.address.label_tag }}
-            {{ form.address }}
+            <div class="input-group">
+                {{ form.address }}
+                <button type="button" id="btn-usar-ubicacion" class="btn btn-outline-secondary">
+                    <i class="fas fa-map-marker-alt"></i> Usar mi ubicación
+                </button>
+            </div>
+            <small class="form-text text-muted">Ingresa una dirección o usa tu ubicación actual</small>
         </div>
+        
         <!-- Mostrar Técnicos Disponibles -->
         <div class="mb-3">
             <label for="technician">Selecciona un Técnico:</label>
-            <select name="technician" id="technician" class="form-control">
-                <option value="">-- Elige un técnico --</option>
-                {% for technician in technicians %}
-                <option value="{{ technician.technician.id }}">
-                    {{ technician.technician.username }} - {{ technician.distance }} km - {{ technician.district_name }}
-                </option>
-                {% empty %}
-                <option>No hay técnicos disponibles en línea cerca de ti.</option>
-                {% endfor %}
-            </select>
+            <div id="technicians-container">
+                <select name="technician" id="technician" class="form-control">
+                    <option value="">-- Elige un técnico --</option>
+                    {% for technician in technicians %}
+                    <option value="{{ technician.technician.id }}" {% if not technician.is_nearby %}disabled="disabled"{% endif %}>
+                        {{ technician.technician.username }} - {{ technician.distance }} km - {{ technician.district_name }}
+                        {% if not technician.is_nearby %}(demasiado lejos){% endif %}
+                    </option>
+                    {% empty %}
+                    <option>No hay técnicos disponibles en línea cerca de ti.</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="no-nearby-technicians" class="alert alert-danger mt-2 d-none">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No hay técnicos disponibles en tu zona (dentro de {{ max_distance }} km). Por favor, ajusta tu ubicación o contacta al soporte.
+            </div>
+            <div id="loading-technicians" class="mt-2 d-none">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <span class="ms-2">Buscando técnicos cercanos...</span>
+            </div>
         </div>
 
-   
-        <!-- Mapa para capturar ubicación -->
-        <div id="map" style="height: 300px; margin-bottom: 15px;"></div>
+        <!-- Mapa -->
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Mapa de ubicación</h5>
+            </div>
+            <div class="card-body p-0">
+                <div id="map" style="height: 400px; width: 100%; border: 1px solid #ccc;"></div>
+            </div>
+            <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> Puedes arrastrar el marcador azul para ajustar tu ubicación.
+                    Los técnicos disponibles dentro de {{ max_distance }} km se muestran como marcadores rojos.
+                </small>
+                <div>
+                    <button type="button" id="btn-zoom-in" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button type="button" id="btn-zoom-out" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button type="button" id="btn-center-map" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
 
-        {{ form.latitude }}
-        {{ form.longitude }}
+        <!-- Límite de distancia  -->
+        <div class="alert alert-info mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            Solo puedes solicitar asistencia técnica si hay un técnico disponible dentro de {{ max_distance }} km de tu ubicación.
+        </div>
 
-        <button type="submit" class="btn btn-primary">Enviar</button>
+        <input type="hidden" id="id_latitude" name="latitude" value="-12.0464">
+        <input type="hidden" id="id_longitude" name="longitude" value="-77.0428">
+
+        <button type="submit" id="btn-submit" class="btn btn-primary">Enviar</button>
     </form>
 </div>
 
-<!-- Leaflet.js para mapas interactivos -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<style>
+    #map {
+        z-index: 1; 
+        background-color: #f8f9fa; 
+        min-height: 400px; 
+    }
+    .leaflet-container {
+        height: 400px;
+        width: 100%;
+    }
+    
+    option:disabled {
+        color: #dc3545;
+        font-style: italic;
+        background-color: #f8d7da;
+    }
+    
+    .radius-circle {
+        stroke-dasharray: 5, 5;
+        stroke-width: 2;
+    }
+</style>
+
+<!-- Cargar JavaScript de Leaflet después del CSS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'tickets/request.js' %}" defer></script>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var map = L.map("map").setView([0, 0], 2);
-        var marker;
-        let latField = document.getElementById("id_latitude");
-        let lonField = document.getElementById("id_longitude");
-
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: "© OpenStreetMap contributors"
-        }).addTo(map);
-
-        function updateLocation(lat, lon) {
-            latField.value = lat.toFixed(6);
-            lonField.value = lon.toFixed(6);
-        }
-
-        function success(position) {
-            var lat = position.coords.latitude;
-            var lon = position.coords.longitude;
-            map.setView([lat, lon], 15);
-            marker = L.marker([lat, lon], { draggable: true }).addTo(map);
-            updateLocation(lat, lon);
-
-            marker.on("dragend", function () {
-                var newPos = marker.getLatLng();
-                updateLocation(newPos.lat, newPos.lng);
-            });
-        }
-
-        function error() {
-            Swal.fire("Ubicación no disponible", "No se pudo obtener la ubicación. Arrastra el marcador manualmente.", "warning");
-        }
-
-        navigator.geolocation.getCurrentPosition(success, error);
-    });
-
-    // Manejo del formulario con AJAX
-    document.getElementById("assistance-form").addEventListener("submit", function (event) {
-        event.preventDefault();
-
-        // Deshabilitar el botón para prevenir clics múltiples
-        document.querySelector('button[type="submit"]').disabled = true;
-
-        let formData = new FormData(this);
-
-        // Validación de ubicación
-        if (!document.getElementById("id_latitude").value || !document.getElementById("id_longitude").value) {
-            Swal.fire("Error", "Debe seleccionar una ubicación en el mapa.", "error");
-            // Reactivar el botón si la validación falla
-            document.querySelector('button[type="submit"]').disabled = false;
-            return;
-        }
-
-        fetch("/tickets/request/", {
-            method: "POST",
-            body: formData,
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log("Respuesta del servidor:", data);
-
-                Swal.fire({
-                    icon: data.status === "success" ? "success" : "error",
-                    title: data.status === "success" ? "Éxito" : "Error",
-                    text: data.message,
-                    confirmButtonColor: "#3085d6",
-                    confirmButtonText: "Entendido"
-                }).then((result) => {
-                    if (result.isConfirmed && data.status === "success") {
-                        window.location.href = data.redirect_url;
-                    }
-                });
-
-                // Reactivar el botón después de la respuesta
-                document.querySelector('button[type="submit"]').disabled = false;
-            })
-            .catch(error => {
-                console.error("Error en la solicitud:", error);
-                Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: "Hubo un problema con la solicitud. Inténtalo nuevamente.",
-                    confirmButtonColor: "#d33",
-                    confirmButtonText: "Cerrar"
-                });
-                // Reactivar el botón si hay un error
-                document.querySelector('button[type="submit"]').disabled = false;
-            });
-    });
-</script>
 {% endblock %}

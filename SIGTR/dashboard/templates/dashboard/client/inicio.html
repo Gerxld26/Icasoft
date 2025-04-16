@@ -7,6 +7,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{% static 'dashboard/css/principal.css' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'dashboard/icon/iconICASOFT.ico' %}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 
 <body>
@@ -47,49 +50,30 @@
                     <div class="Ubicacion">
                         <div class="nombreUbi">UBICACIÓN</div>
                         <div class="mapa">
-                            <iframe class="mapaUbi"
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3870.2186740547177!2d-75.7278443!3d-14.0642606!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9110e2bd0f99f96f%3A0x21a304d4341e31e2!2sIcasoft%20i21!5e0!3m2!1ses-419!2spe!4v1742567745922!5m2!1ses-419!2spe"
-                                width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
-                                referrerpolicy="no-referrer-when-downgrade">
-                            </iframe>
-                        </div>
+                            <div id="map" style="height: 100%; width: 100%; border: 1px solid #ccc;"></div>
+                        </div> 
                     </div>
                     <div class="asistencia">
                         <button class="asistenciaButton" id="btnAsistencia">
                             <i class="fa-solid fa-users-gear iconAnalisis"></i> ASISTENCIA TÉCNICA
                         </button>
                     </div>
-                    <!-- <div class="tecnicosDisponibilidad">
-                        <div class="opcionesTecnicos">
-                            <select name="select" class="selectTecnico">
-                                <option value="value1" selected>Seleccione un técnico</option>
-                                <option value="value2">Pedro</option>
-                                <option value="value3">Alejandro</option>
-                            </select>
-                        </div>
-                    </div> -->
-                    <!-- <div class="Restauracion">
-                            <div class="nombreResta">RESPALDO Y RESTAURACIÓN</div>
-                            <div class="botonesRest">
-                                <div class="botRespaldo">Crear respaldo</div>
-                                <div class="botRest">Restaurar</div>
-                            </div>
-                            <div class="verCompleto"><label for="">VER COMPLETO</label></div>
-                        </div>  -->
                 </div>
                 <div class="asistente">
                     <div class="asistVirtual">ASISTENTE VIRTUAL DE SOPORTE TÉCNICO</div>
                     <div class="botonAsist">
-                        <div class="botReg"><button class="buttonAsist">REGISTRARSE</button></div>
-                        <div class="botSolicitud"><button class="buttonAsist">SOLICITUD</button></div>
+                        <button class="buttonAsist">
+                            <div class="iconLogin"><i class="fa-solid fa-user"></i></div>
+                            <div class="textLogin">INICIAR SESIÓN</div>
+                        </button>
                     </div>
                     <div class="monitoreo">
-                        <button id="btnMonitoreo" class="btnMonitoreodiv">
-                            <div class="nombreMonit">MONITOREO DEL SISTEMA</div>
+                        <button id="btnMonitoreo" class="btnUlt">
+                            <div class="textDiag" id="textMonitoreo">MONITOREO DEL SISTEMA</div>
                             <div class="graficoMonit"><img src="{% static 'dashboard/img/monitoreo.webp' %}" alt=""
-                                    class="imgGrafico" id="imgGraficoMonitoreo"></div>
+                                    class="imgDiagnostico" id="imgGraficoMonitoreo"></div>
                             <div class="progress-bar" id="progressBarMonitoreo">
-                                <span data-width="80%"></span>
+                                <span data-width="100%"></span>
                             </div>
                         </button>
                     </div>
@@ -116,10 +100,25 @@
                         <h2 class="spanNombreAsistente">ASISTENTE DE SOPORTE</h2>
                     </div>
                     <div class="imagenIA">
-                        <img class="robot" src="{% static 'dashboard/img/robotIA.webp' %}" alt="">
+                        <img class="robot" src="{% static 'dashboard/img/robotIA.webp' %}" alt="" id="robotimg">
+
+                        <div class="video-container" id="video-container">
+                            <video class="robot" id="robotGIF" autoplay muted>
+                                <source src="{% static 'dashboard/video/robotHablando.mp4' %}" type="video/mp4">
+                            </video>
+                        </div>
+                        <div class="video-container" id="video-container2">
+                            <video class="robot" id="robotGIFOjos" autoplay muted>
+                                <source src="{% static 'dashboard/video/robotOjos.mp4' %}" type="video/mp4">
+                            </video>
+                        </div>
+                        <audio controls autoplay muted id="audioRobot">
+                            <source src="{% static 'dashboard/audio/audioRobot.mp3' %}">
+                            no se encontró ningún audio
+                        </audio>
                     </div>
-                    <div class="mensajeIA"><input class="textIA" type="text"
-                            placeholder="Envía un mensaje a ICASOFT IA">
+                    <div class="mensajeIA">
+                        <input class="textIA" id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA">
                     </div>
                     <div class="vozIA">
                         <label for="" class="textoVoz">AYÚDAME</label>
@@ -128,10 +127,10 @@
                 </div>
                 <div class="analisis">
                     <div class="analisisCompleto">
-                        <button class="analisisComp">
+                        <button class="analisisComp" id="btnAnalisiCompleto">
                             <div class="textButton">ANÁLISIS COMPLETO DEL SISTEMA</div>
                             <div class="imgBtnAnalisis"><img src="{% static 'dashboard/img/actualizarSistema.webp' %}"
-                                    class="imgBtnAnalisisComp">
+                                    class="imgBtnAnalisisComp" id="imgAnalisisComp">
                             </div>
                         </button>
                     </div>
@@ -173,7 +172,9 @@
                         <button id="btnAbrirModalDiagnostico" class="btnUlt">
                             <div class="textDiag">DIAGNÓSTICO</div>
                             <div class="imgDetDiag" id="imgDiagnosticoDet">
-                                <img class="imgDiagnostico" src="{% static 'dashboard/img/diagnostico.webp' %}" alt="">
+                                <img class="imgDiagnostico" id="imgDiag"
+                                    src="{% static 'dashboard/img/diagnostico.webp' %}" alt="">
+                                <!-- <img class="imgDiagnosticoGIF" id="imgDiagGIF" src="{% static 'dashboard/img/diagnosticoGIF.gif' %}" alt=""> -->
                             </div>
                             <div class="progress-bar" id="progressBarDiagnostico">
                                 <span data-width="100%"></span>
@@ -182,34 +183,36 @@
                     </div>
                     <div class="antivirus">
                         <button class="btnUlt" id="btnAbrirModalAntivirus">
-                            <div class="textAnt">ANTIVIRUS</div>
-                            <div class="imgDetDiag" id="imgAntivirusDet"><img class="imgAntivirus"
-                                    src="{% static 'dashboard/img/antivirus.webp' %}" alt="">
+                            <div class="textDiag">ANTIVIRUS</div>
+                            <div class="imgDetDiag" id="imgAntivirusDet">
+                                <img class="imgDiagnostico" src="{% static 'dashboard/img/antivirus.webp' %}" alt="">
                             </div>
                             <div class="progress-bar" id="progressBarAntivirus">
-                                <span data-width="70%"></span>
+                                <span data-width="100%"></span>
                             </div>
                         </button>
                     </div>
                     <div class="ultMant">
                         <button class="btnUlt" id="btnAbrirModalMantenimiento">
-                            <div class="textMant">MANTENIMIENTO</div>
-                            <div class="imgDetDiag" id="imgMantDet"><img class="imgMant"
-                                    src="{% static 'dashboard/img/mantenimiento.webp' %}" alt="">
+                            <div class="textDiag">MANTENIMIENTO</div>
+                            <div class="imgDetDiag" id="imgMantDet"><img class="imgDiagnostico"
+                                    src="{% static 'dashboard/img/mantenimientoDet.webp' %}" id="imgMant" alt="">
+                                <img src="{% static 'dashboard/img/mantenimientoGIF.gif' %}" class="imgMantGIF"
+                                    id="imgMantGIF" alt="">
                             </div>
                             <div class="progress-bar" id="progressBarMantenimiento">
-                                <span data-width="60%"></span>
+                                <span data-width="100%"></span>
                             </div>
                         </button>
                     </div>
                     <div class="ultHist">
                         <button class="btnUlt" id="btnHist">
-                            <div class="textHist">HISTORIAL</div>
-                            <div class="imgDetDiag" id="imgHistDet"><img src="{% static 'dashboard/img/historial.webp' %}"
-                                    class="imgHist" alt="">
+                            <div class="textDiag">HISTORIAL</div>
+                            <div class="imgDetDiag" id="imgHistDet">
+                                <img src="{% static 'dashboard/img/historial.webp' %}" class="imgDiagnostico" alt="">
                             </div>
                             <div class="progress-bar" id="progressBarHistorial">
-                                <span data-width="90%"></span>
+                                <span data-width="100%"></span>
                             </div>
                         </button>
                     </div>
@@ -220,8 +223,9 @@
     </div>
     <!--MODALS:-->
     {% include "dashboard/client/modalInicio.html" %}
-
+    {% include "dashboard/client/notificaciones.html" %}
     <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!--para la ubicación en tiempo real-->
     <script src="{% static 'dashboard/js/clientes/inicio.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/monitoreo.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/antivirus.js' %}"></script>
@@ -231,6 +235,7 @@
     <script src="{% static 'dashboard/js/clientes/asistenciaTecnica.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/historial.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/recomendaciones.js' %}"></script>
+    <!-- <script src="{% static 'tickets/request.js' %}"></script> -->
 </body>
 
 </html>

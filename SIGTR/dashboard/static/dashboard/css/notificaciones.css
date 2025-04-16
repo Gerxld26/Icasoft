@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+.notificaciones {
+    display: none;
+    align-items: center;
+    gap: 1em;
+    padding: 0em 1em 0.5em 0em;
+    position: fixed;
+    bottom: 0; /*para que aparezca abajo*/
+    right: 0; /*para que se ubique a la derecha*/
+    width: 25%;
+    max-width: 470px;
+}
+
+.notification {
+    background: linear-gradient(90deg, #024b09 0%, rgb(0, 51, 0) 30%, #232631 80%);
+    padding: 1em;
+    border-radius: 10px;
+    color: #898c97;
+    width: 100%;
+    animation: fadeOut 400ms ease-out 3s;
+    border-bottom: #024b09 5px solid;
+}
+
+.notification,
+.notification>div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1em;
+    width: 100%;
+}
+
+.iconNotification {
+    font-size: 32px;
+    color: white;
+}
+
+.iconNotifClose {
+    font-size: 20px;
+    color: white;
+    cursor: pointer;
+}
+.notification h3 {
+    color: white;
+    font-weight: 700;
+    font-size: 20px;
+    font-family: "Segoe UI";
+}

@@ -15,31 +15,16 @@
 
 body {
     min-height: 100vh;
-    background: linear-gradient(90deg, rgb(37, 36, 36), rgb(45, 45, 45), rgb(37, 36, 36));
+    background: rgb(29, 29, 29)
+        /*rgb(24, 23, 23)*/
+    ;
     background-size: 600% 600%;
     /* Hacemos que el gradiente sea más grande para poder moverlo */
     color: white;
     font-family: "Segoe UI";
     font-weight: bold;
     overflow-x: hidden;
-    animation: gradientAnimation 60s ease infinite;
     /* Animación para mover el gradiente */
-}
-
-@keyframes gradientAnimation {
-    0% {
-        background-position: 0% 0%;
-    }
-
-    /*posición 0*/
-    50% {
-        background-position: 400% 0%;
-    }
-
-    /*el 400 es del eje x*/
-    100% {
-        background-position: 0% 0%;
-    }
 }
 
 .contenedorPrincipal {
@@ -205,7 +190,7 @@ body {
     margin-left: 8%;
     height: 100%;
 
-    .mapaUbi {
+    #map {
         border-radius: 25px;
     }
 }
@@ -226,77 +211,6 @@ body {
     color: white;
     padding: 10px 0px 10px 0px;
     align-items: center;
-}
-
-/*div del cuadro de acciones respaldo y restauración*/
-.Restauracion {
-    grid-area: Restauracion;
-    display: grid;
-    grid-template-areas:
-        "nombreResta"
-        "botonesRest"
-        "verCompleto";
-    justify-items: center;
-    align-items: center;
-    width: 85%;
-    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
-    border: 3px solid rgb(42, 76, 89);
-    box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
-    border-radius: 30px;
-}
-
-.nombreResta {
-    grid-area: nombreResta;
-    border-bottom: 1px solid white;
-    width: 100%;
-    text-align: center;
-    padding: 10px 0px 10px 0px;
-}
-
-.botonesRest {
-    grid-area: botonesRest;
-    width: 100%;
-    justify-items: center;
-}
-
-.botRest {
-    grid-area: botRest;
-}
-
-.botRespaldo {
-    grid-area: botRespaldo;
-}
-
-.botRest,
-.botRespaldo {
-    border: 2px solid rgb(42, 76, 89);
-    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
-    box-shadow: 5px 10px 10px -8px;
-    border-radius: 10px;
-    color: rgb(3, 101, 140);
-    text-align: center;
-    align-content: center;
-    font-family: "Segoe UI";
-    font-weight: 700;
-    font-size: 18px;
-    padding: 5px;
-    cursor: pointer;
-    width: 70%;
-    margin-top: 6%;
-    margin-bottom: 6%;
-}
-
-.verCompleto {
-    grid-area: verCompleto;
-    border-top: 1px solid white;
-    width: 100%;
-    text-align: center;
-    cursor: pointer;
-    padding: 10px 0px 10px 0px;
-}
-
-.verCompleto label:hover {
-    color: rgb(3, 101, 140);
 }
 
 /*segunda columna*/
@@ -326,21 +240,10 @@ body {
 
 .botonAsist {
     grid-area: botonAsist;
-    display: grid;
-    grid-template-areas:
-        "botReg botSolicitud";
     width: 100%;
     justify-content: center;
     gap: 20px;
-}
-
-.botReg {
-    grid-area: botReg;
-
-}
-
-.botSolicitud {
-    grid-area: botSolicitud;
+    display: flex;
 }
 
 .buttonAsist {
@@ -351,14 +254,14 @@ body {
     padding: 10px;
     box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
     text-align: center;
+    display: grid;
+    grid-template-areas: "iconLogin textLogin";
+    width: 100%;
+    font-size: 20px;
+    cursor: pointer;
 }
 
-.botReg button:hover {
-    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(29, 46, 46));
-    color: rgb(3, 101, 140);
-}
-
-.botSolicitud button:hover {
+.botonAsist button:hover {
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(29, 46, 46));
     color: rgb(3, 101, 140);
 }
@@ -376,12 +279,11 @@ body {
     text-align: center;
 }
 
-.btnMonitoreodiv {
+#btnMonitoreo .btnUlt {
     width: 100%;
     height: 100%;
     background: none;
     color: white;
-    cursor: pointer;
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -546,12 +448,38 @@ body {
     position: relative;
     display: flex;
     justify-content: center;
+    cursor: pointer;
 }
 
-.robot {
-    width: 70%;
-    height: 100%;
-    filter: drop-shadow(6px 6px 10px rgb(72, 100, 128));
+#robotimg {
+    width: 80%;
+    display: flex;
+    filter: drop-shadow(1px 1px 15px rgba(42, 147, 189, 0.8));
+}
+
+#video-container,
+#video-container2 {
+    width: 100%;
+    position: relative;
+    display: none;
+    justify-content: center;
+    filter: drop-shadow(1px 1px 15px rgba(42, 147, 189, 0.8));
+}
+
+#robotGIF {
+    display: flex;
+    clip-path: circle(50% at 50% 50%);
+    object-fit: cover;
+    /*ajustar el contenido (como imágenes o videos) dentro de un contenedor*/
+    width: 80%;
+}
+
+#robotGIFOjos {
+    display: flex;
+    clip-path: circle(50% at 50% 50%);
+    object-fit: cover;
+    /*ajustar el contenido (como imágenes o videos) dentro de un contenedor*/
+    width: 80%;
 }
 
 .mensajeIA {
@@ -656,16 +584,34 @@ body {
     height: 100%;
     color: white;
     padding: 10px 0px 10px 0px;
-    display: flex;
-    gap: 10px;
+    display: grid;
+    grid-template-areas: "iconDiagnostico textDiagnosticoDet";
+    grid-template-columns: 20% auto;
     align-items: center;
 
     .textDiagnosticoDet {
         text-align: center;
-        font-size: medium;
+        font-size: 18px;
+    }
+    .iconAnalisis{
+        font-size: 25px;
     }
 }
-
+#btnDiagnosticoDet .iconAnalisis{
+    color: #d62828;
+}
+#btnOptimizarAntivirus .iconAnalisis{
+    color:  #f77f00;
+}
+#btnMantFunction .iconAnalisis{
+    color: #fcbf49;
+}
+#btnMonitoreioAnalisis .iconAnalisis{
+    color: #00a8e8;
+}
+#btnHistFunction .iconAnalisis{
+    color: #007ea7;
+}
 .imgBtnAnalisis {
     display: flex;
     flex-direction: row;
@@ -759,6 +705,20 @@ body {
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(42, 76, 89));
 }
 
+.imgMantGIF {
+    display: none;
+    filter: drop-shadow(7px 7px 9px rgb(6, 11, 54));
+}
+
+#imgMant {
+    filter: drop-shadow(7px 7px 9px rgb(6, 11, 54));
+}
+
+.imgDiagnosticoGIF {
+    display: none;
+    filter: drop-shadow(7px 7px 9px rgb(6, 11, 54));
+}
+
 /* Modo tablet. falta arreglar */
 @media (min-width: 768px) {}
 
@@ -766,7 +726,6 @@ body {
 @media (min-width: 992px) {
     body {
         overflow: hidden;
-        background: rgb(37, 36, 36);
     }
 
     .container {
@@ -833,6 +792,7 @@ body {
 
     .logo {
         width: 100%;
+        gap:0;
     }
 
     .logoIMG {
@@ -842,7 +802,7 @@ body {
     .nombreLogo {
         padding: 0px;
         text-align: center;
-        font-size: medium;
+        font-size: 18px;
         width: auto;
     }
 
@@ -871,51 +831,6 @@ body {
 
     .tecnicosDisponibilidad {
         width: 100%;
-    }
-
-    .selectTecnico {
-        border: 2px solid rgb(42, 76, 89);
-        background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
-        box-shadow: 5px 10px 10px -8px;
-        border-radius: 30px;
-        color: rgb(3, 101, 140);
-        text-align: center;
-        align-content: center;
-        font-family: "Segoe UI";
-        font-weight: 800;
-        font-size: 18px;
-        width: 100%;
-        height: 50px;
-    }
-
-    /*div del cuadro de acciones respaldo y restauración*/
-    /* .Restauracion {
-        grid-template-areas:
-            "nombreResta"
-            "botonesRest"
-            "verCompleto";
-        grid-template-rows: 30% auto 30%;
-        width: 100%;
-        height: 100%;
-        border-radius: 20px;
-    }
-
-    .verCompleto {
-        font-size: 17px;
-    } */
-
-    .nombreResta {
-        grid-area: nombreResta;
-        border-bottom: 1px solid white;
-        width: 100%;
-        text-align: center;
-        padding: 5px 0px 5px 0px;
-    }
-
-    .botRest,
-    .botRespaldo {
-        margin-top: 4%;
-        margin-bottom: 4%;
     }
 
     /*segunda columna*/
@@ -951,10 +866,7 @@ body {
         display: flex;
         flex-direction: column;
         gap: 10px;
-    }
-
-    .monitoreo {
-        cursor: pointer;
+        height: max-content;
     }
 
     #btnMonitoreo {
@@ -966,7 +878,10 @@ body {
         gap: 10px;
         flex-direction: column;
     }
-
+    #btnMonitoreo .textDiag{
+        font-size: 20px;
+        padding: 3px;
+    }
     .graficoMonit {
         display: flex;
         height: 80px;
@@ -1017,12 +932,37 @@ body {
         width: 100%;
         display: flex;
         justify-content: center;
+        align-items: center;
     }
 
-    .robot {
+    .img-container {
+        width: 100%;
+    }
+
+    #robotimg {
         width: 80%;
-        height: 100%;
-        filter: drop-shadow(6px 6px 10px rgb(72, 100, 128));
+        display: flex;
+        filter: drop-shadow(1px 1px 12px rgba(42, 147, 189, 3));
+    }
+
+    .video-container {
+        width: 100%;
+        position: relative;
+        display: none;
+        justify-content: center;
+        filter: drop-shadow(1px 1px 12px rgba(42, 147, 189, 3));
+    }
+
+    #robotGIF {
+        display: flex;
+        clip-path: circle(50% at 50% 50%);
+        object-fit: cover;
+        /*ajustar el contenido (como imágenes o videos) dentro de un contenedor*/
+        width: 80%;
+    }
+
+    #audioRobot {
+        display: none;
     }
 
     .microfono {
@@ -1038,6 +978,7 @@ body {
 
     .analisisComp {
         display: flex;
+        gap: 10px;
         align-items: center;
         padding-right: 10px;
         padding-left: 10px;
@@ -1056,7 +997,9 @@ body {
         padding-right: 10px;
     }
 
-    #textPrimeroDiag {}
+    #btnAnalisiCompleto .textButton {
+        font-size: 18px;
+    }
 
     .diagnostico,
     .optimizar,
@@ -1085,7 +1028,6 @@ body {
         height: 100%;
         background: none;
         color: white;
-        cursor: pointer;
         display: flex;
         flex-direction: column;
         gap: 5px;
@@ -1093,7 +1035,9 @@ body {
         justify-content: center;
         font-size: 18px;
     }
-
+    .ultimo .btnUlt .textDiag{
+        font-size: 20px;
+    } 
     .imgDetDiag {
         display: flex;
         height: 90px;
@@ -1101,9 +1045,8 @@ body {
     }
 
     .imgDiagnostico,
-    .imgAntivirus,
-    .imgMant,
-    .imgHist {
+    .imgMantGIF,
+    .imgDiagnosticoGIF {
         height: 100%;
     }
 

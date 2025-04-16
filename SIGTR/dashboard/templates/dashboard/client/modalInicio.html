@@ -2,18 +2,55 @@
 <link rel="stylesheet" href="{% static 'dashboard/css/modalInicio.css' %}">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    window.ACTION_URLS = {
+        cleanup: "{% url 'client_clear_space' %}",
+        update: "{% url 'client_update_software' %}",
+        defrag: "{% url 'client_defragment_disk' %}",
+        repair: "{% url 'client_repair_disk' %}"
+    };
+</script>
 
 <!--MODDAL ASISTENCIA TÉCNICA-->
 <div id="modalAsistencia" class="modal">
     <div class="modal-content">
         <div class="headerModal">
             <span id="closeModalAsis" class="close">&times;</span>
-            <div class="textHW">ASISTENCIA TÉCNICA</div>
+            <div class="textHW">¿Necesitas asistencia técnica?</div>
         </div>
         <div class="contentData">
-            <div class="textAsistencia">¿Necesitas asistencia técnica?</div>
-            <div class="contentAsistencia">
-                <button class="btnAsistencia">Solicitar Asistencia</button>
+            <div class="asistencia1">
+                <div class="textDescrip">Describe el problema</div>
+                <div class="inputDescrip">
+                    <input type="text" class="textAsistencia">
+                </div>
+            </div>
+            <div class="asistencia1">
+                <div class="textDescrip">Dirección para la asistencia</div>
+                <div class="inputDescrip"><input type="text" class="textAsistencia"></div>
+            </div>
+            <div class="asistencia2">
+                <div class="textDescrip">Técnicos cerca a tu dirección:</div>
+                <div class="inputDescrip">
+                    <select name="" id="" class="selectTecnico">
+                        <option value="">Selecciona un técnico</option>
+                        <option value="">Juan</option>
+                    </select>
+                </div>
+            </div>
+            <div class="asistencia4">
+                <div>
+                    <iframe class="mapaUbiCliente"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3870.2186740547177!2d-75.7278443!3d-14.0642606!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9110e2bd0f99f96f%3A0x21a304d4341e31e2!2sIcasoft%20i21!5e0!3m2!1ses-419!2spe!4v1742567745922!5m2!1ses-419!2spe"
+                        width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+                <div style="font-style: italic; color: beige;">* Deslice la localización a la dirección que desee la asistencia *</div>
+            </div>
+            <div class="asistencia5">
+                <button class="btnAsistencia">SOLICITAR</button>
             </div>
         </div>
     </div>
@@ -29,43 +66,46 @@
             <div class="detalleGraficoMonitoreo">
                 <canvas id="donutsTickets"></canvas>
             </div>
-            <div class="detalleHW">
-                <div class="textDetalle">ALERTA</div>
-                <div class="componentes">
-                    <div class="cpu">
+            <div class="componentes">
+                <div class="cpu">
+                    <div class="contentCompHW">
                         <div class="textCompMonitoreo">CPU</div>
-                        <div class="contentCompHW">
-                            <div class="compImg"><img src="{% static 'dashboard/img/cpu.webp' %}" alt="" class="imgHW">
-                            </div>
-                            <div class="progress-bar-Monitoreo">
-                                <div id="cpu-name"></div>
-                                <span id="cpu-progress-bar" data-width="0%"></span>
-                            </div>
+                        <div class="compImg">
+                            <img src="{% static 'dashboard/img/cpu.webp' %}" alt="" class="imgHW">
                         </div>
                     </div>
-                    <div class="memoriaRAM">
+                    <div class="contentHW">
+                        <div id="cpu-name" class="textContentHW"></div>
+                        <div class="progress-bar-Monitoreo" id="progress-bar-cpu">
+                            <span data-width="0%"></span>
+                            <div class="progress-text" id="cpu-progress-text">0%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="memoriaRAM">
+                    <div class="contentCompHW">
                         <div class="textCompMonitoreo">MEMORIA</div>
-                        <div class="contentCompHW">
-                            <div class="compImg">
-                                <img src="{% static 'dashboard/img/memoriaRAM.webp' %}" alt="" class="imgHW">
-                            </div>
-                            <div class="contentHW">
-                                <div id="sistemaOperativotext"></div>
-                                <div class="progress-bar-Monitoreo" id="progress-bar-ram">
-                                <span id="ram-progress-bar" data-width="0%"></span>
-                            </div>
-                            </div>
+                        <div class="compImg">
+                            <img src="{% static 'dashboard/img/memoriaRAM.webp' %}" alt="" class="imgHW">
                         </div>
                     </div>
-                    <div class="Disco">
-                        <div class="textCompMonitoreo">DISCO</div>
-                        <div class="contentCompHW">
-                            <div class="compImg"><img src="{% static 'dashboard/img/discoSSD.webp' %}" alt=""
-                                    class="imgHW"></div>
-                            <div class="progress-bar-Monitoreo">
-                                <span id="disco-progress-bar" data-width="0%"></span>
-                            </div>
+                    <div class="contentHW">
+                        <div id="sistemaOperativotext" class="textContentHW"></div>
+                        <div class="progress-bar-Monitoreo" id="progress-bar-ram">
+                            <span data-width="0%"></span>
                         </div>
+                    </div>
+                </div>
+                <div class="Disco">
+                    <div class="contentCompHW">
+                        <div class="textCompMonitoreo">DISCO</div>
+                        <div class="compImg">
+                            <img src="{% static 'dashboard/img/discoSSD.webp' %}" alt="" class="imgHW">
+                        </div>
+                    </div>
+
+                    <div class="contentHW" id="contentDisco">
+                        <!--Contenido dinámico js-->
                     </div>
                 </div>
             </div>
@@ -148,49 +188,80 @@
     </div>
 </div>
 
-<!--MODAL MANTENIMIENTO-->
+<!-- MODAL MANTENIMIENTO MEJORADO -->
 <div id="modalMantenimiento" class="modal">
     <div class="modal-content">
-
         <div class="headerModal">
             <span id="closeModalMant" class="close">&times;</span>
             <div class="textHW">MANTENIMIENTO DEL SISTEMA</div>
         </div>
         <div class="contentData">
-
             <div class="cardDataSuperior">
                 <div class="cardData" id="cardData1">
                     <div class="textcardData">Liberar Espacio</div>
-                    <div class="contentCardData">Eliminar archivos temporales</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-trash"></i>
-                            Liberar Espacio</button></div>
+                    <div class="contentCardData">
+                        Elimina archivos temporales para liberar espacio en disco.
+                       
+                    </div>
+                    <div class="btnCardData">
+                        <button class="btnCardDataFunction" data-action="cleanup">
+                            <i class="fa-solid fa-trash"></i> Liberar Espacio
+                        </button>
+                    </div>
                 </div>
                 <div class="cardData" id="cardData2">
                     <div class="textcardData">Actualizar Software</div>
-                    <div class="contentCardData">Instalar las actualizaciones más recientes</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-upload"></i>
-                            Actualizar</button></div>
+                    <div class="contentCardData">
+                        Instala las actualizaciones más recientes de software.
+                    </div>
+                    <div class="btnCardData">
+                        <button class="btnCardDataFunction" data-action="update">
+                            <i class="fa-solid fa-upload"></i> Actualizar
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="cardDataInferior">
                 <div class="cardData" id="cardData3">
                     <div class="textcardData">Desfragmentar Disco</div>
-                    <div class="contentCardData">Organizar los datos en el disco</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i class="fa-solid fa-hard-drive"></i>
-                            Desfragmentar</button></div>
+                    <div class="contentCardData">
+                        Organiza los datos en tu disco para mejorar el rendimiento.
+                    </div>
+                    <div class="btnCardData">
+                        <button class="btnCardDataFunction" data-action="defrag">
+                            <i class="fa-solid fa-hard-drive"></i> Desfragmentar
+                        </button>
+                    </div>
                 </div>
                 <div class="cardData" id="cardData4">
                     <div class="textcardData">Reparar Disco</div>
-                    <div class="contentCardData">Buscar y reparar errores</div>
-                    <div class="btnCardData"><button class="btnCardDataFunction"><i
-                                class="fa-solid fa-screwdriver-wrench"></i> Reparar</button></div>
+                    <div class="contentCardData">
+                        Busca y repara errores en el disco duro.
+                       
+                    </div>
+                    <div class="btnCardData">
+                        <button class="btnCardDataFunction" data-action="repair">
+                            <i class="fa-solid fa-screwdriver-wrench"></i> Reparar
+                        </button>
+                    </div>
                 </div>
             </div>
 
+            <!-- Sección de resultados -->
+            <div id="mantenimientoResultado" class="resultado-success" style="display: none;">
+                <div class="headerResultado">
+                    <i class="fas fa-check-circle" style="font-size: 24px; margin-right: 10px;"></i>
+                    <div class="textHW">Resultado de la Operación</div>
+                </div>
+                <div class="contentResultado">
+                    <div id="resultadoMensaje">
+                        <!-- Aquí va el mensaje del resultado -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
 <!--MODAL RECOMENDACIONES SW-->
 <div id="modalRecomendaciones" class="modal">
     <div class="modal-content">
@@ -295,21 +366,43 @@
     <div class="modal-content">
         <div class="headerModal">
             <span id="closeModalAprendizaje" class="close">&times;</span>
+            <div class="textHW">CONSEJOS</div>
         </div>
         <div class="contentData">
-            <div class="textHW">CENTRO DE APRENDIZAJE</div>
-            <div class="antivirusHab">
-                <div>Anitivirus habilitado:</div>
-                <div>Sí</div>
+            <div class="imgCentro">
+                <img src="{% static 'dashboard/img/consejos.png' %}" alt="" id="imgCentroAprend">
             </div>
-            <div class="protTiempo">
-                <div>Protección en tiempo real:</div>
-                <div>Activado</div>
-            </div>
-            <div class="version">
-                <div>VERSIÓN DE FIRMA DE ANTIVIRUS:</div>
-                <div>1.427.00</div>
+            <div class="contentConsejos">
+                <div class="centro">
+                    <div class="contentImg">
+                        <i class="fa-brands fa-youtube ytCentro"></i>
+                    </div>
+                    <div class="contentCentro">
+                        <div class="textConsejo">Consejos de ciberseguridad...</div>
+                        <div class="contentBtnCnetro"><button class="btnCnetro">VER</button></div>
+                    </div>
+                </div>
+                <div class="centro">
+                    <div class="contentImg">
+                        <i class="fa-brands fa-youtube ytCentro"></i>
+                    </div>
+                    <div class="contentCentro">
+                        <div class="textConsejo">Si tu computadora suena y está muy lenta...</div>
+                        <div class="contentBtnCnetro"><button class="btnCnetro">VER</button></div>
+                    </div>
+                </div>
+                <div class="centro">
+                    <div class="contentImg">
+                        <i class="fa-brands fa-youtube ytCentro"></i>
+                    </div>
+                    <div class="contentCentro">
+                        <div class="textConsejo">Para desarmar tu laptop...</div>
+                        <div class="contentBtnCnetro"><button class="btnCnetro">VER</button></div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
+

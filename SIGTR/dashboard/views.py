@@ -39,6 +39,8 @@ from .forms import LearningVideoForm
 from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.safestring import mark_safe
+
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -72,6 +74,16 @@ def base_context_processor(request):
     return {'monitoring_urls': monitoring_urls}
 
 # Vista de inicio del cliente
+# Decorador para inicializar COM correctamente en hilos de Windows
+def ensure_com_initialized(func):
+    def wrapper(*args, **kwargs):
+        import pythoncom
+        pythoncom.CoInitialize()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            pythoncom.CoUninitialize()
+    return wrapper
 
 # Vista para mantenimiento
 @login_required
@@ -164,7 +176,7 @@ def cpu_monitoring_data(request):
             "speed": "N/A",
             "processes": 0,
             "threads": 0,
-            "sockets": 1,  # Default value
+            "sockets": 1,  # Valor por defecto
             "cores": 0,
             "logical_processors": 0,
             "uptime": "0:00:00",
@@ -175,46 +187,41 @@ def cpu_monitoring_data(request):
         }
 
         if system == "Windows":
-            try:
+            @ensure_com_initialized
+            def get_windows_cpu_info():
                 import wmi
                 w = wmi.WMI(namespace="root\\CIMV2")
                 
-                # Obtener nombre del procesador
                 cpu_info = w.query("SELECT Name, MaxClockSpeed FROM Win32_Processor")[0]
                 data["cpu_name"] = cpu_info.Name.strip()
                 data["speed"] = f"{cpu_info.MaxClockSpeed / 1000:.2f} GHz"
 
-                # Uso del CPU
                 data["usage"] = psutil.cpu_percent(interval=1)
-
-                # Número de procesos
                 data["processes"] = len(psutil.pids())
-
-                # Núcleos y subprocesos
                 data["cores"] = psutil.cpu_count(logical=False)
                 data["logical_processors"] = psutil.cpu_count(logical=True)
 
-                # Uptime
                 uptime_seconds = time.time() - psutil.boot_time()
                 hours, remainder = divmod(uptime_seconds, 3600)
                 minutes, seconds = divmod(remainder, 60)
                 data["uptime"] = f"{int(hours)}h:{int(minutes)}m:{int(seconds)}s"
 
-                # Virtualización
                 virtualization_info = w.query("SELECT VirtualizationFirmwareEnabled FROM Win32_ComputerSystem")
                 data["virtualization"] = "Habilitado" if virtualization_info[0].VirtualizationFirmwareEnabled else "No habilitado"
 
-                # Cachés
                 cache_info = w.query("SELECT L2CacheSize, L3CacheSize FROM Win32_Processor")[0]
                 data["cache_l2"] = f"{cache_info.L2CacheSize / 1024:.1f} MB" if cache_info.L2CacheSize else "No disponible"
                 data["cache_l3"] = f"{cache_info.L3CacheSize / 1024:.1f} MB" if cache_info.L3CacheSize else "No disponible"
-                data["cache_l1"] = "1.1 MB"  # Valor aproximado
+                data["cache_l1"] = "1.1 MB"  # Estimado
+
+            try:
+                get_windows_cpu_info()
             except Exception as e:
                 logger.warning(f"Error al obtener datos en Windows: {e}")
 
         elif system == "Linux":
             try:
-                # Usar psutil y sensores
+                import cpuinfo
                 cpu_info = cpuinfo.get_cpu_info()
                 data["cpu_name"] = cpu_info.get("brand_raw", "Procesador desconocido")
                 data["usage"] = psutil.cpu_percent(interval=1)
@@ -223,20 +230,12 @@ def cpu_monitoring_data(request):
                 data["cores"] = psutil.cpu_count(logical=False)
                 data["logical_processors"] = psutil.cpu_count(logical=True)
 
-                # Uptime
                 uptime_seconds = time.time() - psutil.boot_time()
                 hours, remainder = divmod(uptime_seconds, 3600)
                 minutes, seconds = divmod(remainder, 60)
                 data["uptime"] = f"{int(hours)}h:{int(minutes)}m:{int(seconds)}s"
-
-                # Cachés (no disponible en Linux con psutil directamente)
-                data["cache_l1"] = "No disponible"
-                data["cache_l2"] = "No disponible"
-                data["cache_l3"] = "No disponible"
-                data["virtualization"] = "No disponible"
             except Exception as e:
                 logger.warning(f"Error al obtener datos en Linux: {e}")
-
         else:
             logger.warning("Sistema operativo no soportado para datos detallados.")
 
@@ -249,40 +248,35 @@ def cpu_monitoring_data(request):
 @user_passes_test(lambda user: user.role == 'client')
 def ram_monitoring_data(request):
     try:
-        import psutil
-        import platform
-
         memory = psutil.virtual_memory()
+        system = platform.system()
 
-        # Obtener datos básicos de la RAM
         data = {
-            "os": platform.system(), 
-            "percent": memory.percent,  
-            "used": round(memory.used / (1024 ** 3), 2),  
-            "total": round(memory.total / (1024 ** 3), 2),  
-            "available": round(memory.available / (1024 ** 3), 2),  
+            "os": system,
+            "percent": memory.percent,
+            "used": round(memory.used / (1024 ** 3), 2),
+            "total": round(memory.total / (1024 ** 3), 2),
+            "available": round(memory.available / (1024 ** 3), 2),
+            "speed": "No disponible",
+            "slots_used": "No disponible"
         }
 
-        # Verificar si el sistema es Windows y obtener datos adicionales básicos
-        if data["os"] == "Windows":
-            try:
+        if system == "Windows":
+            @ensure_com_initialized
+            def get_windows_ram_info():
                 import wmi
                 w = wmi.WMI()
-
-                # Obtener velocidad de RAM y ranuras usadas
                 memory_modules = w.query("SELECT Speed, BankLabel FROM Win32_PhysicalMemory")
                 speeds = [m.Speed for m in memory_modules if isinstance(m.Speed, int)]
                 slots_used = len(memory_modules)
 
                 data["speed"] = f"{max(speeds)} MT/s" if speeds else "No disponible"
                 data["slots_used"] = f"{slots_used} de {slots_used}"
+
+            try:
+                get_windows_ram_info()
             except Exception as e:
                 logger.warning(f"Error al obtener datos de RAM en Windows: {e}")
-                data["speed"] = "No disponible"
-                data["slots_used"] = "No disponible"
-        else:
-            data["speed"] = "No disponible"
-            data["slots_used"] = "No disponible"
 
         return JsonResponse(data)
     except Exception as e:
@@ -581,30 +575,30 @@ def client_clear_space(request):
     try:
         # Directorios de archivos temporales comunes
         temp_directories = [
-            os.getenv('TEMP', '/tmp'),  # Windows o Unix-like
-            os.path.expanduser('~/.cache'),  # Directorio de cache del usuario
+            os.getenv('TEMP', '/tmp'),  
+            os.path.expanduser('~/.cache'), 
         ]
 
-        # Contadores
+       
         total_deleted = 0
         total_failed = 0
-        failed_files = []  # Para almacenar los archivos que no pudieron eliminarse
+        failed_files = []  
 
-        # Recorremos los directorios temporales
+      
         for temp_dir in temp_directories:
             if os.path.exists(temp_dir):
                 for root, dirs, files in os.walk(temp_dir):
                     for file in files:
                         file_path = os.path.join(root, file)
                         try:
-                            os.remove(file_path)  # Intentamos eliminar el archivo
+                            os.remove(file_path)  
                             total_deleted += 1
                         except Exception as e:
                             total_failed += 1
-                            failed_files.append(file_path)  # Agregamos el archivo a la lista de errores
+                            failed_files.append(file_path) 
                             print(f"Error al eliminar {file_path}: {e}")
 
-        # Mensaje final
+
         message = (
             f"Espacio liberado exitosamente. Archivos eliminados: {total_deleted}. "
             f"Archivos no eliminados: {total_failed}."
@@ -625,10 +619,10 @@ def client_update_software(request):
     redirige a la configuración de Windows Update.
     """
     try:
-        system_platform = platform.system().lower()  # Detectar el sistema operativo
+        system_platform = platform.system().lower()  
 
         if "windows" in system_platform:
-            # Intentamos abrir Windows Update directamente
+      
             try:
                 subprocess.run(
                     ["start", "ms-settings:windowsupdate"],
@@ -709,8 +703,8 @@ def client_defragment_disk(request):
     - Verifica que la unidad esté disponible.
     """
     try:
-        system_platform = platform.system().lower()  # Detectar el sistema operativo
-        drive = request.GET.get("drive", "C:")  # Unidad predeterminada: C:
+        system_platform = platform.system().lower()  
+        drive = request.GET.get("drive", "C:")  
 
         if "windows" in system_platform:
             # Validar que la unidad esté disponible en Windows
@@ -804,7 +798,7 @@ def client_defragment_disk(request):
                 }, status=500)
 
             # Ejecutar desfragmentación en Linux
-            drive_path = request.GET.get("drive", "/")  # Por defecto, la raíz del sistema
+            drive_path = request.GET.get("drive", "/")  
             try:
                 result = subprocess.run(
                     ["e4defrag", drive_path],
@@ -1435,3 +1429,4 @@ def deactivate_user(request, user_id):
 def user_logout(request):
     logout(request)
     return redirect('users:login')
+
