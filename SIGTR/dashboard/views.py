@@ -109,8 +109,8 @@ def client_monitoring_ram(request):
     """
     Renderiza la página de monitoreo de RAM.
     """
-    return render(request, 'dashboard/client/monitoring/ram.html')
-
+    # return render(request, 'dashboard/client/monitoring/ram.html')
+    return render(request, 'dashboard/client/inicio.html')
 # Vista para Disco
 @login_required
 @user_passes_test(is_client)

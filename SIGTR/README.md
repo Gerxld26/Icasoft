@@ -41,6 +41,8 @@ views: ahí se define las rutas para que se puedan visualizar los diseños y fun
 urls: se define las vistas.
 templates: se ubica los htmls.
 
+## DATOS LIBRERÍA:
+el cpuinfo trae toda la data referente.
 ## DATOS CSS: 
 display:
 grid: ancho fijo

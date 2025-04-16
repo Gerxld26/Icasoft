@@ -397,7 +397,7 @@ body {
 
 .imgGrafico {
     height: 100%;
-    animation: rotarImg 1.5s linear infinite;
+    animation: none;
     display: inline-block;
 }
 
@@ -599,7 +599,6 @@ body {
         "diagnostico"
         "optimizar"
         "mantenimiento"
-        "recomendacSW"
         "monitoreoSop"
         "historial";
     text-align: center;
@@ -618,10 +617,6 @@ body {
 
     .mantenimiento {
         grid-area: mantenimiento;
-    }
-
-    .recomendacSW {
-        grid-area: recomendacSW;
     }
 
     .historial {
@@ -685,7 +680,6 @@ body {
 .diagnostico,
 .optimizar,
 .mantenimiento,
-.recomendacSW,
 .historial,
 .monitoreoSop {
     width: 80%;
@@ -695,7 +689,6 @@ body {
 .diagnostico:hover button,
 .optimizar:hover button,
 .mantenimiento:hover button,
-.recomendacSW:hover button,
 .historial:hover button,
 .monitoreoSop:hover button {
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(42, 76, 89));
@@ -1068,7 +1061,6 @@ body {
     .diagnostico,
     .optimizar,
     .mantenimiento,
-    .recomendacSW,
     .historial,
     .monitoreoSop {
         width: 100%;
@@ -1099,15 +1091,12 @@ body {
         gap: 5px;
         align-items: center;
         justify-content: center;
-
+        font-size: 18px;
     }
 
-    .imgDetDiag,
-    .imgDetAnt,
-    .imgDetMant,
-    .imgDetHist {
+    .imgDetDiag {
         display: flex;
-        height: 70px;
+        height: 90px;
         justify-content: center;
     }
 
@@ -1126,6 +1115,7 @@ body {
         border-radius: 30px;
         background-color: white;
         box-shadow: 5px 5px 10px rgb(3, 101, 140);
+        display: none;
     }
 
     .progress-bar span {
