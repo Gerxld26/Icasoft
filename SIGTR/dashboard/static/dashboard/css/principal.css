@@ -190,7 +190,7 @@ body {
     margin-left: 8%;
     height: 100%;
 
-    .mapaUbi {
+    #map {
         border-radius: 25px;
     }
 }

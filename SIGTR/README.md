@@ -47,3 +47,6 @@ el cpuinfo trae toda la data referente.
 display:
 grid: ancho fijo
 flex: sin ancho fijo
+
+##FLUJO:
+del template a las views, de ahí urls, 

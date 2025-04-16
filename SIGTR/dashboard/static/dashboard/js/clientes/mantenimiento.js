@@ -71,7 +71,20 @@ const spinnerCSS = `
     background-color: #ffc107;
 }
 `;
+function notificacionMantenimiento() {
+    let progressBar100Mant = true;
+    const spanMant = progressBarMantenimiento.querySelector('span');
+    const width = spanMant.dataset.width.replace('%', '');
+    spanMant.style.width = spanMant.dataset.width;
+    spanMant.innerHTML = spanMant.dataset.width;
 
+    if (parseInt(width) < 100) {
+        progressBar100Mant = false;
+    }
+    if (progressBar100Mant) {
+        mostrarNotificacion('success', 'Análisis completo del mantenimiento',4);
+    }
+}
 // Función para añadir los estilos CSS al documento
 function agregarEstilosCSS() {
     if (!document.getElementById('mantenimiento-estilos')) {
@@ -344,92 +357,31 @@ async function ejecutarAccion(accion, boton) {
     }
 }
 
-// Comportamiento para el botón de mantenimiento sin engranajes
-if (btnMantFunction) {
-    btnMantFunction.addEventListener('click', function() {
-        if (openModalMantenimiento) {
-            // Activar el botón con engranajes
-            openModalMantenimiento.click();
-        } else {
-            console.warn('Botón de mantenimiento con engranajes no encontrado');
-        }
-    });
-}
-
-// Comportamiento para el botón con engranajes
-if (openModalMantenimiento) {
-    openModalMantenimiento.addEventListener('click', function() {
-        // Mostrar animación
-        if (imgMant) imgMant.style.display = 'none';
-        if (imgMantGIF) imgMantGIF.style.display = 'flex';
-        if (progressBarMantenimiento) progressBarMantenimiento.style.display = 'flex';
-        
-        // Mostrar modal
-        if (modalMantenimiento) modalMantenimiento.style.display = 'flex';
-    });
-}
-
-// Cerrar modal con el botón X
-if (closeModalMantenimiento) {
-    closeModalMantenimiento.addEventListener('click', function() {
-        // Limpiar cualquier contador antes de cerrar
-        limpiarContador();
-        
-        if (modalMantenimiento) modalMantenimiento.style.display = 'none';
-        
-        // Restaurar imagen normal
-        setTimeout(() => {
-            if (imgMant) imgMant.style.display = 'flex';
-            if (imgMantGIF) imgMantGIF.style.display = 'none';
-        }, 300);
-    });
-}
 
 
-// function notificacionMantenimiento() {
-//     let progressBar100Mant = true;
-//     const spanMant = progressBarMantenimiento.querySelector('span');
-//     const width = spanMant.dataset.width.replace('%', '');
-//     spanMant.style.width = spanMant.dataset.width;
-//     spanMant.innerHTML = spanMant.dataset.width;
+btnMantFunction.addEventListener('click', function(){
+    openModalMantenimiento.style.cursor = 'pointer';
+    openModalMantenimiento.addEventListener('click', function () {
+        modalMantenimiento.style.display = 'flex';
+    })
 
-//     if (parseInt(width) < 100) {
-//         progressBar100Mant = false;
-//     }
-//     if (progressBar100Mant) {
-//         mostrarNotificacion('success', 'Análisis completo del mantenimiento',4);
-//     }
-// }
+    imgMant.style.display = 'none';
+    imgMantGIF.style.display = 'flex';
+    openModalMantenimiento.style.fontSize = '18px';
+    progressBarMantenimiento.style.display = 'flex';
+    notificacionMantenimiento();
+});
 
-// btnMantFunction.addEventListener('click', function(){
-//     openModalMantenimiento.style.cursor = 'pointer';
-//     openModalMantenimiento.addEventListener('click', function () {
-//         modalMantenimiento.style.display = 'flex';
-//     })
+closeModalMantenimiento.addEventListener('click', function () {
+    limpiarContador();
 
-//     imgMant.style.display = 'none';
-//     imgMantGIF.style.display = 'flex';
-//     openModalMantenimiento.style.fontSize = '18px';
-//     progressBarMantenimiento.style.display = 'flex';
-//     notificacionMantenimiento();
-// });
-
-// closeModalMantenimiento.addEventListener('click', function () {
-//     modalMantenimiento.style.display = 'none';
-// })
+     modalMantenimiento.style.display = 'none';
+})
 
 window.addEventListener('click', function (event) {
     if (event.target == modalMantenimiento) {
-        // Limpiar cualquier contador antes de cerrar
         limpiarContador();
-        
         modalMantenimiento.style.display = 'none';
-        
-        // Restaurar imagen normal
-        setTimeout(() => {
-            if (imgMant) imgMant.style.display = 'flex';
-            if (imgMantGIF) imgMantGIF.style.display = 'none';
-        }, 300);
     }
 });
 
@@ -464,9 +416,4 @@ document.addEventListener('DOMContentLoaded', function() {
             ejecutarAccion('repair', this);
         });
     }
-    
-    // Verificar elementos críticos
-    console.log('Modal de mantenimiento:', modalMantenimiento ? 'Encontrado' : 'No encontrado');
-    console.log('Botón abrir modal:', openModalMantenimiento ? 'Encontrado' : 'No encontrado');
-    console.log('Botón cerrar modal:', closeModalMantenimiento ? 'Encontrado' : 'No encontrado');
 });

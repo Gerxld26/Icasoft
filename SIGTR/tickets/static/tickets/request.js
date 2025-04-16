@@ -23,7 +23,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const mapElement = document.getElementById("map");
     console.log("Elemento del mapa:", mapElement);
     console.log("Dimensiones del mapa:", mapElement.offsetWidth, "x", mapElement.offsetHeight);
-
     setTimeout(initMap, 100);
 });
 

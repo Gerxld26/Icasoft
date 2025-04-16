@@ -68,6 +68,12 @@ function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', 
 }
 
 $(document).ready(function () {
+    if (typeof L === 'undefined') {
+        console.error("Leaflet no está cargado.");
+        return;
+    }
+
+    initBasicMap();
     //tercera columna
     const robotImg = document.getElementById("robotimg");
     const videoRobot = document.getElementById("video-container");
@@ -150,3 +156,73 @@ $(document).ready(function () {
 
     })
 });
+function initBasicMap() {
+    const defaultLat = -12.0464;
+    const defaultLng = -77.0428;
+    const defaultZoom = 15;
+
+    const mapElement = document.getElementById("map");
+
+    if (!mapElement) {
+        console.error("No se encontró el elemento con ID 'map'.");
+        return;
+    }
+
+    const map = L.map("map", {
+        center: [defaultLat, defaultLng],
+        zoom: defaultZoom,
+        zoomControl: false
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 50
+    }).addTo(map);
+
+    L.control.zoom({
+        position: 'topright'
+    }).addTo(map);
+
+    // Icono azul personalizado
+    const userIcon = L.icon({
+        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    let userMarker = null;
+
+    // Ver si el navegador soporta geolocalización
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+            function (position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                if (!userMarker) {
+                    // Crear el marcador por primera vez
+                    userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+                    userMarker.bindPopup("Tu ubicación actual").openPopup();
+                    map.setView([lat, lng], defaultZoom);
+                } else {
+                    // Actualizar posición
+                    userMarker.setLatLng([lat, lng]);
+                }
+
+            },
+            function (error) {
+                console.warn("No se pudo obtener la ubicación en tiempo real:", error);
+                Swal.fire("Error", "No se pudo acceder a tu ubicación. Verifica los permisos del navegador.", "error");
+            },
+            {
+                enableHighAccuracy: true,
+                maximumAge: 10000,
+                timeout: 10000
+            }
+        );
+    } else {
+        Swal.fire("Geolocalización no disponible", "Tu navegador no soporta geolocalización", "warning");
+    }
+}

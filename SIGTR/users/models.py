@@ -38,7 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     email = models.EmailField(unique=True)
-    username = models.CharField(max_length=150, unique=True)
+    username = models.CharField(max_length=150, unique=True) # va a jalar de la bd esto, obtener los valores de la bd
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
     role = models.CharField(max_length=10, choices=ROLES, default='client')
