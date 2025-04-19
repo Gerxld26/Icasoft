@@ -9,11 +9,14 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 from decouple import config
+from pathlib import Path
+import logging
 
 from django.contrib.messages import constants as messages
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 MESSAGE_TAGS = {
     messages.DEBUG: 'debug',
@@ -145,8 +148,6 @@ LOGIN_REDIRECT_URL = "/"
 
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 

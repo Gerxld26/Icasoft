@@ -1,4 +1,3 @@
-
 {% extends "dashboard/base_dashboard.html" %}
 {% load static %}
 {% block title %}Solicitar Asistencia Técnica{% endblock %}
@@ -28,7 +27,7 @@
             </div>
             <small class="form-text text-muted">Ingresa una dirección o usa tu ubicación actual</small>
         </div>
-
+        
         <!-- Mostrar Técnicos Disponibles -->
         <div class="mb-3">
             <label for="technician">Selecciona un Técnico:</label>
@@ -36,10 +35,8 @@
                 <select name="technician" id="technician" class="form-control">
                     <option value="">-- Elige un técnico --</option>
                     {% for technician in technicians %}
-                    <option value="{{ technician.technician.id }}" {% if not technician.is_nearby %}disabled="disabled"
-                        {% endif %}>
-                        {{ technician.technician.username }} - {{ technician.distance }} km - {{
-                        technician.district_name }}
+                    <option value="{{ technician.technician.id }}" {% if not technician.is_nearby %}disabled="disabled"{% endif %}>
+                        {{ technician.technician.username }} - {{ technician.distance }} km - {{ technician.district_name }}
                         {% if not technician.is_nearby %}(demasiado lejos){% endif %}
                     </option>
                     {% empty %}
@@ -49,8 +46,7 @@
             </div>
             <div id="no-nearby-technicians" class="alert alert-danger mt-2 d-none">
                 <i class="fas fa-exclamation-triangle me-2"></i>
-                No hay técnicos disponibles en tu zona (dentro de {{ max_distance }} km). Por favor, ajusta tu ubicación
-                o contacta al soporte.
+                No hay técnicos disponibles en tu zona (dentro de {{ max_distance }} km). Por favor, ajusta tu ubicación o contacta al soporte.
             </div>
             <div id="loading-technicians" class="mt-2 d-none">
                 <div class="spinner-border spinner-border-sm text-primary" role="status">
@@ -70,8 +66,7 @@
             </div>
             <div class="card-footer bg-light d-flex justify-content-between align-items-center">
                 <small class="text-muted">
-                    <i class="fas fa-info-circle"></i> 
-                    Puedes arrastrar el marcador azul para ajustar tu ubicación.
+                    <i class="fas fa-info-circle"></i> Puedes arrastrar el marcador azul para ajustar tu ubicación.
                     Los técnicos disponibles dentro de {{ max_distance }} km se muestran como marcadores rojos.
                 </small>
                 <div>
@@ -91,8 +86,7 @@
         <!-- Límite de distancia  -->
         <div class="alert alert-info mb-3">
             <i class="fas fa-info-circle me-2"></i>
-            Solo puedes solicitar asistencia técnica si hay un técnico disponible dentro de {{ max_distance }} km de tu
-            ubicación.
+            Solo puedes solicitar asistencia técnica si hay un técnico disponible dentro de {{ max_distance }} km de tu ubicación.
         </div>
 
         <input type="hidden" id="id_latitude" name="latitude" value="-12.0464">
@@ -102,38 +96,36 @@
     </form>
 </div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
 <style>
     #map {
-        z-index: 1;
-        background-color: #f8f9fa;
-        min-height: 400px;
+        z-index: 1; 
+        background-color: #f8f9fa; 
+        min-height: 400px; 
     }
-
     .leaflet-container {
         height: 400px;
         width: 100%;
     }
-
+    
     option:disabled {
         color: #dc3545;
         font-style: italic;
         background-color: #f8d7da;
     }
-
+    
     .radius-circle {
         stroke-dasharray: 5, 5;
         stroke-width: 2;
     }
 </style>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Cargar JavaScript de Leaflet después del CSS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'tickets/request.js' %}" defer></script>
 
-<script src="{% static 'tickets/request.js' %}"></script>
 {% endblock %}

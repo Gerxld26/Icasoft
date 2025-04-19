@@ -4,6 +4,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    window.ACTION_URLS = {
+
+        diagnosis_data: "/dashboard/client/diagnosis-data/",
+        comparison: "{% url 'client_comparison' %}",
+        defender_status: "{% url 'defender_status_api' %}"
+    };
+</script>
 
 <!--MODDAL ASISTENCIA TÉCNICA-->
 <div id="modalAsistencia" class="modal">
@@ -115,77 +123,145 @@
     <div class="modal-content">
         <div class="headerModal">
             <span id="closeModalDiagn" class="close">&times;</span>
-            <!-- <div class="textDiagnostico">DIAGNÓSTICO</div> -->
+            <div class="textHW">DIAGNÓSTICO DEL SISTEMA</div>
         </div>
         <div class="contentData">
+            <!-- Tipo de análisis -->
+            <div class="tipoAnalisis">
+                <div class="textHW">TIPO DE DIAGNÓSTICO</div>
+                <div class="cardComparacionHW">
+                    <div class="componentesHW">
+                        <div class="selectTipoDiagnostico">
+                            <select id="scan-type" class="selectDiagnostico">
+                                <option value="QuickScan" selected>Escaneo Rápido</option>
+                                <option value="FullScan">Escaneo Completo</option>
+                                <option value="CustomScan">Escaneo Personalizado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="componentesHW" id="custom-scan-options" style="display: none;">
+                        <div class="textComponente">Ruta personalizada:</div>
+                        <div class="resultComponente">
+                            <input type="text" id="custom-scan-path" class="inputRuta" placeholder="C:\Carpeta">
+                        </div>
+                    </div>
+                    <div class="componentesHW">
+                        <button id="iniciar-diagnostico" class="botonIniciar">
+                            <i class="fa-solid fa-play"></i> INICIAR DIAGNÓSTICO
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progreso del análisis -->
+            <div class="progresoAnalisis" style="display: none;">
+                <div class="textHW">PROGRESO DEL DIAGNÓSTICO</div>
+                <div class="cardComparacionHW">
+                    <div class="componentesHW">
+                        <div class="textComponente">Estado:</div>
+                        <div class="resultComponente" id="estado-diagnostico">Analizando sistema...</div>
+                    </div>
+                    <div class="componentesHW">
+                        <div class="progress-bar" id="progress-bar-diagnostico">
+                            <span data-width="0%" style="width: 0%">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comparación con diagnósticos previos -->
             <div class="comparacionHW">
                 <div class="textHW">COMPARACIÓN CON DIAGNÓSTICOS PREVIOS</div>
                 <div class="cardComparacionHW">
                     <div class="componentesHW">
                         <div class="textComponente">USO DE CPU:</div>
-                        <div class="resultComponente">Disminuyó en 4.1%</div>
+                        <div class="resultComponente">Cargando datos...</div>
                     </div>
                     <div class="componentesHW">
                         <div class="textComponente">USO DE RAM:</div>
-                        <div class="resultComponente">Disminuyó en 4.1%</div>
+                        <div class="resultComponente">Cargando datos...</div>
                     </div>
                     <div class="componentesHW">
                         <div class="textComponente">USO DEL DISCO:</div>
-                        <div class="resultComponente">Disminuyó en 4.1%</div>
+                        <div class="resultComponente">Cargando datos...</div>
                     </div>
                 </div>
             </div>
-            <div class="comparacionHW">
-                <div class="textHW">ESTADO DE SEGURIDAD</div>
-                <div class="cardComparacionHW">
-                    <div class="componentesHW">
-                        <div class="textComponente">Antivirus Habilitado:</div>
-                        <div class="resultComponente">Sí</div>
-                    </div>
-                    <div class="componentesHW">
-                        <div class="textComponente">Protección en tiempo real:</div>
-                        <div class="resultComponente">Activado</div>
-                    </div>
-                    <div class="componentesHW">
-                        <div class="textComponente">Versión de firma de Antivirus:</div>
-                        <div class="resultComponente">1.427.00</div>
-                    </div>
-                </div>
-            </div>
+            
+            <!-- Análisis detallado por IA -->
             <div class="analisisIA">
-                <div class="textHW">ANÁLISIS DETALLADO POR IA <button class="btnAnalisis"><i
-                            class="fa-solid fa-eye verAnalisis"></i></button></div>
-                <!-- <div class="respuestaIA"><input class="textRespuestaIA" type="text"></div> -->
+                <div class="textHW">ANÁLISIS DETALLADO POR IA 
+                    <button class="btnAnalisis" id="btnVerAnalisisIA">
+                        <i class="fa-solid fa-eye verAnalisis"></i>
+                    </button>
+                </div>
+                <div class="cardComparacionHW" id="resultadoAnalisisIA" style="display: none;">
+                    <div class="componentesHW">
+                        <div class="textComponente">Análisis CPU:</div>
+                        <div class="resultComponente">Esperando diagnóstico completo...</div>
+                    </div>
+                    <div class="componentesHW">
+                        <div class="textComponente">Análisis RAM:</div>
+                        <div class="resultComponente">Esperando diagnóstico completo...</div>
+                    </div>
+                    <div class="componentesHW">
+                        <div class="textComponente">Análisis Disco:</div>
+                        <div class="resultComponente">Esperando diagnóstico completo...</div>
+                    </div>
+                    <div class="componentesHW">
+                        <div class="textComponente">Análisis Seguridad:</div>
+                        <div class="resultComponente">Esperando diagnóstico completo...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!--MODAL ANTIVIRUS-->
-<div id="modalAntivirus" class="modal">
-    <div class="modal-content">
-        <div class="headerModal">
+<div id="modalAntivirus" class="modal antivirus-modal">
+    <div class="modal-content antivirus-modal-content">
+        <div class="headerModal antivirus-header">
             <span id="closeModalAnt" class="close">&times;</span>
-        </div>
-        <div class="contentDataAnt">
             <div class="textHW">ESTADO DE SEGURIDAD</div>
-            <div class="antivirusHab">
-                <div>Anitivirus habilitado:</div>
-                <div>Sí</div>
+        </div>
+        <div class="contentDataAnt antivirus-content">
+      
+            
+            <div class="antivirus-detalles">
+                <div class="antivirus-info">
+                    <div>Antivirus habilitado:</div>
+                    <div id="antivirusHabilitado">-</div>
+                </div>
+                <div class="antivirus-info">
+                    <div>Protección en tiempo real:</div>
+                    <div id="proteccionTiempoReal">-</div>
+                </div>
+                <div class="antivirus-info">
+                    <div>Versión de Antivirus:</div>
+                    <div id="versionAntivirus">-</div>
+                </div>
             </div>
-            <div class="protTiempo">
-                <div>Protección en tiempo real:</div>
-                <div>Activado</div>
-            </div>
-            <div class="version">
-                <div>VERSIÓN DE FIRMA DE ANTIVIRUS:</div>
-                <div>1.427.00</div>
+
+            <div class="antivirus-analisis">
+                <div class="analisis-componente">
+                    <div class="titulo">Estado de Protección</div>
+                    <div id="estadoProteccion" class="contenido">-</div>
+                </div>
+                <div class="analisis-componente">
+                    <div class="titulo">Últimas Amenazas</div>
+                    <div id="ultimasAmenazas" class="contenido">-</div>
+                </div>
+                <div class="analisis-componente">
+                    <div class="titulo">Recomendaciones</div>
+                    <div id="recomendacionesSeguridad" class="contenido">-</div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- MODAL MANTENIMIENTO MEJORADO -->
+<!-- MODAL MANTENIMIENTO  -->
 <div id="modalMantenimiento" class="modal">
     <div class="modal-content">
         <div class="headerModal">
@@ -354,7 +430,21 @@
         </div>
     </div>
 </div>
-
+<!--MODAL HISTORIAL-->
+<div id="modalHistorial" class="modal historial-modal">
+    <div class="modal-content historial-modal-content">
+        <div class="headerModal historial-header">
+            <span id="closeModalHist" class="close">&times;</span>
+            <div class="textHW">HISTORIAL DE DIAGNÓSTICOS</div>
+        </div>
+        <div class="contentDataHistorial historial-content">
+            
+            <div id="contenidoHistorial" class="tabla-contenedor">
+                <!-- Aquí se insertará la tabla de historial -->
+            </div>
+        </div>
+    </div>
+</div>
 <!--MODAL RESPALDO Y RESTAURACIÓN-->
 
 <!--MODAL CENTRO DE APRENDIZAJE-->
