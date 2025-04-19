@@ -233,7 +233,7 @@ body {
     padding: 15px 15px 15px 15px;
     width: 100%;
     text-align: center;
-    font-size: 30px;
+    font-size: medium;
     text-shadow: 5px 1px 8px rgb(3, 101, 140);
     background: var(--fondoDiv);
 }
@@ -256,8 +256,8 @@ body {
     text-align: center;
     display: grid;
     grid-template-areas: "iconLogin textLogin";
+    grid-template-columns: auto;
     width: 100%;
-    font-size: 20px;
     cursor: pointer;
 }
 
@@ -320,9 +320,8 @@ body {
     border-radius: 30px;
     align-content: center;
     width: 60%;
-    padding-top: 10px;
-    padding-bottom: 10px;
     text-align: center;
+    padding-bottom: 10px;
 }
 
 .nombreCatalogo {
@@ -366,20 +365,19 @@ body {
 
 .botonesSoporte {
     grid-area: botonesSoporte;
-    justify-items: center;
+    align-items: center;
     display: flex;
-    flex-direction: column;
 }
 
-.botResp {
+/* .botResp {
     grid-area: botResp;
-}
+} */
 
 .botCentro {
     grid-area: botCentro;
+    width: 100%;
 }
 
-.botResp,
 .botCentro {
     border: 2px solid rgb(42, 76, 89);
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
@@ -501,15 +499,19 @@ body {
 
 .vozIA {
     grid-area: vozIA;
+    display: flex;
+    gap:20px;
+    align-items: center;
+    justify-content: center;
     width: 80%;
-    padding: 10px 0px 10px 0px;
-    text-align: center;
+    height: 100%;
     border: 2px solid rgb(42, 76, 89);
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
-    box-shadow: 5px 10px 10px -8px;
+    box-shadow: 5px 10px 10px -8px rgb(3, 101, 140);
     border-radius: 30px;
-    color: rgb(3, 101, 140);
+    color: white;
     cursor: pointer;
+    font-size: large;
 }
 
 .vozIA:hover {
@@ -835,7 +837,7 @@ body {
 
     /*segunda columna*/
     .asistente {
-        grid-template-rows: 15% auto auto auto auto !important;
+        grid-template-rows: 15% 8% auto auto 10% !important;
         gap: 10px;
         width: 100%;
     }
@@ -855,6 +857,7 @@ body {
 
     .botonAsist {
         align-items: center;
+        height: 100%;
     }
 
     .monitoreo,
@@ -866,7 +869,8 @@ body {
         display: flex;
         flex-direction: column;
         gap: 10px;
-        height: max-content;
+        height: 90%;
+        justify-content: center;
     }
 
     #btnMonitoreo {
@@ -893,18 +897,19 @@ body {
     }
 
     .botonesSoporte {
-        gap: 10px;
         width: 100%;
+        align-items: flex-start;
     }
 
-    .botResp,
     .botCentro {
         padding: 0px;
         margin-top: 0%;
         margin-bottom: 0%;
-        height: 40px;
+        height: 100%;
     }
+    .catVerComp{
 
+    }
     /*tercera columna:*/
     .asistenteSoporte {
         grid-template-areas:
@@ -966,11 +971,14 @@ body {
     }
 
     .microfono {
-        border: 1px solid rgb(72, 100, 128);
-        padding: 8px;
+        border: 3px solid rgb(42, 76, 89);
+        padding: 8px 10px 8px 10px;
         border-radius: 100%;
     }
+    .microfono:hover{
+        background-color: #007ea7;
 
+    }
     /*cuarta columna*/
     .analisisCompleto {
         width: 100%;

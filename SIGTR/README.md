@@ -43,10 +43,6 @@ templates: se ubica los htmls.
 
 ## DATOS LIBRERÍA:
 el cpuinfo trae toda la data referente.
-## DATOS CSS: 
-display:
-grid: ancho fijo
-flex: sin ancho fijo
 
 ##FLUJO:
 del template a las views, de ahí urls, 

@@ -121,8 +121,7 @@ def client_monitoring_ram(request):
     """
     Renderiza la página de monitoreo de RAM.
     """
-    # return render(request, 'dashboard/client/monitoring/ram.html')
-    return render(request, 'dashboard/client/inicio.html')
+    return render(request, 'dashboard/client/monitoring/ram.html')
 # Vista para Disco
 @login_required
 @user_passes_test(is_client)
@@ -549,7 +548,7 @@ def defender_status_api(request):
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
     
-#MANTENIMEINTO
+#MANTENIMIENTO
 
 @login_required
 @user_passes_test(is_client)
@@ -579,12 +578,10 @@ def client_clear_space(request):
             os.path.expanduser('~/.cache'), 
         ]
 
-       
         total_deleted = 0
         total_failed = 0
         failed_files = []  
 
-      
         for temp_dir in temp_directories:
             if os.path.exists(temp_dir):
                 for root, dirs, files in os.walk(temp_dir):
@@ -600,11 +597,10 @@ def client_clear_space(request):
 
 
         message = (
-            f"Espacio liberado exitosamente. Archivos eliminados: {total_deleted}. "
-            f"Archivos no eliminados: {total_failed}."
+            f"Archivos eliminados: {total_deleted}. <br>"
         )
         if total_failed > 0:
-            message += " Algunos archivos no pudieron eliminarse porque están en uso."
+            message += f"Archivos en uso no eliminados: {total_failed}."
 
         return JsonResponse({"status": "success", "message": message, "failed_files": failed_files})
 

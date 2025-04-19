@@ -1,16 +1,9 @@
 {% load static %}
+{% block content %}
 <link rel="stylesheet" href="{% static 'dashboard/css/modalInicio.css' %}">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    window.ACTION_URLS = {
-        cleanup: "{% url 'client_clear_space' %}",
-        update: "{% url 'client_update_software' %}",
-        defrag: "{% url 'client_defragment_disk' %}",
-        repair: "{% url 'client_repair_disk' %}"
-    };
-</script>
 
 <!--MODDAL ASISTENCIA TÉCNICA-->
 <div id="modalAsistencia" class="modal">
@@ -20,34 +13,38 @@
             <div class="textHW">¿Necesitas asistencia técnica?</div>
         </div>
         <div class="contentData">
-            <div class="asistencia1">
+            <div class="asistencia1" id="problemaDescript">
                 <div class="textDescrip">Describe el problema</div>
                 <div class="inputDescrip">
                     <input type="text" class="textAsistencia">
                 </div>
             </div>
-            <div class="asistencia1">
+            <div class="asistencia1" id="contentDireccion">
                 <div class="textDescrip">Dirección para la asistencia</div>
-                <div class="inputDescrip"><input type="text" class="textAsistencia"></div>
+                <div class="inputDescrip">
+                    <input type="text" class="textAsistencia" id="inputDireccion">
+                    <button class="btnUbiCliente">
+                        <div><i class="fa-solid fa-location-dot"></i></div>
+                        <div>Mi ubicación</div>
+                    </button>
+                </div>
             </div>
             <div class="asistencia2">
                 <div class="textDescrip">Técnicos cerca a tu dirección:</div>
                 <div class="inputDescrip">
-                    <select name="" id="" class="selectTecnico">
+                    <!-- <select name="" id="" class="selectTecnico">
                         <option value="">Selecciona un técnico</option>
                         <option value="">Juan</option>
-                    </select>
+                    </select> -->
                 </div>
             </div>
             <div class="asistencia4">
                 <div>
-                    <iframe class="mapaUbiCliente"
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3870.2186740547177!2d-75.7278443!3d-14.0642606!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9110e2bd0f99f96f%3A0x21a304d4341e31e2!2sIcasoft%20i21!5e0!3m2!1ses-419!2spe!4v1742567745922!5m2!1ses-419!2spe"
-                        width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
-                        referrerpolicy="no-referrer-when-downgrade">
-                    </iframe>
+                    <div id="mapAsistencia"></div>
                 </div>
-                <div style="font-style: italic; color: beige;">* Deslice la localización a la dirección que desee la asistencia *</div>
+
+                <div style="font-style: italic; color: beige;">* Deslice la localización a la dirección que desee la
+                    asistencia *</div>
             </div>
             <div class="asistencia5">
                 <button class="btnAsistencia">SOLICITAR</button>
@@ -198,10 +195,10 @@
         <div class="contentData">
             <div class="cardDataSuperior">
                 <div class="cardData" id="cardData1">
-                    <div class="textcardData">Liberar Espacio</div>
+                    <div class="textHW">Liberar Espacio</div>
                     <div class="contentCardData">
                         Elimina archivos temporales para liberar espacio en disco.
-                       
+
                     </div>
                     <div class="btnCardData">
                         <button class="btnCardDataFunction" data-action="cleanup">
@@ -210,7 +207,7 @@
                     </div>
                 </div>
                 <div class="cardData" id="cardData2">
-                    <div class="textcardData">Actualizar Software</div>
+                    <div class="textHW">Actualizar Software</div>
                     <div class="contentCardData">
                         Instala las actualizaciones más recientes de software.
                     </div>
@@ -223,7 +220,7 @@
             </div>
             <div class="cardDataInferior">
                 <div class="cardData" id="cardData3">
-                    <div class="textcardData">Desfragmentar Disco</div>
+                    <div class="textHW">Desfragmentar Disco</div>
                     <div class="contentCardData">
                         Organiza los datos en tu disco para mejorar el rendimiento.
                     </div>
@@ -234,10 +231,10 @@
                     </div>
                 </div>
                 <div class="cardData" id="cardData4">
-                    <div class="textcardData">Reparar Disco</div>
+                    <div class="textHW">Reparar Disco</div>
                     <div class="contentCardData">
                         Busca y repara errores en el disco duro.
-                       
+
                     </div>
                     <div class="btnCardData">
                         <button class="btnCardDataFunction" data-action="repair">
@@ -249,14 +246,13 @@
 
             <!-- Sección de resultados -->
             <div id="mantenimientoResultado" class="resultado-success" style="display: none;">
-                <div class="headerResultado">
-                    <i class="fas fa-check-circle" style="font-size: 24px; margin-right: 10px;"></i>
-                    <div class="textHW">Resultado de la Operación</div>
-                </div>
+                <!-- <i class="fas fa-check-circle" style="font-size: 24px; margin-right: 10px;"></i> -->
                 <div class="contentResultado">
+                    <div id="iconResult"><i id="iconoType"></i></div>
                     <div id="resultadoMensaje">
                         <!-- Aquí va el mensaje del resultado -->
                     </div>
+                    <span class="closeSucessMant" id="close"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
                 </div>
             </div>
         </div>
@@ -373,16 +369,21 @@
                 <img src="{% static 'dashboard/img/consejos.png' %}" alt="" id="imgCentroAprend">
             </div>
             <div class="contentConsejos">
+                {% for video in videos %}
                 <div class="centro">
                     <div class="contentImg">
                         <i class="fa-brands fa-youtube ytCentro"></i>
                     </div>
                     <div class="contentCentro">
-                        <div class="textConsejo">Consejos de ciberseguridad...</div>
-                        <div class="contentBtnCnetro"><button class="btnCnetro">VER</button></div>
+                        <div class="textConsejo">{{ video }}</div>
+                        <!-- <div class="contentBtnCnetro"><button class="btnCnetro"
+                                onclick="{{ video.get_embed_url }}">VER</button></div> -->
                     </div>
                 </div>
-                <div class="centro">
+                {% empty %}
+                <p class="text-center text-muted">No hay videos disponibles o no se encontraron resultados.</p>
+                {% endfor %}
+                <!-- <div class="centro">
                     <div class="contentImg">
                         <i class="fa-brands fa-youtube ytCentro"></i>
                     </div>
@@ -399,10 +400,10 @@
                         <div class="textConsejo">Para desarmar tu laptop...</div>
                         <div class="contentBtnCnetro"><button class="btnCnetro">VER</button></div>
                     </div>
-                </div>
+                </div> -->
 
             </div>
         </div>
     </div>
 </div>
-
+{% endblock %}

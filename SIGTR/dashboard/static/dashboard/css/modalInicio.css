@@ -310,37 +310,46 @@
 
 /*MODAL ANTIVIRUS*/
 /*MODAL MANTENIMIENTO*/
+#modalMantenimiento .modal-content {
+    display: grid;
+    grid-template-areas:
+        "headerModal"
+        "contentData";
+    gap: 20px;
+    grid-auto-rows: 10% auto;
+}
 #modalMantenimiento .modal-content .contentData {
     display: grid;
     grid-template-areas:
         "cardDataSuperior"
         "cardDataInferior";
     gap: 20px;
+    height: 100%;
 }
 
 #modalMantenimiento .headerModal {
     margin-bottom: 10px;
 }
 
-.cardDataSuperior {
-    display: grid;
-    grid-template-areas:
-        "cardData1 cardData2";
-}
-
-.cardDataInferior {
-    display: grid;
-    grid-template-areas:
-        "cardData3 cardData4";
-}
-
 .cardDataSuperior,
 .cardDataInferior {
     gap: 20px;
+    display: grid;
+    grid-template-areas:
+        "cardData cardData";
     justify-items: center;
     text-align: center;
+    align-items: center;
 }
+#modalMantenimiento .headerModal .textHW{
+    font-size: xx-large;
+}
+#modalMantenimiento .textHW{
+    font-size: x-large;
+}
+#modalMantenimiento .contentCardData{
 
+}
 #cardData1,
 #cardData2,
 #cardData3,
@@ -349,16 +358,15 @@
     border-radius: 30px;
     padding: 10px;
     width: 300px;
-    height: 130px;
-    box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
+    height: 80%;
     border: 3px solid rgb(3, 101, 140);
+    box-shadow: -3px 4px 20px 5px rgba(0, 0, 0, 0.5);
 }
 
 #cardData1 .btnCardData button {
     background-color: rgb(225, 215, 33);
     color: black;
 }
-
 #cardData2 .btnCardData button {
     background-color: rgb(11, 40, 184);
     color: rgb(255, 255, 255);
@@ -373,7 +381,26 @@
     background-color: rgb(184, 11, 11);
     color: rgb(255, 255, 255);
 }
-
+#cardData1 button:hover{
+    box-shadow: 5px 5px 10px -3px  rgb(225, 215, 33);
+    background-color: white;
+    color: rgb(75, 71, 1);
+}
+#cardData2 button:hover{
+    box-shadow: 5px 5px 10px -3px  rgb(11, 40, 184);
+    background-color: white;
+    color: rgb(11, 40, 184);
+}
+#cardData3 button:hover{
+    box-shadow: 5px 5px 10px -3px  rgb(4, 169, 177);
+    background-color: white;
+    color: rgb(2, 96, 101);
+}
+#cardData4 button:hover{
+    box-shadow: 5px 5px 10px -3px  rgb(184, 11, 11);
+    background-color: white;
+    color:  rgb(184, 11, 11);
+}
 .btnCardData button {
     cursor: pointer;
     border: none;
@@ -385,60 +412,63 @@
     padding: 10px;
     width: 60%;
 }
-/*Parte de Geral*/
-/* Estilos adicionales para la nueva sección de resultado */
+/* sección de resultados */
 #mantenimientoResultado {
-    margin-top: 20px;
     border-radius: 15px;
     width: 100%;
     overflow: hidden;
     background-color: rgba(25, 33, 41, 0.5);
-    border: 2px solid #0d6efd;
+    display: grid;
 }
 
 /* Para resultados exitosos */
 #mantenimientoResultado.resultado-success {
     border: 2px solid #198754;
+    #iconoType{
+        color:#198754;
+    }
 }
 
 /* Para advertencias */
 #mantenimientoResultado.resultado-warning {
     border: 2px solid #ffc107;
+    #iconoType{
+        color:#ffc107;
+    }
 }
 
 /* Para errores */
 #mantenimientoResultado.resultado-error {
     border: 2px solid #dc3545;
+    #iconoType{
+        color:#dc3545;
+    }
 }
 
 /* Para resultados normales */
 #mantenimientoResultado.resultado-info {
     border: 2px solid #0dcaf0;
-}
-
-.headerResultado {
-    padding: 10px 15px;
-    background-color: rgba(3, 101, 140, 0.2);
-    display: flex;
-    align-items: center;
-}
-
-.resultadoTitle {
-    font-size: 20px !important;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    #iconoType{
+        color:#0dcaf0;
+    }
 }
 
 .contentResultado {
-    padding: 15px;
+    display: grid;
+    grid-template-areas: "iconResult resultadoMensaje closeSucessMant";
+    grid-template-columns: 10% auto 10%;
+    height: 100%;
+    align-items: center;
+    justify-items: center;
 }
 
 .resultadoMensaje {
     font-size: 16px;
     line-height: 1.5;
 }
-
+#iconoType{
+    font-size: 30px;
+}
 /* Estilos para la nueva información en las tarjetas */
 .cardDataInfo {
     margin-top: 8px;
@@ -457,58 +487,6 @@
     font-weight: bold;
 }
 
-/* Estilos para los estados de resultado */
-#mantenimientoResultado.resultado-success .headerResultado {
-    background-color: rgba(40, 167, 69, 0.2);
-}
-
-#mantenimientoResultado.resultado-warning .headerResultado {
-    background-color: rgba(255, 193, 7, 0.2);
-}
-
-#mantenimientoResultado.resultado-error .headerResultado {
-    background-color: rgba(220, 53, 69, 0.2);
-}
-
-/* Mejoras a los botones existentes */
-.btnCardDataFunction {
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.btnCardDataFunction:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.btnCardDataFunction:active {
-    transform: translateY(0);
-}
-
-/* Efecto de onda al hacer clic */
-.btnCardDataFunction::after {
-    content: '';
-    display: block;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
-    background-repeat: no-repeat;
-    background-position: 50%;
-    transform: scale(10, 10);
-    opacity: 0;
-    transition: transform .3s, opacity .5s;
-}
-
-.btnCardDataFunction:active::after {
-    transform: scale(0, 0);
-    opacity: .3;
-    transition: 0s;
-}
 
 /* Estilos para el spinner y animaciones */
 .spinner {
@@ -780,17 +758,39 @@
 .asistencia2 .inputDescrip {
     width: 100%;
 }
-
+#contentDireccion .inputDescrip{
+    width: 100%;
+    height: 40px;
+    display: grid;
+    grid-template-areas: "textAsistencia btnUbiCliente";
+    grid-template-columns: 80% auto;
+    border-radius: 30px;
+    box-shadow: 5px 10px 10px -8px rgb(3, 101, 140);
+}
+#contentDireccion .textAsistencia{
+    border-top-left-radius: 30px;
+    border-bottom-left-radius: 30px;
+}
+.btnUbiCliente{
+    display: flex;
+    align-items: center;
+    gap:10px;
+    border-top-right-radius: 30px;
+    border-bottom-right-radius: 30px;
+    justify-content: center;
+    background-color: rgb(3 140 99);
+    color: white;
+    cursor: pointer;
+}
 .textDescrip {
     font-size: 20px;
     display: grid;
     align-items: center;
 }
 
-.textAsistencia {
+#problemaDescript .textAsistencia {
     width: 100%;
     border-radius: 30px;
-    height: 30px;
     box-shadow: 5px 10px 10px -8px rgb(3, 101, 140);
 }
 
@@ -815,8 +815,13 @@
         width: 100%;
         height: 50px;
 }*/
-.mapaUbiCliente {
+.asistencia4{
+
+}
+#mapAsistencia {
     border-radius: 20px;
+    width: 100%;
+    height: 150px;
 }
 
 @media (max-width: 480px) {

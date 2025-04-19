@@ -74,6 +74,7 @@ $(document).ready(function () {
     }
 
     initBasicMap();
+    initMapAsistencia();
     //tercera columna
     const robotImg = document.getElementById("robotimg");
     const videoRobot = document.getElementById("video-container");
@@ -161,26 +162,19 @@ function initBasicMap() {
     const defaultLng = -77.0428;
     const defaultZoom = 15;
 
-    const mapElement = document.getElementById("map");
-
-    if (!mapElement) {
-        console.error("No se encontró el elemento con ID 'map'.");
-        return;
-    }
-
-    const map = L.map("map", {
+    const mapInicio = L.map("map", {
         center: [defaultLat, defaultLng],
         zoom: defaultZoom,
         zoomControl: false
     });
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 50
-    }).addTo(map);
+        maxZoom: 19
+    }).addTo(mapInicio);
 
     L.control.zoom({
         position: 'topright'
-    }).addTo(map);
+    }).addTo(mapInicio);
 
     // Icono azul personalizado
     const userIcon = L.icon({
@@ -192,37 +186,33 @@ function initBasicMap() {
         shadowSize: [41, 41]
     });
 
-    let userMarker = null;
+    let marcadorUbi = null;
 
     // Ver si el navegador soporta geolocalización
-    if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(
-            function (position) {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
 
-                if (!userMarker) {
-                    // Crear el marcador por primera vez
-                    userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
-                    userMarker.bindPopup("Tu ubicación actual").openPopup();
-                    map.setView([lat, lng], defaultZoom);
-                } else {
-                    // Actualizar posición
-                    userMarker.setLatLng([lat, lng]);
-                }
+    navigator.geolocation.watchPosition(
+        function (position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
 
-            },
-            function (error) {
-                console.warn("No se pudo obtener la ubicación en tiempo real:", error);
-                Swal.fire("Error", "No se pudo acceder a tu ubicación. Verifica los permisos del navegador.", "error");
-            },
-            {
-                enableHighAccuracy: true,
-                maximumAge: 10000,
-                timeout: 10000
+            if (!marcadorUbi) {
+                // Crear el marcador por primera vez
+                marcadorUbi = L.marker([lat, lng], { icon: userIcon }).addTo(mapInicio);
+                marcadorUbi.bindPopup("Tu ubicación actual").openPopup();
+                mapInicio.setView([lat, lng], defaultZoom);
+            } else {
+                // Actualizar posición
+                marcadorUbi.setLatLng([lat, lng]);
             }
-        );
-    } else {
-        Swal.fire("Geolocalización no disponible", "Tu navegador no soporta geolocalización", "warning");
-    }
+        },
+        function (error) {
+            console.error("Error obteniendo la ubicación:", error.message);
+        },
+        {
+            enableHighAccuracy: true,
+            maximumAge: 10000,
+            timeout: 10000
+        }
+    );
+
 }
