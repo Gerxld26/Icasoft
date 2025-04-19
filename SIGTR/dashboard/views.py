@@ -549,6 +549,23 @@ def defender_status_api(request):
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
     
+#HISTORIAL DE DIAGNOSTICO
+@login_required
+@user_passes_test(is_client)
+def client_historial(request):
+    try:
+        # Obtener los últimos 10 registros de diagnóstico para el usuario actual
+        historial = Diagnosis.objects.filter(user=request.user).order_by('-timestamp')[:10].values()
+        
+        return JsonResponse({
+            'status': 'success', 
+            'historial': list(historial)
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error', 
+            'message': str(e)
+        }, status=500)    
 #MANTENIMEINTO
 
 @login_required

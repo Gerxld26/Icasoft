@@ -36,6 +36,7 @@ from .views import (
     client_maintenance,
     client_recommendations,
     client_learning_center,
+    client_historial,
 
     # Maintenance-specific views
     client_clear_space,
@@ -97,13 +98,14 @@ urlpatterns = [
 
     # Client routes
     path("client/diagnosis/", client_diagnosis, name="client_diagnosis"),  
-    path("client/diagnosis/data/", client_diagnosis_data, name="client_diagnosis_data"),
+    path("client/diagnosis-data/", client_diagnosis_data, name="client_diagnosis_data"),
     path("client/diagnosis/comparison/", client_comparison, name="client_comparison"),
     path("client/diagnosis/defender/status/", defender_status_api, name="defender_status_api"),
     path("client/maintenance/", client_maintenance, name="client_maintenance"),
     path("client/recommendations/", client_recommendations, name="client_recommendations"),
     path("client/learning-center/", client_learning_center, name="client_learning_center"),
     path("client/chat/", client_chat, name="client_chat"),
+    path("client/historial/", client_historial, name="client_historial"),
 
     # Maintenance routes
    # Mantenimiento
