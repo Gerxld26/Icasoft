@@ -40,6 +40,7 @@ function actualizarProgressBar(elemento, porcentaje) {
     }
 }
 function DiagnosticoFunction() {
+    openModalDiagnostico.style.pointerEvents = 'none';
     spanDiagnostico.style.width = '0%';
     spanDiagnostico.textContent = '0%';
     const porcentajeFinal = parseInt(spanDiagnostico.dataset.width.replace('%', ''));
@@ -47,6 +48,7 @@ function DiagnosticoFunction() {
 
     animarProgreso(spanDiagnostico, porcentajeFinal, () => {
         setTimeout(() => {
+            openModalDiagnostico.style.pointerEvents = 'auto';
             modalDiagnostico.style.display = 'flex';
             modalDiagnostico.style.fontSize = '18px';
         }, 3000);
