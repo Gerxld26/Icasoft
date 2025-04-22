@@ -83,9 +83,23 @@
 .contentDataMonitoreo {
     display: grid;
     grid-template-areas:
-        "detalleGraficoMonitoreo componentes";
+        "contentMonitoreoGrafico componentes";
     justify-items: center;
     grid-auto-columns: 50% auto;
+}
+
+.contentMonitoreoGrafico {
+    display: grid;
+    grid-template-areas:
+        "detalleGraficoMonitoreo" "coloresMonitoreo";
+}
+
+.coloresMonitoreo {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 20px;
+    font-family: "Segoe UI";
 }
 
 #donutsTickets {
@@ -116,6 +130,7 @@
         "memoriaRAM"
         "Disco";
     width: 100%;
+    gap: 10px;
 }
 
 .cpu,
@@ -126,6 +141,13 @@
         "contentCompHW contentHW";
     grid-template-columns: 30% auto;
     width: 100%;
+}
+
+#modalMonitoreo .contentCompHW {
+    background: #fafafa10;
+    backdrop-filter: blur(0.4rem);
+    -webkit-backdrop-filter: blur(0.4rem);
+    border-radius: 10px;
 }
 
 .cpu .contentHW {
@@ -254,8 +276,15 @@
 }
 
 @keyframes modalopen {
-    from {opacity: 0; transform: scale(0.8);}
-    to {opacity: 1; transform: scale(1);}
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .headerModal {
@@ -370,68 +399,30 @@
     padding-left: 15px;
 }
 
-/* Barras de progreso */
-.progress-bar {
-    width: 100%;
-    background-color: #2d2d2d;
-    border-radius: 10px;
-    overflow: hidden;
-    height: 15px;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
+/*progress bar*/
+.progress-bar-Monitoreo {
+    position: relative;
+    height: 25px;
+    width: 80%;
+    border-radius: 30px;
+    background-color: white;
+    box-shadow: 5px 5px 10px rgb(3, 101, 140);
+    text-align: center;
 }
 
-.progress-bar span {
-    display: block;
+.progress-bar-Monitoreo span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0%;
     height: 100%;
-    background: linear-gradient(90deg, #03658c 0%, #03a9f4 100%);
-    border-radius: 10px;
-    transition: width 0.5s ease;
-    text-align: center;
     color: white;
-    font-size: 12px;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* Estilos para los botones en general */
-.btnUlt {
-    background-color: #1a1a1a;
-    border: 2px solid #03658c;
-    border-radius: 15px;
-    color: white;
-    padding: 10px 20px;
-    width: 100%;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border-radius: 30px;
+    background: white;
+    transition: width .5s linear;
 }
 
-.btnUlt:hover {
-    background-color: rgba(3, 101, 140, 0.2);
-    box-shadow: 0 8px 20px rgba(3, 101, 140, 0.4);
-    transform: translateY(-5px);
-}
-
-.textDiag {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.imgDiagnostico {
-    max-width: 100%;
-    height: auto;
-    transition: all 0.3s ease;
-    border-radius: 10px;
-}
 #resultadoAnalisisIA {
     margin-top: 15px;
     transition: all 0.3s ease;
@@ -511,8 +502,15 @@
 }
 
 @keyframes modalopen {
-    from {opacity: 0; transform: scale(0.8);}
-    to {opacity: 1; transform: scale(1);}
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 /* Notificación */
@@ -546,20 +544,55 @@
 }
 
 @keyframes slideIn {
-    from {transform: translateX(100%); opacity: 0;}
-    to {transform: translateX(0); opacity: 1;}
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 @keyframes fadeOut {
-    from {transform: translateX(0); opacity: 1;}
-    to {transform: translateX(100%); opacity: 0;}
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
 }
 
 .selectTipoDiagnostico {
     width: 100%;
 }
 
+/* Barras de progreso */
+#modalDiagnostico .progress-bar-content-diag {
+    width: 100%;
+    height: 25px;
+    background-color: #2d2d2d;
+    border-radius: 10px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+    margin-top: 10px;
+    display: flex;
+}
 
+#modalDiagnostico .progress-bar-content-diag span {
+    background: linear-gradient(90deg, #03658c 0%, #03a9f4 100%);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    text-align: center;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    align-items: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
 
 /* Notificaciones */
 .notificacion {
@@ -592,13 +625,27 @@
 }
 
 @keyframes slideIn {
-    from {transform: translateX(100%); opacity: 0;}
-    to {transform: translateX(0); opacity: 1;}
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 @keyframes fadeOut {
-    from {transform: translateX(0); opacity: 1;}
-    to {transform: translateX(100%); opacity: 0;}
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
 }
 
 /* Responsive */
@@ -607,20 +654,21 @@
         width: 95%;
         padding: 15px;
     }
-    
+
     .textHW {
         font-size: 20px;
     }
-    
-    .textComponente, .resultComponente {
+
+    .textComponente,
+    .resultComponente {
         font-size: 16px;
     }
-    
+
     .componentesHW {
         flex-direction: column;
         align-items: flex-start;
     }
-    
+
     .resultComponente {
         margin-top: 5px;
         align-self: flex-end;
@@ -636,6 +684,7 @@
     gap: 20px;
     grid-auto-rows: 10% auto;
 }
+
 #modalMantenimiento .modal-content .contentData {
     display: grid;
     grid-template-areas:
@@ -659,15 +708,17 @@
     text-align: center;
     align-items: center;
 }
-#modalMantenimiento .headerModal .textHW{
+
+#modalMantenimiento .headerModal .textHW {
     font-size: xx-large;
 }
-#modalMantenimiento .textHW{
+
+#modalMantenimiento .textHW {
     font-size: x-large;
 }
-#modalMantenimiento .contentCardData{
 
-}
+#modalMantenimiento .contentCardData {}
+
 #cardData1,
 #cardData2,
 #cardData3,
@@ -685,6 +736,7 @@
     background-color: rgb(225, 215, 33);
     color: black;
 }
+
 #cardData2 .btnCardData button {
     background-color: rgb(11, 40, 184);
     color: rgb(255, 255, 255);
@@ -699,26 +751,31 @@
     background-color: rgb(184, 11, 11);
     color: rgb(255, 255, 255);
 }
-#cardData1 button:hover{
-    box-shadow: 5px 5px 10px -3px  rgb(225, 215, 33);
+
+#cardData1 button:hover {
+    box-shadow: 5px 5px 10px -3px rgb(225, 215, 33);
     background-color: white;
     color: rgb(75, 71, 1);
 }
-#cardData2 button:hover{
-    box-shadow: 5px 5px 10px -3px  rgb(11, 40, 184);
+
+#cardData2 button:hover {
+    box-shadow: 5px 5px 10px -3px rgb(11, 40, 184);
     background-color: white;
     color: rgb(11, 40, 184);
 }
-#cardData3 button:hover{
-    box-shadow: 5px 5px 10px -3px  rgb(4, 169, 177);
+
+#cardData3 button:hover {
+    box-shadow: 5px 5px 10px -3px rgb(4, 169, 177);
     background-color: white;
     color: rgb(2, 96, 101);
 }
-#cardData4 button:hover{
-    box-shadow: 5px 5px 10px -3px  rgb(184, 11, 11);
+
+#cardData4 button:hover {
+    box-shadow: 5px 5px 10px -3px rgb(184, 11, 11);
     background-color: white;
-    color:  rgb(184, 11, 11);
+    color: rgb(184, 11, 11);
 }
+
 .btnCardData button {
     cursor: pointer;
     border: none;
@@ -730,6 +787,7 @@
     padding: 10px;
     width: 60%;
 }
+
 /* sección de resultados */
 #mantenimientoResultado {
     border-radius: 15px;
@@ -742,32 +800,36 @@
 /* Para resultados exitosos */
 #mantenimientoResultado.resultado-success {
     border: 2px solid #198754;
-    #iconoType{
-        color:#198754;
+
+    #iconoType {
+        color: #198754;
     }
 }
 
 /* Para advertencias */
 #mantenimientoResultado.resultado-warning {
     border: 2px solid #ffc107;
-    #iconoType{
-        color:#ffc107;
+
+    #iconoType {
+        color: #ffc107;
     }
 }
 
 /* Para errores */
 #mantenimientoResultado.resultado-error {
     border: 2px solid #dc3545;
-    #iconoType{
-        color:#dc3545;
+
+    #iconoType {
+        color: #dc3545;
     }
 }
 
 /* Para resultados normales */
 #mantenimientoResultado.resultado-info {
     border: 2px solid #0dcaf0;
-    #iconoType{
-        color:#0dcaf0;
+
+    #iconoType {
+        color: #0dcaf0;
     }
 }
 
@@ -784,9 +846,11 @@
     font-size: 16px;
     line-height: 1.5;
 }
-#iconoType{
+
+#iconoType {
     font-size: 30px;
 }
+
 /* Estilos para la nueva información en las tarjetas */
 .cardDataInfo {
     margin-top: 8px;
@@ -818,7 +882,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .progress-indicator {
@@ -867,6 +933,7 @@
 .resultado-info .resultado-icon {
     color: #0dcaf0;
 }
+
 /** MODAL ANTIVIRUS */
 
 .antivirus-modal {
@@ -893,11 +960,13 @@
     color: #ecf0f1;
 }
 
-.antivirus-detalles, .antivirus-analisis {
+.antivirus-detalles,
+.antivirus-analisis {
     margin-top: 15px;
 }
 
-.antivirus-info, .analisis-componente {
+.antivirus-info,
+.analisis-componente {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
@@ -912,10 +981,7 @@
 }
 
 #progressBarAntivirus {
-    background-color: #34495e;
-    height: 20px;
-    border-radius: 10px;
-    overflow: hidden;
+    background-color: white;
 }
 
 #progressBarAntivirus span {
@@ -929,6 +995,7 @@
     background-color: #2ecc71 !important;
     color: white !important;
 }
+
 .antivirus-analisis ul {
     list-style-type: disc;
     padding-left: 20px;
@@ -938,6 +1005,7 @@
 .antivirus-analisis .analisis-componente .contenido {
     text-align: left;
 }
+
 /* MODAL HISTORIAL*/
 .historial-modal .tabla-contenedor {
     max-height: 400px;
@@ -956,7 +1024,8 @@
     color: white;
 }
 
-.tabla-historial th, .tabla-historial td {
+.tabla-historial th,
+.tabla-historial td {
     border: 1px solid #34495e;
     padding: 8px;
     text-align: center;
@@ -1047,6 +1116,7 @@
     display: grid;
     grid-template-areas: "headerModal" "contentData";
     gap: 10px;
+    grid-template-rows: 20% auto;
 }
 
 #modalAprendizaje .textHW {
@@ -1060,41 +1130,25 @@
     bottom: 0;
     left: 0;
     width: 55%;
-    /* ancho del borde */
     height: 2px;
-    /* el grosor del borde */
     background-color: currentColor;
-    /* Usa el color del texto o puedes cambiarlo */
 }
-
-#modalAprendizaje .contentData {
+#modalAprendizaje .contentData{
     display: grid;
-    grid-template-areas: "imgCentro contentConsejos";
-    grid-template-columns: 45% auto;
+    grid-template-areas: "contentConsejos contentConsejos contentConsejos";
+    grid-template-columns: 30%;
+    gap: 15px;
 }
 
-.imgCentro {
-    display: flex;
-    height: 100%;
-    max-height: 400px;
-    justify-content: start;
-}
-
-#imgCentroAprend {
-    height: 100%;
-}
-
-.contentConsejos {
+#modalAprendizaje .centro {
     display: grid;
-    grid-template-areas: "centro" "centro" "centro";
-}
-
-.centro {
-    display: grid;
-    grid-template-areas: "contentImg contentCentro";
-    grid-template-columns: 30% auto;
-    gap: 10px;
-}
+    grid-template-areas:
+        "contentImg"
+        "contentCentro";
+    grid-template-rows: auto;
+    align-items: start;
+    gap: 15px;
+} */
 
 #modalAprendizaje .contentImg {
     display: flex;
@@ -1102,6 +1156,7 @@
     align-items: flex-start;
     margin-top: 15px;
     height: 100%;
+    align-items: center;
 }
 
 .ytCentro {
@@ -1122,6 +1177,7 @@
     -webkit-backdrop-filter: blur(0.4rem);
     padding: 10px 15px 10px 15px;
     border-radius: 10px;
+    text-align: center;
 }
 
 .btnAsistencia,
@@ -1179,7 +1235,8 @@
 .asistencia2 .inputDescrip {
     width: 100%;
 }
-#contentDireccion .inputDescrip{
+
+#contentDireccion .inputDescrip {
     width: 100%;
     height: 40px;
     display: grid;
@@ -1188,14 +1245,16 @@
     border-radius: 30px;
     box-shadow: 5px 10px 10px -8px rgb(3, 101, 140);
 }
-#contentDireccion .textAsistencia{
+
+#contentDireccion .textAsistencia {
     border-top-left-radius: 30px;
     border-bottom-left-radius: 30px;
 }
-.btnUbiCliente{
+
+.btnUbiCliente {
     display: flex;
     align-items: center;
-    gap:10px;
+    gap: 10px;
     border-top-right-radius: 30px;
     border-bottom-right-radius: 30px;
     justify-content: center;
@@ -1203,6 +1262,7 @@
     color: white;
     cursor: pointer;
 }
+
 .textDescrip {
     font-size: 20px;
     display: grid;
@@ -1236,9 +1296,8 @@
         width: 100%;
         height: 50px;
 }*/
-.asistencia4{
+.asistencia4 {}
 
-}
 #mapAsistencia {
     border-radius: 20px;
     width: 100%;

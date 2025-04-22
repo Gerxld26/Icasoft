@@ -2,12 +2,35 @@ const modalAntivirus = document.getElementById('modalAntivirus');
 const openModalAntivirus = document.getElementById('btnAbrirModalAntivirus');
 const closeModalAntivirus = document.getElementById('closeModalAnt');
 const progressBarAnt = document.getElementById('progressBarAntivirus');
+const spanAnt = progressBarAnt.querySelector('span');
 const imgDetDiag = document.getElementById('imgAntivirusDet');
-const btnOptimizarAntivirus = document.getElementById('btnOptimizarAntivirus');
 
 const antivirusHabilitadoElement = document.getElementById('antivirusHabilitado');
 const proteccionTiempoRealElement = document.getElementById('proteccionTiempoReal');
 const versionAntivirusElement = document.getElementById('versionAntivirus');
+
+function AntivirusFunction() {
+    openModalAntivirus.style.pointerEvents = 'none';
+    spanAnt.style.width = '0%';
+    spanAnt.textContent = '0%';
+    const porcentajeFinal = parseInt(spanAnt.dataset.width.replace('%', ''));
+    const typeNotification = () => mostrarNotificacion('success', 'Análisis completo del antivirus', 4);
+
+    animarProgreso(spanAnt, porcentajeFinal, () => {
+        setTimeout(() => {
+            modalAntivirus.style.display = 'flex';
+            openModalAntivirus.style.pointerEvents = 'auto'; 
+        }, 3000);
+    }, typeNotification);
+}
+openModalAntivirus.style.cursor = 'pointer';
+openModalAntivirus.addEventListener('click', function () {
+    obtenerEstadoAntivirus();
+    AntivirusFunction();
+    imgDetDiag.style.height = '70px';
+    openModalAntivirus.style.fontSize = '18px';
+    progressBarAnt.style.display = 'flex';
+})
 
 closeModalAntivirus.addEventListener('click', function () {
     modalAntivirus.style.display = 'none';
@@ -18,20 +41,6 @@ window.addEventListener('click', function (event) {
         modalAntivirus.style.display = 'none';
     }
 });
-
-function notificacionAntivirus() {
-    let progressBar100Ant = true;
-    const spanAnt = progressBarAnt.querySelector('span');
-    const width = spanAnt.dataset.width.replace('%', '');
-    spanAnt.style.width = spanAnt.dataset.width;
-    spanAnt.innerHTML = spanAnt.dataset.width;
-    if (parseInt(width) < 100) {
-        progressBar100Ant = false;
-    }
-    if (progressBar100Ant) {
-        mostrarNotificacion('success', 'Análisis completo del antivirus', 3);
-    }
-}
 
 async function obtenerEstadoAntivirus() {
     try {
@@ -95,41 +104,42 @@ async function obtenerEstadoAntivirus() {
     }
 }
 
-btnOptimizarAntivirus.addEventListener('click', function() {
-    openModalAntivirus.style.cursor = 'pointer';
-    openModalAntivirus.addEventListener('click', function () {
-        modalAntivirus.style.display = 'flex';
-    });
-    
-    imgDetDiag.style.height = '70px';
-    openModalAntivirus.style.fontSize = '18px';
-    progressBarAnt.style.display = 'flex';
-    
-    let progress = 0;
-    const spanProgreso = progressBarAnt.querySelector('span');
-    
-    const etapas = [
-        { porcentaje: 20, mensaje: "Inicializando análisis..." },
-        { porcentaje: 40, mensaje: "Escaneando archivos del sistema..." },
-        { porcentaje: 60, mensaje: "Verificando amenazas potenciales..." },
-        { porcentaje: 80, mensaje: "Finalizando análisis de seguridad..." },
-        { porcentaje: 100, mensaje: "Análisis completado" }
-    ];
+// btnOptimizarAntivirus.addEventListener('click', function() {
+//     openModalAntivirus.style.cursor = 'pointer';
+//     openModalAntivirus.addEventListener('click', function () {
+//         modalAntivirus.style.display = 'flex';
+//     });
 
-    const interval = setInterval(() => {
-        if (progress >= 100) {
-            clearInterval(interval);
-            notificacionAntivirus();
-            obtenerEstadoAntivirus();
-            return;
-        }
+//     imgDetDiag.style.height = '70px';
+//     openModalAntivirus.style.fontSize = '18px';
+//     progressBarAnt.style.display = 'flex';
 
-        const etapaActual = etapas.find(etapa => etapa.porcentaje > progress);
-        
-        progress = etapaActual.porcentaje;
-        spanProgreso.style.width = `${progress}%`;
-        spanProgreso.textContent = `${progress}%`;
+//     let progress = 0;
+//     const spanProgreso = progressBarAnt.querySelector('span');
 
-        mostrarNotificacion('info', etapaActual.mensaje, 2);
-    }, 500);
-});
+//     const etapas = [
+//         { porcentaje: 20, mensaje: "Inicializando análisis..." },
+//         { porcentaje: 40, mensaje: "Escaneando archivos del sistema..." },
+//         { porcentaje: 60, mensaje: "Verificando amenazas potenciales..." },
+//         { porcentaje: 80, mensaje: "Finalizando análisis de seguridad..." },
+//         { porcentaje: 100, mensaje: "Análisis completado" }
+//     ];
+
+//     const interval = setInterval(() => {
+//         if (progress >= 100) {
+//             clearInterval(interval);
+//             notificacionAntivirus();
+//             obtenerEstadoAntivirus();
+//             return;
+//         }
+
+//         const etapaActual = etapas.find(etapa => etapa.porcentaje > progress);
+
+//         progress = etapaActual.porcentaje;
+//         spanProgreso.style.width = `${progress}%`;
+//         spanProgreso.textContent = `${progress}%`;
+
+//         mostrarNotificacion('info', etapaActual.mensaje, 2);
+//     }, 500);
+// });
+

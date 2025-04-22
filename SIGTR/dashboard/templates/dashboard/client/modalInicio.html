@@ -4,14 +4,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    window.ACTION_URLS = {
-
-        diagnosis_data: "/dashboard/client/diagnosis-data/",
-        comparison: "{% url 'client_comparison' %}",
-        defender_status: "{% url 'defender_status_api' %}"
-    };
-</script>
 
 <!--MODDAL ASISTENCIA TÉCNICA-->
 <div id="modalAsistencia" class="modal">
@@ -68,8 +60,15 @@
             <div class="textHW">RENDIMIENTO DEL HARDWARE</div>
         </div>
         <div class="contentDataMonitoreo">
-            <div class="detalleGraficoMonitoreo">
-                <canvas id="donutsTickets"></canvas>
+            <div class="contentMonitoreoGrafico">
+                <div class="detalleGraficoMonitoreo">
+                    <canvas id="donutsTickets"></canvas>
+                </div>
+                <div class="coloresMonitoreo">
+                    <div><i class="fa-solid fa-circle" style="color:green"></i> Óptimo</div>
+                    <div><i class="fa-solid fa-circle" style="color:orange"></i> Advertencia</div>
+                    <div><i class="fa-solid fa-circle" style="color:red"></i> Peligro</div>
+                </div>
             </div>
             <div class="componentes">
                 <div class="cpu">
@@ -123,12 +122,11 @@
     <div class="modal-content">
         <div class="headerModal">
             <span id="closeModalDiagn" class="close">&times;</span>
-            <div class="textHW">DIAGNÓSTICO DEL SISTEMA</div>
         </div>
         <div class="contentData">
             <!-- Tipo de análisis -->
             <div class="tipoAnalisis">
-                <div class="textHW">TIPO DE DIAGNÓSTICO</div>
+                <div class="textHW">DIAGNÓSTICO DEL SISTEMA</div>
                 <div class="cardComparacionHW">
                     <div class="componentesHW">
                         <div class="selectTipoDiagnostico">
@@ -162,7 +160,7 @@
                         <div class="resultComponente" id="estado-diagnostico">Analizando sistema...</div>
                     </div>
                     <div class="componentesHW">
-                        <div class="progress-bar" id="progress-bar-diagnostico">
+                        <div class="progress-bar-content-diag" id="progress-bar-diagnostico">
                             <span data-width="0%" style="width: 0%">0%</span>
                         </div>
                     </div>
@@ -170,7 +168,7 @@
             </div>
             
             <!-- Comparación con diagnósticos previos -->
-            <div class="comparacionHW">
+            <div class="comparacionHW" id="diagnosticosPrevios">
                 <div class="textHW">COMPARACIÓN CON DIAGNÓSTICOS PREVIOS</div>
                 <div class="cardComparacionHW">
                     <div class="componentesHW">
@@ -189,10 +187,11 @@
             </div>
             
             <!-- Análisis detallado por IA -->
-            <div class="analisisIA">
+            <div class="analisisIA" id="analisisisIAContent">
                 <div class="textHW">ANÁLISIS DETALLADO POR IA 
                     <button class="btnAnalisis" id="btnVerAnalisisIA">
-                        <i class="fa-solid fa-eye verAnalisis"></i>
+                        <i class="fa-solid fa-eye-slash verAnalisis"></i>
+                        <!-- <i class="fa-solid fa-eye verAnalisis"></i> -->
                     </button>
                 </div>
                 <div class="cardComparacionHW" id="resultadoAnalisisIA" style="display: none;">
@@ -454,45 +453,8 @@
             <span id="closeModalAprendizaje" class="close">&times;</span>
             <div class="textHW">CONSEJOS</div>
         </div>
-        <div class="contentData">
-            <div class="imgCentro">
-                <img src="{% static 'dashboard/img/consejos.png' %}" alt="" id="imgCentroAprend">
-            </div>
-            <div class="contentConsejos">
-                {% for video in videos %}
-                <div class="centro">
-                    <div class="contentImg">
-                        <i class="fa-brands fa-youtube ytCentro"></i>
-                    </div>
-                    <div class="contentCentro">
-                        <div class="textConsejo">{{ video }}</div>
-                        <!-- <div class="contentBtnCnetro"><button class="btnCnetro"
-                                onclick="{{ video.get_embed_url }}">VER</button></div> -->
-                    </div>
-                </div>
-                {% empty %}
-                <p class="text-center text-muted">No hay videos disponibles o no se encontraron resultados.</p>
-                {% endfor %}
-                <!-- <div class="centro">
-                    <div class="contentImg">
-                        <i class="fa-brands fa-youtube ytCentro"></i>
-                    </div>
-                    <div class="contentCentro">
-                        <div class="textConsejo">Si tu computadora suena y está muy lenta...</div>
-                        <div class="contentBtnCnetro"><button class="btnCnetro">VER</button></div>
-                    </div>
-                </div>
-                <div class="centro">
-                    <div class="contentImg">
-                        <i class="fa-brands fa-youtube ytCentro"></i>
-                    </div>
-                    <div class="contentCentro">
-                        <div class="textConsejo">Para desarmar tu laptop...</div>
-                        <div class="contentBtnCnetro"><button class="btnCnetro">VER</button></div>
-                    </div>
-                </div> -->
-
-            </div>
+        <div class="contentData" id="contentConsej">
+            <!--Contenido dinámico-->
         </div>
     </div>
 </div>

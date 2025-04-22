@@ -66,6 +66,26 @@ function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', 
         notificacionesContainer.style.display = 'none';
     });
 }
+function animarProgreso(span, porcentajeFinal, callback, typeNotification) {
+    let actual = 0;
+    const intervalo = setInterval(() => {
+        if (actual >= porcentajeFinal) {
+            clearInterval(intervalo);
+            if (typeof typeNotification === 'function') {
+                setTimeout(() => {
+                    typeNotification(); 
+                }, 1500);
+            }
+            if (typeof callback === 'function') {
+                callback(); // Se abre el modal (3s después en callback original)
+            }
+        } else {
+            actual++;
+            span.style.width = actual + '%';
+            span.textContent = actual + '%';
+        }
+    }, 20);
+}
 
 $(document).ready(function () {
     if (typeof L === 'undefined') {
@@ -109,26 +129,44 @@ $(document).ready(function () {
     $("#closeNotification").on("click", function () {
         notificacionesContainer.style.display = 'none';
     });
-
+    function animarProgreso2(span, porcentajeFinal, onComplete) {
+        let actual = 0;
+        const intervalo = setInterval(() => {
+            if (actual >= porcentajeFinal) {
+                clearInterval(intervalo);
+                onComplete(); // Notificamos que este span terminó
+            } else {
+                actual++;
+                span.style.width = actual + '%';
+                span.textContent = actual + '%';
+            }
+        }, 20); // velocidad
+    }
     btnAnalisis.addEventListener('click', function () {
         const allImgs = document.querySelectorAll('.imgDetDiag');
         const allTextsTitulo = document.getElementById('textMonitoreo');
         const imgGraficoMon = document.getElementById('imgGraficoMonitoreo');
-        const allTexts = document.querySelectorAll('.btnUlt'); //cambia el tamaño de letra de la barra de progreso
+        const allTexts = document.querySelectorAll('.btnUlt');
         const allProgress = document.querySelectorAll('.progress-bar');
-        const allSpans = document.querySelectorAll('.progress-bar span'); //Selecciona todos los elementos <span> que están dentro de un .progress-bar.
+        const allSpans = document.querySelectorAll('.progress-bar span');
 
-        let progressBar100 = true;
+        let completados = 0;
+        const totalSpans = allSpans.length;
 
         allSpans.forEach((span) => {
-            const width = span.dataset.width || '0%';
-            span.style.width = width;
-            span.innerHTML = width;
+            const final = parseInt(span.dataset.width.replace('%', '')) || 0;
 
-            const numericWidth = parseInt(width.replace('%', ''));
-            if (numericWidth < 100) {
-                progressBar100 = false;
-            }
+            animarProgreso2(span, final, () => {
+                completados++;
+                if (completados === totalSpans) {
+                    mostrarNotificacion('success', 'Análisis completo del sistema', 0);
+                    btnMonitoreoFunction.click();
+                    btnDiagnostico.click();
+                    btnOptimizarAntivirus.click();
+                    btnMantFunction.click();
+                    btnHistFunction.click();
+                }
+            });
         });
 
         allImgs.forEach((img) => {
@@ -138,6 +176,10 @@ $(document).ready(function () {
         allTextsTitulo.style.fontSize = '17px';
         allTextsTitulo.style.padding = '0';
         imgGraficoMon.style.animation = "rotarImg 1.5s linear infinite";
+        imgMant.style.display = 'none';
+        imgMantGIF.style.display = 'flex';
+        openModalMonitoreo.style.cursor = 'pointer';
+
         allTexts.forEach((btn) => {
             btn.style.fontSize = '18px';
         });
@@ -145,17 +187,7 @@ $(document).ready(function () {
         allProgress.forEach((progress) => {
             progress.style.display = 'flex';
         });
-
-        if (progressBar100) {
-            mostrarNotificacion('success', 'Análisis completo del sistema', 0);
-            btnMonitoreoFunction.click();
-            btnDiagnostico.click();
-            btnOptimizarAntivirus.click();
-            btnMantFunction.click();
-            btnHistFunction.click();
-        }
-
-    })
+    });
 });
 function initBasicMap() {
     const defaultLat = -12.0464;
@@ -216,3 +248,18 @@ function initBasicMap() {
     );
 
 }
+
+$("#textIAID").on('keypress', function (e) {
+    const textAsistente = document.getElementById('textAsistente');
+    const asistenteSoporte = document.getElementById('asistenteSoporte');
+    const vozIA = document.getElementById('vozIA');
+    if (e.which === 13) {
+        var mensaje = $(this).val().trim();
+
+        if (mensaje !== "") {
+            textAsistente.style.display = 'none';
+            asistenteSoporte.style.gridTemplateAreas = "imagenIA mensajeIA";
+            asistenteSoporte.style.gridTemplateRows = '10px auto';
+        }
+    }
+});

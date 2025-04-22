@@ -1,58 +1,82 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const modalHistorial = document.getElementById('modalHistorial');
-    const btnHistorialDerecho = document.getElementById('btnHist');
-    const btnHistorialIzquierdo = document.getElementById('btnHistFunction');
-    const closeModalHistorial = document.getElementById('closeModalHist');
-    const progressBarHistorial = document.getElementById('progressBarHistorial');
-    const contenidoHistorialElement = document.getElementById('contenidoHistorial');
+const modalHistorial = document.getElementById('modalHistorial');
+const openModalHistorial = document.getElementById('btnHist');
+const closeModalHistorial = document.getElementById('closeModalHist');
+const progressBarHistorial = document.getElementById('progressBarHistorial');
+const contenidoHistorialElement = document.getElementById('contenidoHistorial');
+const imgHist = document.getElementById('imgHistDet');
+const spanHistorial = progressBarHistorial.querySelector('span');
+modalHistorial.classList.add('modal-hidden');
 
-    modalHistorial.classList.add('modal-hidden');
 
-    closeModalHistorial.addEventListener('click', function() {
+function HistorialFunction() {
+    openModalHistorial.style.pointerEvents = 'none';
+    spanHistorial.style.width = '0%';
+    spanHistorial.textContent = '0%';
+    const porcentajeFinal = parseInt(spanHistorial.dataset.width.replace('%', ''));
+    const typeNotification = () => mostrarNotificacion('success', 'Análisis completo del historial', 6);
+
+    animarProgreso(spanHistorial, porcentajeFinal, () => {
+        setTimeout(() => {
+            openModalHistorial.style.pointerEvents = 'auto';
+            modalHistorial.style.display = 'flex';
+            modalHistorial.style.fontSize = '18px';
+        }, 3000);
+    }, typeNotification);
+}
+openModalHistorial.style.cursor = 'pointer';
+openModalHistorial.addEventListener('click', function () {
+    obtenerHistorial(); 
+    HistorialFunction();
+    imgHist.style.height = '70px';
+    progressBarHistorial.style.display = 'flex';
+
+});
+
+closeModalHistorial.addEventListener('click', function () {
+    modalHistorial.style.display = 'none';
+});
+
+window.addEventListener('click', function (event) {
+    if (event.target == modalHistorial) {
         modalHistorial.style.display = 'none';
-    });
-
-    window.addEventListener('click', function(event) {
-        if (event.target == modalHistorial) {
-            modalHistorial.style.display = 'none';
-        }
-    });
-
-    function formatearFecha(fechaString) {
-        const fecha = new Date(fechaString);
-        return fecha.toLocaleString('es-PE', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
     }
+});
 
-    async function obtenerHistorial() {
-        try {
-            const response = await fetch('/dashboard/client/historial/', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                credentials: 'same-origin'
-            });
+function formatearFecha(fechaString) {
+    const fecha = new Date(fechaString);
+    return fecha.toLocaleString('es-PE', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
 
-            if (!response.ok) {
-                throw new Error('Error al obtener el historial');
-            }
+async function obtenerHistorial() {
+    try {
+        const response = await fetch('/dashboard/client/historial/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
 
-            const data = await response.json();
+        if (!response.ok) {
+            throw new Error('Error al obtener el historial');
+        }
 
-            if (data.status === 'success') {
-                contenidoHistorialElement.innerHTML = '';
+        const data = await response.json();
 
-                const tablaHistorial = document.createElement('table');
-                tablaHistorial.className = 'tabla-historial';
-                
-                const encabezados = `
+        if (data.status === 'success') {
+            contenidoHistorialElement.innerHTML = '';
+
+            const tablaHistorial = document.createElement('table');
+            tablaHistorial.className = 'tabla-historial';
+
+            const encabezados = `
                     <thead>
                         <tr>
                             <th>Fecha</th>
@@ -62,62 +86,33 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tr>
                     </thead>
                 `;
-                tablaHistorial.innerHTML = encabezados;
+            tablaHistorial.innerHTML = encabezados;
 
-                const tbody = document.createElement('tbody');
-                data.historial.forEach(item => {
-                    const fila = document.createElement('tr');
-                    fila.innerHTML = `
+            const tbody = document.createElement('tbody');
+            data.historial.forEach(item => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
                         <td>${formatearFecha(item.timestamp)}</td>
                         <td>${item.cpu_usage}</td>
                         <td>${item.ram_percent}</td>
                         <td>${item.disk_percent}</td>
                     `;
-                    tbody.appendChild(fila);
-                });
+                tbody.appendChild(fila);
+            });
 
-                tablaHistorial.appendChild(tbody);
-                contenidoHistorialElement.appendChild(tablaHistorial);
+            tablaHistorial.appendChild(tbody);
+            contenidoHistorialElement.appendChild(tablaHistorial);
 
-                if (typeof window.mostrarNotificacion === 'function') {
-                    window.mostrarNotificacion('success', 'Historial cargado exitosamente', 2);
-                }
-            } else {
-                if (typeof window.mostrarNotificacion === 'function') {
-                    window.mostrarNotificacion('error', 'No se pudo obtener el historial', 3);
-                }
-            }
-        } catch (error) {
-            console.error('Error:', error);
+        } else {
             if (typeof window.mostrarNotificacion === 'function') {
-                window.mostrarNotificacion('error', 'Error al cargar el historial', 3);
+                window.mostrarNotificacion('error', 'No se pudo obtener el historial', 3);
             }
         }
-    }
-
-    function iniciarAnimacionBarraProgreso() {
-        let progress = 0;
-        const spanProgreso = progressBarHistorial.querySelector('span');
-        
-        const interval = setInterval(() => {
-            progress += 2;
-            spanProgreso.style.width = `${progress}%`;
-            spanProgreso.textContent = `${progress}%`;
-
-            if (progress >= 100) {
-                clearInterval(interval);
-                obtenerHistorial();
-            }
-        }, 20);
-    }
-
-    btnHistorialIzquierdo.addEventListener('click', function() {
-        iniciarAnimacionBarraProgreso();
-    });
-
-    btnHistorialDerecho.addEventListener('click', function() {
-        if (progressBarHistorial.querySelector('span').style.width === '100%') {
-            modalHistorial.style.display = 'flex';
+    } catch (error) {
+        console.error('Error:', error);
+        if (typeof window.mostrarNotificacion === 'function') {
+            window.mostrarNotificacion('error', 'Error al cargar el historial', 3);
         }
-    });
-});
+    }
+}
+

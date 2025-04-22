@@ -4,45 +4,63 @@ const actionUrls = window.ACTION_URLS = {
     defrag: "/dashboard/client/maintenance/defragment-disk/",
     repair: "/dashboard/client/maintenance/repair-disk/"
 };
-// Referencias a elementos del DOM
+
 const modalMantenimiento = document.getElementById('modalMantenimiento');
 const openModalMantenimiento = document.getElementById('btnAbrirModalMantenimiento');
 const closeModalMantenimiento = document.getElementById('closeModalMant');
 const progressBarMantenimiento = document.getElementById('progressBarMantenimiento');
-
+const spanMant = progressBarMantenimiento.querySelector('span');
 const imgMant = document.getElementById('imgMant');
 const imgMantGIF = document.getElementById('imgMantGIF');
-const btnMantFunction = document.getElementById('btnMantFunction');
-
-function notificacionMantenimiento() {
-    let progressBar100Mant = true;
-    const spanMant = progressBarMantenimiento.querySelector('span');
-    const width = spanMant.dataset.width.replace('%', '');
-    spanMant.style.width = spanMant.dataset.width;
-    spanMant.innerHTML = spanMant.dataset.width;
-
-    if (parseInt(width) < 100) {
-        progressBar100Mant = false;
-    }
-    if (progressBar100Mant) {
-        mostrarNotificacion('success', 'Análisis completo del mantenimiento', 4);
-    }
-}
 
 // Referencias a los botones de acción de mantenimiento
 const btnLiberarEspacio = document.querySelector('#cardData1 .btnCardDataFunction');
 const btnActualizarSoftware = document.querySelector('#cardData2 .btnCardDataFunction');
 const btnDesfragmentar = document.querySelector('#cardData3 .btnCardDataFunction');
 const btnReparar = document.querySelector('#cardData4 .btnCardDataFunction');
-
 let resultadoMantenimiento = document.getElementById('mantenimientoResultado');
-// Variable para almacenar el ID del intervalo del contador
 let contadorIntervalo = null;
 
+function MantenimientoFunction() {
+    openModalMantenimiento.style.pointerEvents = 'none'; //evitar que el usuario haga click en el botón
+    spanMant.style.width = '0%';
+    spanMant.textContent = '0%';
+    const porcentajeFinal = parseInt(spanMant.dataset.width.replace('%', ''));
+    const typeNotification = () => mostrarNotificacion('success', 'Análisis completo del mantenimiento', 5);
+
+    animarProgreso(spanMant, porcentajeFinal, () => {
+        setTimeout(() => {
+            modalMantenimiento.style.display = 'flex';
+            modalMantenimiento.style.fontSize = '18px';
+            openModalMantenimiento.style.pointerEvents = 'auto'; //reactivar el botón al terminar la animación
+        }, 3000);
+    }, typeNotification);
+}
+openModalMantenimiento.style.cursor = 'pointer';
+openModalMantenimiento.addEventListener('click', function () {
+    openModalMantenimiento.style.fontSize = '18px';
+    imgMant.style.display = 'none';
+    imgMantGIF.style.display = 'flex';
+    progressBarMantenimiento.style.display = 'flex';
+    MantenimientoFunction();
+})
+
+closeModalMantenimiento.addEventListener('click', function () {
+    limpiarContador();
+
+    modalMantenimiento.style.display = 'none';
+})
+
+window.addEventListener('click', function (event) {
+    if (event.target == modalMantenimiento) {
+        limpiarContador();
+        modalMantenimiento.style.display = 'none';
+    }
+});
 
 // Función para mostrar mensajes de resultado
 function mostrarResultado(mensaje, tipo = 'info') {
-    
+
     if (!resultadoMantenimiento) {
         resultadoMantenimiento = document.createElement('div');
         resultadoMantenimiento.id = 'mantenimientoResultado';
@@ -60,7 +78,7 @@ function mostrarResultado(mensaje, tipo = 'info') {
              <div id="iconResult"><i class="${icono}"></i></div>
             <div id="resultadoMensaje">${mensaje}</div>
         `;
-        
+
         const contentData = document.querySelector('#modalMantenimiento .contentData');
         contentData.appendChild(resultadoMantenimiento);
 
@@ -107,13 +125,13 @@ function mostrarCargando(boton, cargando = true) {
     if (!boton) return;
 
     if (cargando) {
-        
+
         boton.dataset.originalText = boton.innerHTML;
         boton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Procesando...`;
         boton.disabled = true;
         boton.style.opacity = '0.7';
     } else {
-        
+
         if (boton.dataset.originalText) {
             boton.innerHTML = boton.dataset.originalText;
         }
@@ -258,32 +276,6 @@ async function ejecutarAccion(accion, boton) {
         mostrarCargando(boton, false);
     }
 }
-
-btnMantFunction.addEventListener('click', function () {
-    openModalMantenimiento.style.cursor = 'pointer';
-    openModalMantenimiento.addEventListener('click', function () {
-        modalMantenimiento.style.display = 'flex';
-    })
-
-    imgMant.style.display = 'none';
-    imgMantGIF.style.display = 'flex';
-    openModalMantenimiento.style.fontSize = '18px';
-    progressBarMantenimiento.style.display = 'flex';
-    notificacionMantenimiento();
-});
-
-closeModalMantenimiento.addEventListener('click', function () {
-    limpiarContador();
-
-    modalMantenimiento.style.display = 'none';
-})
-
-window.addEventListener('click', function (event) {
-    if (event.target == modalMantenimiento) {
-        limpiarContador();
-        modalMantenimiento.style.display = 'none';
-    }
-});
 
 // Inicializar al cargar el DOM
 document.addEventListener('DOMContentLoaded', function () {

@@ -6,10 +6,9 @@ let intervalId;
 const modalMonitoreo = document.getElementById('modalMonitoreo');
 const openModalMonitoreo = document.getElementById('btnMonitoreo');
 const closeModalbtn = document.getElementById('closeModal');
-const btnMonitoreoFunction = document.getElementById('btnMonitoreioAnalisis');
 const imgGrafico = document.getElementById('imgGraficoMonitoreo');
 const progressBar = document.getElementById('progressBarMonitoreo');
-
+const spanMonitoreo = progressBar.querySelector('span');
 // Función que obtiene los datos de RAM y actualiza el progreso
 async function fetchCpuData() {
     try {
@@ -21,7 +20,6 @@ async function fetchCpuData() {
         const dataCPU = await responseCPU.json();
         const dataRAM = await responseRAM.json();
         const dataDisk = await responseDISK.json();
-
         //Barra de progreso CPU dinámico:
         const spanCPU = document.getElementById('progress-bar-cpu').querySelector('span');
         const textCPU = document.getElementById('cpu-progress-text');
@@ -34,7 +32,7 @@ async function fetchCpuData() {
         sistemaOperativoText.textContent = `En uso: ${dataRAM.used} GB`;
 
 
-        if (parseInt(dataCPU.usage) >= 0 && parseInt(dataCPU.usage) <= 15) {
+        if (parseInt(dataCPU.usage) >= 0 && parseInt(dataCPU.usage) <= 30) {
             //CPU
             spanCPU.style.width = dataCPU.usage + '%'; //el ancho de lo pintado
             spanCPU.style.paddingLeft = '30px';
@@ -42,7 +40,7 @@ async function fetchCpuData() {
             textCPU.style.color = 'green';
             spanCPU.style.backgroundColor = "green";
 
-        } else if (parseInt(dataCPU.usage) > 15 && parseInt(dataCPU.usage) <= 50) {
+        } else if (parseInt(dataCPU.usage) > 30 && parseInt(dataCPU.usage) <= 50) {
             //CPU
             textCPU.style.display = 'none'; // para que no se nota la etiqueta del centro
             spanCPU.style.width = dataCPU.usage + '%';
@@ -95,14 +93,14 @@ async function fetchCpuData() {
             const diskUsage = parseFloat(diskDetails.percent);
             const textDISKS = document.getElementById('disk-progress-text' + index);
 
-            if (diskUsage >= 0 && diskUsage <= 15) {
+            if (diskUsage >= 0 && diskUsage <= 30) {
                 diskBar.style.paddingLeft = '30px';
                 diskBar.style.width = diskUsage + '%';
                 textDISKS.textContent = diskUsage + '%';
                 textDISKS.style.color = 'green';
                 diskBar.style.backgroundColor = "green";
 
-            } else if (diskUsage > 15 && diskUsage <= 50) {
+            } else if (diskUsage > 30 && diskUsage <= 50) {
                 textDISKS.style.display = 'none';
                 diskBar.style.width = diskUsage + '%';
                 diskBar.innerHTML = diskUsage + '%';
@@ -143,39 +141,35 @@ async function fetchCpuData() {
         console.log('Error al cargar datos de la RAM: ', error);
     }
 }
-function notificacionMonitoreo() {
-    let progressBarMon = true;
-    const spanMonitoreo = progressBar.querySelector('span');
-    const width = spanMonitoreo.dataset.width.replace('%', '');
-    spanMonitoreo.style.width = spanMonitoreo.dataset.width;
-    spanMonitoreo.innerHTML = spanMonitoreo.dataset.width;
-    if (parseInt(width) < 100) {
-        progressBarMon = false;
-    }
-    if (progressBarMon) {
-        mostrarNotificacion('success', 'Análisis completo del Monitoreo del sistema', 1);
-    }
+function MonitoreoFunction() {
+    openModalMonitoreo.style.pointerEvents = 'none';
+    spanMonitoreo.style.width = '0%';
+    spanMonitoreo.textContent = '0%';
+    const porcentajeFinal = parseInt(spanMonitoreo.dataset.width.replace('%', ''));
+    const typeNotification = () => mostrarNotificacion('success', 'Análisis completo del monitoreo', 1);
+
+    animarProgreso(spanMonitoreo, porcentajeFinal, () => {
+        setTimeout(() => {
+            modalMonitoreo.style.display = 'flex';
+            openModalMonitoreo.style.pointerEvents = 'auto';
+        }, 3000);
+    }, typeNotification);
 }
 
-btnMonitoreoFunction.addEventListener('click', function () {
-    const textDivMonitoreo = document.getElementById('textMonitoreo');
+/*MODAL MONITOREO*/
+openModalMonitoreo.style.cursor = 'pointer';
+fetchCpuData();
+openModalMonitoreo.addEventListener('click', function () {
+    MonitoreoFunction();
     modalOpen = true;
-    openModalMonitoreo.style.cursor = 'pointer';
+    const textDivMonitoreo = document.getElementById('textMonitoreo');
     imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
     progressBar.style.display = 'flex';
     imgGrafico.style.height = '80px';
-    textDivMonitoreo.style.fontSize = '17px';
     textDivMonitoreo.style.padding = '0';
-    /*MODAL MONITOREO*/
-    openModalMonitoreo.addEventListener('click', function () {
-        modalMonitoreo.style.display = 'flex';
-        modalOpen = true;
-        fetchCpuData();
-        intervalId = setInterval(fetchCpuData, 5000);
-    });
-    fetchCpuData();
-    notificacionMonitoreo();
+    intervalId = setInterval(fetchCpuData, 5000);
 });
+
 
 closeModalbtn.addEventListener('click', function () {
     modalMonitoreo.style.display = 'none';

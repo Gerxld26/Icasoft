@@ -140,13 +140,6 @@ def client_monitoring_gpu(request):
     """
     return render(request, 'dashboard/client/monitoring/gpu.html')
 
-# Vista para el centro de aprendizaje
-@login_required
-@user_passes_test(is_client)
-def client_learning_center(request):
-    return render(request, "dashboard/client/learning_center.html")
-
-
 # Vista para diagnóstico
 @login_required
 @user_passes_test(is_client)
@@ -243,6 +236,7 @@ def cpu_monitoring_data(request):
         logger.error(f"Error en cpu_monitoring_data: {e}")
         return JsonResponse({"error": str(e)}, status=500)
 
+
 @login_required
 @user_passes_test(lambda user: user.role == 'client')
 def ram_monitoring_data(request):
@@ -290,6 +284,15 @@ def disk_monitoring_data(request):
         import psutil
         import time
 
+        def convert_bytes(size):
+            """Convierte bytes a la unidad más legible (KB, MB, GB, etc.)"""
+            units = ['B', 'KB', 'MB', 'GB', 'TB']
+            i = 0
+            while size >= 1024 and i < len(units) - 1:
+                size /= 1024.0
+                i += 1
+            return round(size, 2), units[i]
+
         # Calcular velocidades de transferencia
         if not hasattr(disk_monitoring_data, "previous_data"):
             disk_monitoring_data.previous_data = {
@@ -302,12 +305,12 @@ def disk_monitoring_data(request):
         current_time = time.time()
 
         elapsed_time = current_time - disk_monitoring_data.previous_data["timestamp"]
-        read_speed = (
+        read_speed_bytes = (
             current_data.read_bytes - disk_monitoring_data.previous_data["read_bytes"]
-        ) / elapsed_time / 1024  
-        write_speed = (
+        ) / elapsed_time
+        write_speed_bytes = (
             current_data.write_bytes - disk_monitoring_data.previous_data["write_bytes"]
-        ) / elapsed_time / 1024  
+        ) / elapsed_time
 
         disk_monitoring_data.previous_data = {
             "read_bytes": current_data.read_bytes,
@@ -315,32 +318,42 @@ def disk_monitoring_data(request):
             "timestamp": current_time,
         }
 
+        # Convertir velocidades a formato legible
+        read_speed_value, read_speed_unit = convert_bytes(read_speed_bytes)
+        write_speed_value, write_speed_unit = convert_bytes(write_speed_bytes)
+
         # Obtener información de cada disco
         partitions = psutil.disk_partitions()
-        disks = [
-            {
-                "device": partition.device,
-                "mountpoint": partition.mountpoint,
-                "fstype": partition.fstype,
-                "total": round(psutil.disk_usage(partition.mountpoint).total / (1024**3), 2),
-                "used": round(psutil.disk_usage(partition.mountpoint).used / (1024**3), 2),
-                "free": round(psutil.disk_usage(partition.mountpoint).free / (1024**3), 2),
-                "percent": psutil.disk_usage(partition.mountpoint).percent,
-            }
-            for partition in partitions
-        ]
+        disks = []
+        for partition in partitions:
+            try:
+                usage = psutil.disk_usage(partition.mountpoint)
+                total_val, total_unit = convert_bytes(usage.total)
+                used_val, used_unit = convert_bytes(usage.used)
+                free_val, free_unit = convert_bytes(usage.free)
+
+                disks.append({
+                    "device": partition.device,
+                    "mountpoint": partition.mountpoint,
+                    "fstype": partition.fstype,
+                    "total": f"{total_val} {total_unit}",
+                    "used": f"{used_val} {used_unit}",
+                    "free": f"{free_val} {free_unit}",
+                    "percent": f"{usage.percent}%",
+                })
+            except Exception as e:
+                continue  # Evita errores con montajes inaccesibles
 
         return JsonResponse(
             {
-                "read_speed": round(read_speed, 2),
-                "write_speed": round(write_speed, 2),
+                "read_speed": f"{read_speed_value} {read_speed_unit}/s",
+                "write_speed": f"{write_speed_value} {write_speed_unit}/s",
                 "disks": disks,
             }
         )
     except Exception as e:
         logger.error(f"Error en disk_monitoring_data: {e}")
         return JsonResponse({"error": str(e)}, status=500)
-
 
 @login_required
 @user_passes_test(lambda user: user.role == 'client')
@@ -859,23 +872,35 @@ def client_learning_center(request):
     Muestra los videos disponibles en el Centro de Aprendizaje con búsqueda y paginación.
     """
     query = request.GET.get('q', '')  # Obtener el término de búsqueda
-    videos = LearningVideo.objects.all()
+    videos = LearningVideo.objects.all()[:3]
 
     # Filtrar videos por título o descripción si hay una búsqueda
-    if query:
-        videos = videos.filter(
-            Q(title__icontains=query) | Q(description__icontains=query)
-        )
+    # if query:
+    #     videos = videos.filter(
+    #         Q(title__icontains=query) | Q(description__icontains=query)
+    #     )
 
     # Paginación: 6 videos por página
-    paginator = Paginator(videos, 6)
-    page_number = request.GET.get('page')
-    videos = paginator.get_page(page_number)
+    # paginator = Paginator(videos, 3)
+    # page_number = request.GET.get('page')
+    # videos = paginator.get_page(page_number)
+    video_list = [
+        {
+            'id': video.id,
+            'title': video.title,
+            'description': video.description,
+            'youtube_url': video.youtube_url,
+            'embed_url': video.get_embed_url(),
+            'created_at': video.created_at.isoformat()
+        }
+        for video in videos
+    ]
 
-    return render(request, "dashboard/client/learning_center.html", {
-        "videos": videos,
-        "query": query  
-    })
+    return JsonResponse({'videos': video_list})
+    # return render(request, "dashboard/client/inicio.html", {
+    #     "videos": videos,
+    #     # "query": query  
+    # })
 
 # Admin dashboard
 @login_required

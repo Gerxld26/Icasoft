@@ -26,18 +26,9 @@
                 <div class="contactos">
                     <div class="correo"><a href="mailto:company.icasofti21@gmail.com" class="linkCorreo">Correo</a>
                     </div>
-                    <div class="wstp"><a href=""><i class="fa-brands fa-whatsapp fa-fade iconWstp"></i></a></div>
+                    <div class="wstp"><a href="https://goo.su/V3JAvi" target="_blank"><i class="fa-brands fa-whatsapp fa-fade iconWstp"></i></a></div>
                 </div>
-                <div class="datosDesktop">
-                    <div class="datoHW">
-                        <div class="IconHW"><i class="fa-solid fa-temperature-arrow-down temperaturaCPU"></i></div>
-                        <div class="valorHW">CPU: 60°C</div>
-                    </div>
-                    <div class="datoHW">
-                        <div class="IconHW"><i class="fa-solid fa-temperature-arrow-up temperaturaRAM"></i></div>
-                        <div class="valorHW">ARCHIVOS TEMPORALES: 435 MB</div>
-                    </div>
-                </div>
+               
             </div>
             <div class="content-body">
                 <div class="primero">
@@ -67,15 +58,15 @@
                             <div class="textLogin">INICIAR SESIÓN</div>
                         </button>
                     </div>
-                    <div class="monitoreo">
-                        <button id="btnMonitoreo" class="btnUlt">
-                            <div class="textDiag" id="textMonitoreo">MONITOREO DEL SISTEMA</div>
-                            <div class="graficoMonit"><img src="{% static 'dashboard/img/monitoreo.webp' %}" alt=""
-                                    class="imgDiagnostico" id="imgGraficoMonitoreo"></div>
-                            <div class="progress-bar" id="progressBarMonitoreo">
-                                <span data-width="100%"></span>
-                            </div>
-                        </button>
+                    <div class="datosDesktop">
+                        <div class="datoHW">
+                            <div class="IconHW"><i class="fa-solid fa-temperature-arrow-down temperaturaCPU"></i></div>
+                            <div class="valorHW">CPU: 60°C</div>
+                        </div>
+                        <div class="datoHW">
+                            <div class="IconHW"><i class="fa-regular fa-file temperaturaRAM"></i></div>
+                            <div class="valorHW">ARCHIVOS TEMPORALES: 435 MB</div>
+                        </div>
                     </div>
                     <div class="recomendaciones">
                         <div class="nombreCatalogo">RECOMENDACIONES DE SOFTWARE</div>
@@ -95,8 +86,8 @@
                         <button class="botCentro" id="btnCentro">CENTRO DE APRENDIZAJES</button>
                     </div>
                 </div>
-                <div class="asistenteSoporte">
-                    <div class="nombreAsistente">
+                <div class="asistenteSoporte" id="asistenteSoporte">
+                    <div class="nombreAsistente" id="textAsistente">
                         <h2 class="spanNombreAsistente">ASISTENTE DE SOPORTE</h2>
                     </div>
                     <div class="imagenIA">
@@ -118,9 +109,9 @@
                         </audio>
                     </div>
                     <div class="mensajeIA">
-                        <input class="textIA" id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA">
+                        <input class="textIA" id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA"><i class="fa-solid fa-paper-plane enviarMessage"></i>  
                     </div>
-                    <div class="vozIA">
+                    <div class="vozIA" id="vozIA">
                         <label for="" class="textoVoz">AYÚDAME</label>
                         <i class="fa-solid fa-microphone microfono"></i>
                     </div>
@@ -134,36 +125,24 @@
                             </div>
                         </button>
                     </div>
-                    <div class="diagnostico">
-                        <button class="analisisButton" id="btnDiagnosticoDet">
-                            <div class="iconDiagnostico"><i class="fa-brands fa-searchengin fa-lg iconAnalisis"></i>
+                    <div class="monitoreo">
+                        <button id="btnMonitoreo" class="btnUlt">
+                            <div class="textDiag" id="textMonitoreo">MONITOREO DEL SISTEMA</div>
+                            <div class="graficoMonit"><img src="{% static 'dashboard/img/monitoreo.webp' %}" alt=""
+                                    class="imgDiagnostico" id="imgGraficoMonitoreo"></div>
+                            <div class="progress-bar" id="progressBarMonitoreo">
+                                <span data-width="100%"></span>
                             </div>
-                            <div class="textDiagnosticoDet" id="textPrimeroDiag">DIAGNÓSTICO</div>
                         </button>
                     </div>
-                    <div class="optimizar">
-                        <button class="analisisButton" id="btnOptimizarAntivirus">
-                            <div class="iconDiagnostico"><i class="fa-solid fa-shield-halved iconAnalisis"></i></div>
-                            <div class="textDiagnosticoDet">ANALIZAR ANTIVIRUS</div>
-                        </button>
-                    </div>
-                    <div class="mantenimiento">
-                        <button class="analisisButton" id="btnMantFunction">
-                            <div class="iconDiagnostico"><i class="fa-solid fa-gears iconAnalisis"></i></div>
-                            <div class="textDiagnosticoDet">MANTENIMIENTO</div>
-                        </button>
-                    </div>
-
-                    <div class="monitoreoSop">
-                        <button class="analisisButton" id="btnMonitoreioAnalisis">
-                            <div class="iconDiagnostico"><i class="fa-solid fa-chart-line iconAnalisis"></i></div>
-                            <div class="textDiagnosticoDet">MONITOREO DEL SISTEMA</div>
-                        </button>
-                    </div>
-                    <div class="historial">
-                        <button class="analisisButton" id="btnHistFunction">
-                            <div class="iconDiagnostico"><i class="fa-solid fa-file iconAnalisis"></i></div>
-                            <div class="textDiagnosticoDet" id="textPrimeroDiag">HISTORIAL</div>
+                    <div class="red">
+                        <button id="btnRed" class="btnUlt">
+                            <div class="textDiag">COMPROBACIÓN DE RED</div>
+                            <div class="graficoMonit"><img src="{% static 'dashboard/img/red.webp' %}" alt=""
+                                    class="imgDiagnostico" id="imgRed"></div>
+                            <div class="progress-bar" id="progressBarRed">
+                                <span data-width="100%"></span>
+                            </div>
                         </button>
                     </div>
                 </div>
