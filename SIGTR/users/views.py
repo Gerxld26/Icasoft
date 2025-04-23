@@ -9,6 +9,8 @@ from django.http import JsonResponse
 from django.middleware.csrf import get_token
 
 logger = logging.getLogger(__name__)
+def client_dashboard_inicio(request):
+    return render(request, 'users/vistaInicial.html')
 
 @require_http_methods(["GET", "POST"])
 def get_csrf_token(request):
@@ -58,6 +60,6 @@ def user_register(request):
 def user_logout(request):
     """Cerrar sesión y redirigir al login."""
     logout(request)
-    return redirect('users:login')
+    return redirect('users:client_dashboard_inicio')
 
 

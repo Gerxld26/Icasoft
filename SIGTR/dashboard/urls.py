@@ -63,8 +63,7 @@ from .views import (
     video_create,
     video_update,
     video_delete,
-    user_logout,
-    
+
     #TECH.
     tech_profile,
     tech_cases,
@@ -77,7 +76,6 @@ urlpatterns = [
     path("admin/", admin_dashboard, name="admin_dashboard"),
     path("tech/", tech_dashboard, name="tech_dashboard"),
     path("client/", client_dashboard, name="client_dashboard"),
-    path('logout/', user_logout, name='logout'),
 
     # Admin routes
     path("add-technician/", add_technician, name="add_technician"),

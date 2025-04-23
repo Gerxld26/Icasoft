@@ -1,7 +1,7 @@
 from django.http import JsonResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import logout, authenticate, login
+from django.contrib.auth import authenticate, login #
 from django.contrib import messages
 from django.db.models import Count, F, Func, Value
 from django.db.models.functions import TruncMonth
@@ -21,6 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
 from openai import OpenAI
 import psutil
+import speedtest #
 import platform
 import logging
 import time
@@ -34,13 +35,14 @@ import GPUtil
 from users.models import UserProfile
 from .forms import UserProfileForm
 from .forms import TicketStatusForm
-import speedtest
+
 from django.utils.dateparse import parse_date
 from .models import LearningVideo
 from .forms import LearningVideoForm
 from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.safestring import mark_safe
+
 from django.middleware.csrf import get_token
 
 from django.contrib.auth.decorators import login_required
@@ -104,65 +106,6 @@ def client_maintenance(request):
 def client_recommendations(request):
     return render(request, "dashboard/client/recommendations.html")
 
-
-# Vista para asistencia técnica
-@login_required
-@user_passes_test(is_client)
-def client_support(request):
-    return redirect('request_assistance') 
-
-# Vista para CPU
-@login_required
-@user_passes_test(is_client)
-def client_monitoring_cpu(request):
-    """
-    Renderiza la página de monitoreo de CPU.
-    """
-    return render(request, 'dashboard/client/monitoring/cpu.html')
-
-# Vista para RAM
-@login_required
-@user_passes_test(is_client)
-def client_monitoring_ram(request):
-    """
-    Renderiza la página de monitoreo de RAM.
-    """
-    return render(request, 'dashboard/client/monitoring/ram.html')
-# Vista para Disco
-@login_required
-@user_passes_test(is_client)
-def client_monitoring_disk(request):
-    """
-    Renderiza la página de monitoreo de Disco.
-    """
-    return render(request, 'dashboard/client/monitoring/disk.html')
-
-# Vista para GPU
-@login_required
-@user_passes_test(is_client)
-def client_monitoring_gpu(request):
-    """
-    Renderiza la página de monitoreo de GPU.
-    """
-    return render(request, 'dashboard/client/monitoring/gpu.html')
-
-# Vista para diagnóstico
-@login_required
-@user_passes_test(is_client)
-def client_diagnosis(request):
-    return render(request, "dashboard/client/diagnosis.html")
-
-
-# Vista para el Chat del Cliente
-@login_required
-@user_passes_test(is_client)
-def client_chat(request):
-    if request.method == "GET":
-
-        return render(request, "dashboard/client/client_chat.html")
-
-
-
 #View del wifi
 @require_http_methods(["GET", "POST"])
 def speed_test(request):
@@ -216,7 +159,62 @@ def speed_test(request):
             'status': 'error', 
             'message': str(e)
         }, status=500)
+    
+# Vista para asistencia técnica
+@login_required
+@user_passes_test(is_client)
+def client_support(request):
+    return redirect('request_assistance') 
 
+# Vista para CPU
+@login_required
+@user_passes_test(is_client)
+def client_monitoring_cpu(request):
+    """
+    Renderiza la página de monitoreo de CPU.
+    """
+    return render(request, 'dashboard/client/monitoring/cpu.html')
+
+# Vista para RAM
+@login_required
+@user_passes_test(is_client)
+def client_monitoring_ram(request):
+    """
+    Renderiza la página de monitoreo de RAM.
+    """
+    return render(request, 'dashboard/client/monitoring/ram.html')
+# Vista para Disco
+@login_required
+@user_passes_test(is_client)
+def client_monitoring_disk(request):
+    """
+    Renderiza la página de monitoreo de Disco.
+    """
+    return render(request, 'dashboard/client/monitoring/disk.html')
+
+# Vista para GPU
+@login_required
+@user_passes_test(is_client)
+def client_monitoring_gpu(request):
+    """
+    Renderiza la página de monitoreo de GPU.
+    """
+    return render(request, 'dashboard/client/monitoring/gpu.html')
+
+# Vista para diagnóstico
+@login_required
+@user_passes_test(is_client)
+def client_diagnosis(request):
+    return render(request, "dashboard/client/diagnosis.html")
+
+
+# Vista para el Chat del Cliente
+@login_required
+@user_passes_test(is_client)
+def client_chat(request):
+    if request.method == "GET":
+        # Renderiza la página del chat
+        return render(request, "dashboard/client/client_chat.html")
 
 
 @login_required
@@ -230,7 +228,7 @@ def cpu_monitoring_data(request):
             "speed": "N/A",
             "processes": 0,
             "threads": 0,
-            "sockets": 1, 
+            "sockets": 1,  # Valor por defecto
             "cores": 0,
             "logical_processors": 0,
             "uptime": "0:00:00",
@@ -404,7 +402,7 @@ def disk_monitoring_data(request):
                     "percent": f"{usage.percent}%",
                 })
             except Exception as e:
-                continue  
+                continue  # Evita errores con montajes inaccesibles
 
         return JsonResponse(
             {
@@ -552,7 +550,6 @@ def run_defender_scan(scan_type, custom_path=None):
 
 
 # Vista para la comparación del diagnóstico actual con diagnósticos previos
-@csrf_exempt
 @login_required
 @user_passes_test(is_client)
 def client_comparison(request):
@@ -1167,7 +1164,6 @@ def tech_cases(request):
 
 @login_required
 @user_passes_test(is_technician)
-@csrf_exempt
 def change_connection_status(request):
     tecnico = request.user.profile
     if request.method == 'POST':
@@ -1566,8 +1562,8 @@ def deactivate_user(request, user_id):
     return JsonResponse({'status': 'success', 'message': 'Usuario desactivado exitosamente.'})
 
 # Logout
-@login_required
-def user_logout(request):
-    logout(request)
-    return redirect('users:login')
+# @login_required
+# def user_logout(request):
+#     logout(request)
+#     return redirect('users:inicio')
 
