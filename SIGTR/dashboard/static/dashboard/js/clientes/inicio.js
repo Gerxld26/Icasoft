@@ -86,8 +86,15 @@ function animarProgreso(span, porcentajeFinal, callback, typeNotification) {
         }
     }, 20);
 }
+async function fecthTemp() {
+    const responseTemp = await fetch('/dashboard/client/tamano-temp/');
+    const dataTemp = await responseTemp.json();
+    archTemp = document.getElementById('archTemp');
+    archTemp.textContent = `Archivos Temporales: ${dataTemp.tamano_total}`;
+}
 
 $(document).ready(function () {
+    fecthTemp();
     if (typeof L === 'undefined') {
         console.error("Leaflet no está cargado.");
         return;
@@ -99,6 +106,7 @@ $(document).ready(function () {
     const robotImg = document.getElementById("robotimg");
     const videoRobot = document.getElementById("video-container");
     const videoRobotInput = document.getElementById("video-container2");
+    const mensajeIA = document.getElementById('mensajeIA');
     const input = document.querySelector('.textIA');
     const btnAnalisis = document.getElementById('btnAnalisiCompleto');
 
@@ -108,10 +116,15 @@ $(document).ready(function () {
         video.play();
         videoRobot.style.display = "flex";
         robotImg.style.display = "none";
+        input.style.pointerEvents = 'none';
+        mensajeIA.style.opacity = '0.4';
     });
+
     video.addEventListener('ended', function () {
         videoRobot.style.display = "none";
         robotImg.style.display = "flex";
+        input.style.pointerEvents = 'auto';
+        mensajeIA.style.opacity = '1';
     });
     input.addEventListener('input', function () {
         if (input.value.trim() !== '') {
@@ -160,8 +173,6 @@ $(document).ready(function () {
                 completados++;
                 if (completados === totalSpans) {
                     mostrarNotificacion('success', 'Análisis completo del sistema', 0);
-                    btnMonitoreoFunction.click();
-                    btnDiagnostico.click();
                     btnOptimizarAntivirus.click();
                     btnMantFunction.click();
                     btnHistFunction.click();
@@ -253,7 +264,7 @@ $("#textIAID").on('keypress', function (e) {
     const textAsistente = document.getElementById('textAsistente');
     const asistenteSoporte = document.getElementById('asistenteSoporte');
     const vozIA = document.getElementById('vozIA');
-    if (e.which === 13) {
+    if (e.which === 13) { //si empiezas a digitar
         var mensaje = $(this).val().trim();
 
         if (mensaje !== "") {

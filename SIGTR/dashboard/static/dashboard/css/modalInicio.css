@@ -1115,10 +1115,11 @@
 #modalAprendizaje .modal-content {
     display: grid;
     grid-template-areas: "headerModal" "contentData";
-    gap: 10px;
-    grid-template-rows: 20% auto;
+    gap: 12px;
 }
-
+#modalAprendizaje .headerModal{
+    margin-bottom: 0px;
+}
 #modalAprendizaje .textHW {
     font-size: 42px;
     position: relative;
@@ -1135,26 +1136,22 @@
 }
 #modalAprendizaje .contentData{
     display: grid;
-    grid-template-areas: "contentConsejos contentConsejos contentConsejos";
-    grid-template-columns: 30%;
-    gap: 15px;
+    grid-template-areas: "contentConsejos contentConsejos" "contentConsejos contentConsejos";
+    column-gap: 15px;
+    grid-template-columns: 50%;
 }
-
-#modalAprendizaje .centro {
+.videoYT{
+    width: 100% ;
+    height: 100%;
+}
+/* #modalAprendizaje .centro {
     display: grid;
-    grid-template-areas:
-        "contentImg"
-        "contentCentro";
-    grid-template-rows: auto;
-    align-items: start;
-    gap: 15px;
-} */
+}
 
 #modalAprendizaje .contentImg {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    margin-top: 15px;
     height: 100%;
     align-items: center;
 }
@@ -1162,7 +1159,7 @@
 .ytCentro {
     font-size: 70px;
     color: red;
-}
+} */
 
 .contentCentro {
     display: grid;

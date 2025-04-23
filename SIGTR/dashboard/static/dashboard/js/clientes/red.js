@@ -5,10 +5,53 @@ document.addEventListener('DOMContentLoaded', function() {
     const redBtnIniciarTest = document.getElementById('red-btn-iniciar-test');
     const redBtnNuevaPrueba = document.getElementById('red-btn-nueva-prueba');
     const speedTestUrl = "/dashboard/speed-test/";
-    
+    const progressBarRed = document.getElementById('progressBarRed');
+    const spanRed = progressBarRed.querySelector('span');
     let testEnProgreso = false;
     let intervalId = null;
     
+    function RedFunction() {
+        btnRed.style.pointerEvents = 'none';
+        spanRed.style.width = '0%';
+        spanRed.textContent = '0%';
+        const porcentajeFinal = parseInt(spanRed.dataset.width.replace('%', ''));
+        const typeNotification = () => mostrarNotificacion('success', 'Análisis completo de la red', 2);
+    
+        animarProgreso(spanRed, porcentajeFinal, () => {
+            setTimeout(() => {
+                btnRed.style.pointerEvents = 'auto';
+                abrirModalRed();
+            }, 3000);
+        }, typeNotification);
+    }
+    if (btnRed) {
+        btnRed.addEventListener('click', (e) => {
+            e.preventDefault();
+            RedFunction();
+            progressBarRed.style.display= "flex";
+        });
+    }
+    function abrirModalRed() {
+        if (modalComprobacionRed) {
+            modalComprobacionRed.style.display = 'flex';
+            modalComprobacionRed.offsetWidth;
+            modalComprobacionRed.classList.add('mostrar');
+            
+            resetearInterfaz();
+            
+            setTimeout(asegurarBotonVisible, 100);
+        }
+    }
+    if (closeModalComprobacionRed) {
+        closeModalComprobacionRed.addEventListener('click', cerrarModalRed);
+    }
+    
+    window.addEventListener('click', function(event) {
+        if (modalComprobacionRed && event.target === modalComprobacionRed) {
+            cerrarModalRed();
+        }
+    });
+
     function asegurarBotonVisible() {
         const seccionBoton = document.querySelector('.red-iniciar-seccion');
         const botonIniciar = document.getElementById('red-btn-iniciar-test');
@@ -24,17 +67,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function abrirModalRed() {
-        if (modalComprobacionRed) {
-            modalComprobacionRed.style.display = 'flex';
-            modalComprobacionRed.offsetWidth;
-            modalComprobacionRed.classList.add('mostrar');
-            
-            resetearInterfaz();
-            
-            setTimeout(asegurarBotonVisible, 100);
-        }
-    }
     
     function cerrarModalRed() {
         if (modalComprobacionRed) {
@@ -285,23 +317,6 @@ document.addEventListener('DOMContentLoaded', function() {
         testEnProgreso = false;
     }
     
-    if (btnRed) {
-        btnRed.addEventListener('click', (e) => {
-            e.preventDefault();
-            abrirModalRed();
-        });
-    }
-    
-    if (closeModalComprobacionRed) {
-        closeModalComprobacionRed.addEventListener('click', cerrarModalRed);
-    }
-    
-    window.addEventListener('click', function(event) {
-        if (modalComprobacionRed && event.target === modalComprobacionRed) {
-            cerrarModalRed();
-        }
-    });
-    
     if (redBtnIniciarTest) {
         redBtnIniciarTest.addEventListener('click', iniciarTestVelocidad);
     }
@@ -318,7 +333,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnCompRed) {
             btnCompRed.addEventListener('click', function(e) {
                 e.preventDefault();
-                abrirModalRed();
             });
         }
         
@@ -327,7 +341,6 @@ document.addEventListener('DOMContentLoaded', function() {
             btnRedAlt.removeAttribute('onclick');
             btnRedAlt.addEventListener('click', function(e) {
                 e.preventDefault();
-                abrirModalRed();
             });
         }
     }, 500);

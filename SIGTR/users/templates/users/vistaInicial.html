@@ -28,9 +28,7 @@
                     </div>
                     <div class="wstp"><a href="https://goo.su/V3JAvi" target="_blank"><i class="fa-brands fa-whatsapp fa-fade iconWstp"></i></a></div>
                 </div>
-               <div>
-                    ¡Hola, {{ request.user.username }}!
-               </div>
+               
             </div>
             <div class="content-body">
                 <div class="primero">
@@ -47,7 +45,7 @@
                         </div> 
                     </div>
                     <div class="asistencia">
-                        <button class="asistenciaButton" id="btnAsistencia">
+                        <button class="asistenciaButton" id="btnAsistencia" onclick="login()">
                             <i class="fa-solid fa-users-gear iconAnalisis"></i> ASISTENCIA TÉCNICA
                         </button>
                     </div>
@@ -55,9 +53,9 @@
                 <div class="asistente">
                     <div class="asistVirtual">ASISTENTE VIRTUAL DE SOPORTE TÉCNICO</div>
                     <div class="botonAsist">
-                        <button class="buttonAsist" id="cerrarSesion" onclick="cerrarSesion()">
+                        <button class="buttonAsist" onclick="login()">
                             <div class="iconLogin"><i class="fa-solid fa-user"></i></div>
-                            <div class="textLogin">CERRAR SESIÓN</div>
+                            <div class="textLogin">INICIAR SESIÓN</div>
                         </button>
                     </div>
                     <div class="datosDesktop">
@@ -120,7 +118,7 @@
                 </div>
                 <div class="analisis">
                     <div class="analisisCompleto">
-                        <button class="analisisComp" id="btnAnalisiCompleto">
+                        <button class="analisisComp" id="btnAnalisiCompleto" onclick="login()">
                             <div class="textButton">ANÁLISIS COMPLETO DEL SISTEMA</div>
                             <div class="imgBtnAnalisis"><img src="{% static 'dashboard/img/actualizarSistema.webp' %}"
                                     class="imgBtnAnalisisComp" id="imgAnalisisComp">
@@ -128,7 +126,7 @@
                         </button>
                     </div>
                     <div class="monitoreo">
-                        <button id="btnMonitoreo" class="btnUlt">
+                        <button id="btnMonitoreo" class="btnUlt" onclick="login()">
                             <div class="textDiag" id="textMonitoreo">MONITOREO DEL SISTEMA</div>
                             <div class="graficoMonit"><img src="{% static 'dashboard/img/monitoreo.webp' %}" alt=""
                                     class="imgDiagnostico" id="imgGraficoMonitoreo"></div>
@@ -138,7 +136,7 @@
                         </button>
                     </div>
                     <div class="red">
-                        <button id="btnRed" class="btnUlt">
+                        <button id="btnRed" class="btnUlt" onclick="login()">
                             <div class="textDiag">COMPROBACIÓN DE RED</div>
                             <div class="graficoMonit"><img src="{% static 'dashboard/img/red.webp' %}" alt=""
                                     class="imgDiagnostico" id="imgRed"></div>
@@ -150,7 +148,7 @@
                 </div>
                 <div class="ultimo">
                     <div class="detdiagnostico">
-                        <button id="btnAbrirModalDiagnostico" class="btnUlt">
+                        <button id="btnAbrirModalDiagnostico" class="btnUlt" onclick="login()">
                             <div class="textDiag">DIAGNÓSTICO</div>
                             <div class="imgDetDiag" id="imgDiagnosticoDet">
                                 <img class="imgDiagnostico" id="imgDiag"
@@ -163,7 +161,7 @@
                         </button>
                     </div>
                     <div class="antivirus">
-                        <button class="btnUlt" id="btnAbrirModalAntivirus">
+                        <button class="btnUlt" id="btnAbrirModalAntivirus" onclick="login()">
                             <div class="textDiag">ANTIVIRUS</div>
                             <div class="imgDetDiag" id="imgAntivirusDet">
                                 <img class="imgDiagnostico" src="{% static 'dashboard/img/antivirus.webp' %}" alt="">
@@ -174,7 +172,7 @@
                         </button>
                     </div>
                     <div class="ultMant">
-                        <button class="btnUlt" id="btnAbrirModalMantenimiento">
+                        <button class="btnUlt" id="btnAbrirModalMantenimiento" onclick="login()">
                             <div class="textDiag">MANTENIMIENTO</div>
                             <div class="imgDetDiag" id="imgMantDet"><img class="imgDiagnostico"
                                     src="{% static 'dashboard/img/mantenimientoDet.webp' %}" id="imgMant" alt="">
@@ -187,7 +185,7 @@
                         </button>
                     </div>
                     <div class="ultHist">
-                        <button class="btnUlt" id="btnHist">
+                        <button class="btnUlt" id="btnHist" onclick="login()">
                             <div class="textDiag">HISTORIAL</div>
                             <div class="imgDetDiag" id="imgHistDet">
                                 <img src="{% static 'dashboard/img/historial.webp' %}" class="imgDiagnostico" alt="">
@@ -202,27 +200,14 @@
             <div class="footer"></div>
         </div>
     </div>
-    <!--MODALS:-->
-    {% include "dashboard/client/modalInicio.html" %}
-    {% include "dashboard/client/notificaciones.html" %}
-    <script>
-        function cerrarSesion(){
-        window.location.href = "{% url 'users:logout' %}"; 
-        }
-    </script>
     <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!--para la ubicación en tiempo real-->
-    <script src="{% static 'dashboard/js/clientes/inicio.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/monitoreo.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/antivirus.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/diagnostico.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/mantenimiento.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/red.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/centroAprendizaje.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/asistenciaTecnica.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/historial.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/recomendaciones.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/red.js' %}"></script>
+    
+    <script>
+        function login(){
+            window.location.href = "{% url 'users:login' %}"; 
+        }
+    </script>
 
 </body>
 
