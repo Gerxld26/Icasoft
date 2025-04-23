@@ -43,7 +43,8 @@ from .views import (
     client_update_software,
     client_defragment_disk,
     client_repair_disk,
-
+    #Archivos temporal views
+    client_tamano_temp,
     # Monitoring views (pages)
     client_monitoring_cpu,
     client_monitoring_ram,
@@ -102,6 +103,7 @@ urlpatterns = [
     path("client/diagnosis/comparison/", client_comparison, name="client_comparison"),
     path("client/diagnosis/defender/status/", defender_status_api, name="defender_status_api"),
     path("client/maintenance/", client_maintenance, name="client_maintenance"),
+    path("client/tamano-temp/", client_tamano_temp, name="client_tamano_temp"),
     path("client/recommendations/", client_recommendations, name="client_recommendations"),
     path("client/learning-center/", client_learning_center, name="client_learning_center"),
     path("client/chat/", client_chat, name="client_chat"),
@@ -109,10 +111,10 @@ urlpatterns = [
 
     # Maintenance routes
    # Mantenimiento
-path("client/maintenance/clear-space/", client_clear_space, name="client_clear_space"),
-path("client/maintenance/update-software/", client_update_software, name="client_update_software"),
-path("client/maintenance/defragment-disk/", client_defragment_disk, name="client_defragment_disk"),
-path("client/maintenance/repair-disk/", client_repair_disk, name="client_repair_disk"),
+    path("client/maintenance/clear-space/", client_clear_space, name="client_clear_space"),
+    path("client/maintenance/update-software/", client_update_software, name="client_update_software"),
+    path("client/maintenance/defragment-disk/", client_defragment_disk, name="client_defragment_disk"),
+    path("client/maintenance/repair-disk/", client_repair_disk, name="client_repair_disk"),
 
     # Monitoring routes (pages)
     path("client/monitoring/cpu/", client_monitoring_cpu, name="client_monitoring_cpu"),

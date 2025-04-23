@@ -23,6 +23,7 @@ import psutil
 import platform
 import logging
 import time
+import tempfile
 import cpuinfo
 import subprocess  
 from .models import Diagnosis
@@ -595,6 +596,17 @@ def client_repair_disk(request):
     except Exception as e:
         return JsonResponse({"status": "error", "message": f"Error inesperado: {str(e)}"}, status=500)
 
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.http import JsonResponse
+import os
+
+def formatear_tamano(bytes_size):
+    for unidad in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if bytes_size < 1024:
+            return f"{bytes_size:.2f} {unidad}"
+        bytes_size /= 1024
+    return f"{bytes_size:.2f} PB"
+
 @login_required
 @user_passes_test(is_client)
 def client_clear_space(request):
@@ -604,13 +616,14 @@ def client_clear_space(request):
     try:
         # Directorios de archivos temporales comunes
         temp_directories = [
-            os.getenv('TEMP', '/tmp'),  
-            os.path.expanduser('~/.cache'), 
+            os.getenv('TEMP', '/tmp'),
+            os.path.expanduser('~/.cache'),
         ]
 
         total_deleted = 0
         total_failed = 0
-        failed_files = []  
+        total_bytes_deleted = 0
+        failed_files = []
 
         for temp_dir in temp_directories:
             if os.path.exists(temp_dir):
@@ -618,24 +631,37 @@ def client_clear_space(request):
                     for file in files:
                         file_path = os.path.join(root, file)
                         try:
-                            os.remove(file_path)  
-                            total_deleted += 1
+                            if os.path.isfile(file_path):
+                                total_bytes_deleted += os.path.getsize(file_path)
+                                os.remove(file_path)
+                                total_deleted += 1
                         except Exception as e:
                             total_failed += 1
-                            failed_files.append(file_path) 
+                            failed_files.append(file_path)
                             print(f"Error al eliminar {file_path}: {e}")
 
+        tamano_legible = formatear_tamano(total_bytes_deleted)
 
         message = (
-            f"Archivos eliminados: {total_deleted}. <br>"
+            f"Archivos eliminados: {total_deleted}.<br>"
+            f"Tamaño liberado: {tamano_legible}.<br>"
         )
         if total_failed > 0:
             message += f"Archivos en uso no eliminados: {total_failed}."
 
-        return JsonResponse({"status": "success", "message": message, "failed_files": failed_files})
+        return JsonResponse({
+            "status": "success",
+            "message": message,
+            "failed_files": failed_files,
+            "total_deleted": total_deleted,
+            "space_freed": tamano_legible
+        })
 
     except Exception as e:
-        return JsonResponse({"status": "error", "message": f"Error inesperado: {str(e)}"}, status=500)
+        return JsonResponse({
+            "status": "error",
+            "message": f"Error inesperado: {str(e)}"
+        }, status=500)
 
 @login_required
 @user_passes_test(is_client)
@@ -864,6 +890,22 @@ def client_defragment_disk(request):
             "message": f"Error inesperado: {str(e)}"
         }, status=500)
 
+@login_required
+@user_passes_test(is_client)
+def client_tamano_temp(request):
+    temp_dir = tempfile.gettempdir()
+    total_tamano = 0
+
+    for archivo in os.listdir(temp_dir):
+        ruta = os.path.join(temp_dir, archivo)
+        if os.path.isfile(ruta):
+            total_tamano += os.path.getsize(ruta)
+
+    tamano_legible = formatear_tamano(total_tamano)
+
+    return JsonResponse({
+        'tamano_total': tamano_legible
+    })
 
 @login_required
 @user_passes_test(is_client)

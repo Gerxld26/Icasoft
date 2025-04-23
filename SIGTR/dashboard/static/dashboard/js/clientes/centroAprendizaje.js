@@ -10,20 +10,15 @@ async function mostrarVideos() {
         const datosVideos = dataLearning.videos;
         var textVideos = '';
         datosVideos.forEach((videoDetalle)=>{
-            textVideos += `<div class="contentConsejos" id="contentConsejos">`
-                textVideos += `<div class="centro" id="video-`+ videoDetalle.id +`">`
-                    textVideos += `<div class="contentImg">`
-                        textVideos += `<i class="fa-brands fa-youtube ytCentro"></i>` 
-                    textVideos += `</div>`
+            textVideos += `<div class="contentConsejos" id="contentConsejos-`+ videoDetalle.id +`">`
                     textVideos += `<div class="contentCentro">`
                         textVideos += `<div class="textConsejo">`+ videoDetalle.title + `</div>`
-                        textVideos += `<div class="ratio ratio-16x9">` 
-                            textVideos += `<iframe width="230" height="105" `
+                        textVideos += `<div class="ratio">` 
+                            textVideos += `<iframe  class="videoYt"`
                                 textVideos += `src="`+ videoDetalle.embed_url + `" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>`
                             textVideos += `</iframe>`
                         textVideos += `</div>`
                     textVideos += `</div>`
-                textVideos += `</div>`
             textVideos += `</div>`
         })
         $("#contentConsej").html(textVideos);

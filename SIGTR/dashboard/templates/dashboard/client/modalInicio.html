@@ -4,6 +4,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.anychart.com/releases/v8/js/anychart-bundle.min.js"></script>
 
 <!--MODDAL ASISTENCIA TÉCNICA-->
 <div id="modalAsistencia" class="modal">
@@ -441,6 +442,19 @@
             <div id="contenidoHistorial" class="tabla-contenedor">
                 <!-- Aquí se insertará la tabla de historial -->
             </div>
+        </div>
+    </div>
+</div>
+<!--MODAL COMPROBACIÓN DE RED-->
+<div id="modalRed" class="modal">
+    <div class="modal-content">
+        <div class="headerModal">
+            <span id="closeModalRed" class="close">&times;</span>
+            <div class="textHW">SPEED TESTS</div>
+        </div>
+        <div class="contentData" id="contentRed">
+            <div id="gaugeContainer" style="width: 400px; height: 300px;"></div>
+            <!--Contenido dinámico-->
         </div>
     </div>
 </div>

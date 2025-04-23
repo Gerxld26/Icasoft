@@ -65,7 +65,7 @@
                         </div>
                         <div class="datoHW">
                             <div class="IconHW"><i class="fa-regular fa-file temperaturaRAM"></i></div>
-                            <div class="valorHW">ARCHIVOS TEMPORALES: 435 MB</div>
+                            <div class="valorHW" id="archTemp"></div>
                         </div>
                     </div>
                     <div class="recomendaciones">
@@ -108,7 +108,7 @@
                             no se encontró ningún audio
                         </audio>
                     </div>
-                    <div class="mensajeIA">
+                    <div class="mensajeIA" id="mensajeIA">
                         <input class="textIA" id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA"><i class="fa-solid fa-paper-plane enviarMessage"></i>  
                     </div>
                     <div class="vozIA" id="vozIA">
@@ -210,6 +210,7 @@
     <script src="{% static 'dashboard/js/clientes/antivirus.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/diagnostico.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/mantenimiento.js' %}"></script>
+    <script src="{% static 'dashboard/js/clientes/red.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/centroAprendizaje.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/asistenciaTecnica.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/historial.js' %}"></script>

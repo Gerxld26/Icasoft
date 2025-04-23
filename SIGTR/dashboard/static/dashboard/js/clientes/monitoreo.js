@@ -9,6 +9,54 @@ const closeModalbtn = document.getElementById('closeModal');
 const imgGrafico = document.getElementById('imgGraficoMonitoreo');
 const progressBar = document.getElementById('progressBarMonitoreo');
 const spanMonitoreo = progressBar.querySelector('span');
+
+function MonitoreoFunction() {
+    openModalMonitoreo.style.pointerEvents = 'none';
+    spanMonitoreo.style.width = '0%';
+    spanMonitoreo.textContent = '0%';
+    const porcentajeFinal = parseInt(spanMonitoreo.dataset.width.replace('%', ''));
+    const typeNotification = () => mostrarNotificacion('success', 'Análisis completo del monitoreo', 1);
+
+    animarProgreso(spanMonitoreo, porcentajeFinal, () => {
+        setTimeout(() => {
+            modalMonitoreo.style.display = 'flex';
+            openModalMonitoreo.style.pointerEvents = 'auto';
+        }, 3000);
+    }, typeNotification);
+}
+
+/*MODAL MONITOREO*/
+openModalMonitoreo.style.cursor = 'pointer';
+fetchCpuData();
+
+openModalMonitoreo.addEventListener('click', function () {
+    MonitoreoFunction();
+    modalOpen = true;
+    const textDivMonitoreo = document.getElementById('textMonitoreo');
+    imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
+    progressBar.style.display = 'flex';
+    imgGrafico.style.height = '80px';
+    textDivMonitoreo.style.padding = '0';
+    intervalId = setInterval(fetchCpuData, 5000);
+
+});
+
+closeModalbtn.addEventListener('click', function () {
+    modalMonitoreo.style.display = 'none';
+    modalOpen = false;
+    imgGrafico.style.animation = "none";
+    clearInterval(intervalId);
+    imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
+});
+// Cerrar el modal si se hace clic fuera del contenido del modal 
+window.addEventListener('click', function (event) {
+    if (event.target == modalMonitoreo) {
+        modalMonitoreo.style.display = 'none';
+        modalOpen = false;
+        imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
+        clearInterval(intervalId);
+    }
+});
 // Función que obtiene los datos de RAM y actualiza el progreso
 async function fetchCpuData() {
     try {
@@ -141,52 +189,6 @@ async function fetchCpuData() {
         console.log('Error al cargar datos de la RAM: ', error);
     }
 }
-function MonitoreoFunction() {
-    openModalMonitoreo.style.pointerEvents = 'none';
-    spanMonitoreo.style.width = '0%';
-    spanMonitoreo.textContent = '0%';
-    const porcentajeFinal = parseInt(spanMonitoreo.dataset.width.replace('%', ''));
-    const typeNotification = () => mostrarNotificacion('success', 'Análisis completo del monitoreo', 1);
-
-    animarProgreso(spanMonitoreo, porcentajeFinal, () => {
-        setTimeout(() => {
-            modalMonitoreo.style.display = 'flex';
-            openModalMonitoreo.style.pointerEvents = 'auto';
-        }, 3000);
-    }, typeNotification);
-}
-
-/*MODAL MONITOREO*/
-openModalMonitoreo.style.cursor = 'pointer';
-fetchCpuData();
-openModalMonitoreo.addEventListener('click', function () {
-    MonitoreoFunction();
-    modalOpen = true;
-    const textDivMonitoreo = document.getElementById('textMonitoreo');
-    imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
-    progressBar.style.display = 'flex';
-    imgGrafico.style.height = '80px';
-    textDivMonitoreo.style.padding = '0';
-    intervalId = setInterval(fetchCpuData, 5000);
-});
-
-
-closeModalbtn.addEventListener('click', function () {
-    modalMonitoreo.style.display = 'none';
-    modalOpen = false;
-    imgGrafico.style.animation = "none";
-    clearInterval(intervalId);
-    imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
-});
-// Cerrar el modal si se hace clic fuera del contenido del modal 
-window.addEventListener('click', function (event) {
-    if (event.target == modalMonitoreo) {
-        modalMonitoreo.style.display = 'none';
-        modalOpen = false;
-        imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
-        clearInterval(intervalId);
-    }
-});
 
 const ctxDoughnut = document.getElementById('donutsTickets');
 chartGlobal = new Chart(ctxDoughnut, {
@@ -229,3 +231,4 @@ chartGlobal = new Chart(ctxDoughnut, {
         }
     }
 });
+
