@@ -444,7 +444,153 @@
         </div>
     </div>
 </div>
-<!--MODAL RESPALDO Y RESTAURACIÓN-->
+
+<!--MODAL DE RED - VERSIÓN FINAL-->
+<div id="modalComprobacionRed" class="modal">
+    <div class="modal-content red-modal-content">
+        <div class="headerModal">
+            <span id="closeModalComprobacionRed" class="close">&times;</span>
+            <div class="textHW">COMPROBACIÓN DE RED</div>
+        </div>
+        <div class="contentData red-content-data">
+            <!-- Estado inicial con velocímetro -->
+            <div class="red-estado-seccion">
+                
+                
+                <!-- Velocímetro inicial -->
+                <div class="red-velocimetro-container">
+                    <div class="red-velocimetro">
+                        <div class="red-velocimetro-escala">
+                            <div class="red-marca marca-0" data-value="0">0</div>
+                            <div class="red-marca marca-10" data-value="10">10</div>
+                            <div class="red-marca marca-50" data-value="50">50</div>
+                            <div class="red-marca marca-100" data-value="100">100</div>
+                            <div class="red-marca marca-250" data-value="250">250</div>
+                            <div class="red-marca marca-500" data-value="500">500</div>
+                            <div class="red-marca marca-1000" data-value="1000">1000</div>
+                        </div>
+                        <div class="red-velocimetro-aguja-contenedor">
+                            <div class="red-velocimetro-aguja"></div>
+                        </div>
+                        <div class="red-velocimetro-centro"></div>
+                    </div>
+                    
+                    <!-- Valor de velocidad -->
+                    <div class="red-velocimetro-valor-box">
+                        <div class="red-velocimetro-valor">0.00</div>
+                        <div class="red-velocimetro-unidad">Mbps</div>
+                    </div>
+                    
+                    <!-- Botón de iniciar integrado en el modal -->
+                    <div class="red-iniciar-seccion">
+                        <button id="red-btn-iniciar-test" class="red-btn-test">
+                            <i class="fa-solid fa-gauge-high"></i> INICIAR PRUEBA DE VELOCIDAD
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progreso de la prueba (oculto inicialmente) -->
+            <div class="red-progreso-seccion" style="display: none;">
+                <div class="red-seccion-titulo">Analizando conexión</div>
+                
+                <!-- Velocímetro para mostrar durante la prueba -->
+                <div id="red-velocimetro-progreso" class="red-velocimetro-container">
+                    <div class="red-velocimetro">
+                        <div class="red-velocimetro-escala">
+                            <div class="red-marca marca-0" data-value="0">0</div>
+                            <div class="red-marca marca-10" data-value="10">10</div>
+                            <div class="red-marca marca-50" data-value="50">50</div>
+                            <div class="red-marca marca-100" data-value="100">100</div>
+                            <div class="red-marca marca-250" data-value="250">250</div>
+                            <div class="red-marca marca-500" data-value="500">500</div>
+                            <div class="red-marca marca-1000" data-value="1000">1000</div>
+                        </div>
+                        <div class="red-velocimetro-centro"></div>
+                        <div class="red-velocimetro-aguja-contenedor">
+                            <div class="red-velocimetro-aguja"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Valor del velocímetro -->
+                    <div class="red-velocimetro-valor-box">
+                        <div class="red-velocimetro-valor">0.00</div>
+                        <div class="red-velocimetro-unidad">Mbps</div>
+                    </div>
+                </div>
+                
+                <div class="red-progreso-container">
+                    <div class="red-progreso-barra-bg">
+                        <div id="red-progreso-barra" class="red-progreso-barra-fill">
+                            <span id="red-progreso-texto">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="red-mensaje-progreso" class="red-mensaje-progreso">Conectando con el servidor de pruebas...</div>
+            </div>
+            
+            <!-- Resultados de la prueba (oculto inicialmente) -->
+            <div class="red-resultados-seccion" style="display: none;">
+                <div class="red-seccion-titulo">Resultados de la conexión</div>
+                
+                <!-- Resultados de velocidad en tarjetas -->
+                <div class="red-resultados-grid">
+                    <div class="red-resultado-item">
+                        <div class="red-resultado-icono">
+                            <i class="fa-solid fa-download"></i>
+                        </div>
+                        <div class="red-resultado-etiqueta">Descarga</div>
+                        <div class="red-resultado-valor" id="red-valor-descarga">-- Mbps</div>
+                    </div>
+                    
+                    <div class="red-resultado-item">
+                        <div class="red-resultado-icono">
+                            <i class="fa-solid fa-upload"></i>
+                        </div>
+                        <div class="red-resultado-etiqueta">Subida</div>
+                        <div class="red-resultado-valor" id="red-valor-subida">-- Mbps</div>
+                    </div>
+                    
+                    <div class="red-resultado-item">
+                        <div class="red-resultado-icono">
+                            <i class="fa-solid fa-gauge-simple-high"></i>
+                        </div>
+                        <div class="red-resultado-etiqueta">Ping</div>
+                        <div class="red-resultado-valor" id="red-valor-ping">-- ms</div>
+                    </div>
+                </div>
+                
+                <!-- Información adicional -->
+                <div class="red-info-seccion">
+                    <div class="red-info-fila">
+                        <div class="red-info-etiqueta">Servidor:</div>
+                        <div class="red-info-valor" id="red-info-servidor">Desconocido</div>
+                    </div>
+                    
+                    <div class="red-info-fila">
+                        <div class="red-info-etiqueta">Evaluación:</div>
+                        <div class="red-info-valor" id="red-info-evaluacion">Excelente</div>
+                    </div>
+                </div>
+                
+                <!-- Recomendación -->
+                <div class="red-recomendacion-caja">
+                    <div class="red-recomendacion-contenido" id="red-recomendacion-text">
+                        Su conexión es óptima para todas las actividades en línea, incluyendo streaming en 4K y videojuegos.
+                    </div>
+                </div>
+                
+                <!-- Botón para nueva prueba -->
+                <div class="red-nueva-prueba-seccion">
+                    <button id="red-btn-nueva-prueba" class="red-btn-test">
+                        <i class="fa-solid fa-rotate"></i> REALIZAR NUEVA PRUEBA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!--MODAL CENTRO DE APRENDIZAJE-->
 <div id="modalAprendizaje" class="modal">

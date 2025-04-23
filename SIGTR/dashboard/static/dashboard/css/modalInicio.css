@@ -1206,6 +1206,433 @@
     font-weight: 800;
 }
 
+
+/*MODAL  RED*/
+#modalComprobacionRed.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#modalComprobacionRed.modal.mostrar {
+    display: flex;
+    opacity: 1;
+}
+
+.red-modal-content {
+    position: relative;
+    width: 90%;
+    max-width: 550px;
+    margin: auto;
+    background-color: #1a1a2e;
+    border-radius: 8px;
+    border: 1px solid #0099ff;
+    box-shadow: 0 0 20px rgba(0, 153, 255, 0.3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.red-content-data {
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.red-velocimetro-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.red-velocimetro {
+    width: 250px;
+    height: 250px;
+    position: relative;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, #1e2242 0%, #13162c 80%);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    margin-bottom: 5px;
+}
+
+.red-velocimetro-valor-box {
+    margin-top: 15px;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 8px 15px;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.red-iniciar-seccion {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.btnUlt {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btnUlt:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: all 0.4s ease;
+}
+
+.btnUlt:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+}
+
+.btnUlt:hover:before {
+    left: 100%;
+}
+
+.btnUlt:active {
+    transform: translateY(0);
+}
+
+.red-btn-test {
+    background-color: #0099ff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 12px 25px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    min-width: 250px;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.red-btn-test:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: all 0.4s ease;
+}
+
+.red-btn-test:hover {
+    background-color: #007acc;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+}
+
+.red-btn-test:hover:before {
+    left: 100%;
+}
+
+.red-btn-test:active {
+    transform: translateY(0);
+}
+
+/* Animación de cursor global */
+.btnUlt:hover,
+.red-btn-test:hover {
+    cursor: pointer;
+}
+
+.btnUlt:hover i,
+.red-btn-test:hover i {
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+}
+
+/* Barra de progreso con animación */
+.red-progreso-container {
+    width: 100%;
+    margin: 15px 0;
+    position: relative;
+}
+
+.red-progreso-barra-bg {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    height: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.red-progreso-barra-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00aaff, #00ffaa);
+    border-radius: 15px;
+    transition: width 0.3s ease;
+    text-align: center;
+    position: relative;
+    width: 0%;
+    animation: progress-pulse 1.5s infinite alternate;
+}
+
+@keyframes progress-pulse {
+    0% { 
+        background-position: 0% 50%;
+        opacity: 0.7;
+    }
+    100% { 
+        background-position: 100% 50%;
+        opacity: 1;
+    }
+}
+
+#red-progreso-texto {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    line-height: 20px;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.red-mensaje-progreso {
+    text-align: center;
+    color: #aaa;
+    font-style: italic;
+    padding: 5px 0;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Resultados */
+.red-resultados-seccion {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 20px;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.red-resultados-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.red-resultado-item {
+    background-color: rgba(25, 39, 52, 0.5);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    border: 1px solid rgba(0, 153, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.red-resultado-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 153, 255, 0.2);
+    border-color: rgba(0, 153, 255, 0.5);
+}
+
+.red-resultado-icono {
+    font-size: 24px;
+    color: #0099ff;
+    margin-bottom: 10px;
+}
+
+.red-resultado-etiqueta {
+    color: #aaa;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.red-resultado-valor {
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(0, 153, 255, 0.3);
+}
+
+.red-info-seccion {
+    background-color: rgba(25, 39, 52, 0.5);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(0, 153, 255, 0.2);
+}
+
+.red-info-fila {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.red-info-fila:last-child {
+    border-bottom: none;
+}
+
+.red-info-etiqueta {
+    color: #aaa;
+    font-weight: 500;
+}
+
+.red-info-valor {
+    color: #fff;
+    font-weight: bold;
+}
+
+.red-recomendacion-caja {
+    background-color: rgba(0, 153, 255, 0.1);
+    border-left: 4px solid #0099ff;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.red-recomendacion-contenido {
+    color: #aaa;
+    font-style: italic;
+}
+
+.red-nueva-prueba-seccion {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+/* Velocímetro */
+.red-velocimetro-escala {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: 50%;
+}
+
+.red-marca {
+    position: absolute;
+    font-size: 10px;
+    color: #aaa;
+}
+
+.marca-0 { bottom: 50%; left: 10%; transform: translateY(50%); }
+.marca-10 { bottom: 25%; left: 20%; transform: translateY(20%); }
+.marca-50 { top: 20%; left: 25%; transform: translateY(-20%); }
+.marca-100 { top: 10%; left: 50%; transform: translateX(-50%); }
+.marca-250 { top: 20%; right: 25%; transform: translateY(-20%); }
+.marca-500 { bottom: 25%; right: 20%; transform: translateY(20%); }
+.marca-1000 { bottom: 50%; right: 10%; transform: translateY(50%); }
+
+.red-velocimetro-centro {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: #0099ff;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    box-shadow: 0 0 10px rgba(0, 153, 255, 0.7);
+}
+
+.red-velocimetro-aguja-contenedor {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.red-velocimetro-aguja {
+    width: 95px;
+    height: 4px;
+    background: linear-gradient(90deg, #0066ff, #ff0066);
+    border-radius: 4px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: left center;
+    transform: rotate(-90deg);
+    z-index: 5;
+    box-shadow: 0 0 10px rgba(255, 0, 102, 0.7);
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .red-modal-content {
+        width: 95%;
+        max-width: 450px;
+    }
+    
+    .red-btn-test {
+        min-width: 200px;
+        font-size: 14px;
+    }
+
+    .red-resultados-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+
+
 /*MODAL ASISTENCIA TÉCNICA*/
 #modalAsistencia .modal-content {
     display: grid;

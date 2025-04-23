@@ -4,8 +4,21 @@ from django.contrib import messages
 from .forms import CustomUserCreationForm
 from django.contrib.auth import logout
 import logging
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+
 logger = logging.getLogger(__name__)
 
+@require_http_methods(["GET", "POST"])
+def get_csrf_token(request):
+    """
+    Endpoint para obtener el token CSRF
+    Soporta tanto GET como POST
+    """
+    return JsonResponse({
+        'csrfToken': get_token(request)
+    })
 
 def user_login(request):
     if request.method == 'POST':
@@ -48,7 +61,3 @@ def user_logout(request):
     return redirect('users:login')
 
 
-def user_logout(request):
-    """Cerrar sesión y redirigir al login."""
-    logout(request)
-    return redirect('login')
