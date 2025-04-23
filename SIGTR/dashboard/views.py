@@ -1,7 +1,7 @@
 from django.http import JsonResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import logout
+from django.contrib.auth import logout, authenticate, login
 from django.contrib import messages
 from django.db.models import Count, F, Func, Value
 from django.db.models.functions import TruncMonth
@@ -15,6 +15,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
 import logging
 import os
+from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -33,14 +34,18 @@ import GPUtil
 from users.models import UserProfile
 from .forms import UserProfileForm
 from .forms import TicketStatusForm
-
+import speedtest
 from django.utils.dateparse import parse_date
 from .models import LearningVideo
 from .forms import LearningVideoForm
 from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.safestring import mark_safe
+from django.middleware.csrf import get_token
 
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from .utils import perform_speed_test
 
 logger = logging.getLogger(__name__)
 
@@ -149,13 +154,69 @@ def client_diagnosis(request):
 
 
 # Vista para el Chat del Cliente
-@csrf_exempt
 @login_required
 @user_passes_test(is_client)
 def client_chat(request):
     if request.method == "GET":
-        # Renderiza la página del chat
+
         return render(request, "dashboard/client/client_chat.html")
+
+
+
+#View del wifi
+@require_http_methods(["GET", "POST"])
+def speed_test(request):
+    """
+    Vista de prueba de velocidad con manejo explícito de autenticación
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'No autenticado',
+            'csrf_token': get_token(request)
+        }, status=401)
+    
+    # Realizar prueba de velocidad
+    try:
+        st = speedtest.Speedtest()
+        
+        server = st.get_best_server()
+        
+        #velocidad de descarga
+        st.download()
+        download_speed = st.results.download / 1_000_000 
+        
+        # velocidad de subida
+        st.upload()
+        upload_speed = st.results.upload / 1_000_000  
+        
+        ping = st.results.ping
+        
+        return JsonResponse({
+            'status': 'success',
+            'user': {
+                'username': request.user.username,
+                'email': request.user.email,
+                'role': request.user.role
+            },
+            'data': {
+                'download_speed': round(download_speed, 2),
+                'upload_speed': round(upload_speed, 2),
+                'ping': round(ping, 2),
+                'server': {
+                    'name': server.get('sponsor', 'Desconocido'),
+                    'location': server.get('name', 'Sin ubicación')
+                }
+            }
+        })
+    
+    except Exception as e:
+        logger.error(f"Error en prueba de velocidad: {str(e)}")
+        return JsonResponse({
+            'status': 'error', 
+            'message': str(e)
+        }, status=500)
+
 
 
 @login_required
@@ -169,7 +230,7 @@ def cpu_monitoring_data(request):
             "speed": "N/A",
             "processes": 0,
             "threads": 0,
-            "sockets": 1,  # Valor por defecto
+            "sockets": 1, 
             "cores": 0,
             "logical_processors": 0,
             "uptime": "0:00:00",
@@ -343,7 +404,7 @@ def disk_monitoring_data(request):
                     "percent": f"{usage.percent}%",
                 })
             except Exception as e:
-                continue  # Evita errores con montajes inaccesibles
+                continue  
 
         return JsonResponse(
             {
