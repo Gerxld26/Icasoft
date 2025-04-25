@@ -38,6 +38,8 @@ function MantenimientoFunction() {
 }
 openModalMantenimiento.style.cursor = 'pointer';
 openModalMantenimiento.addEventListener('click', function () {
+    const contenedorMant = document.querySelector(".ultMant");
+    contenedorMant.classList.add("borde-animado");
     openModalMantenimiento.style.fontSize = '18px';
     imgMant.style.display = 'none';
     imgMantGIF.style.display = 'flex';

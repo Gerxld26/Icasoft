@@ -30,6 +30,8 @@ openModalMonitoreo.style.cursor = 'pointer';
 fetchCpuData();
 
 openModalMonitoreo.addEventListener('click', function () {
+    const contenedorMon = document.querySelector(".monitoreo");
+    contenedorMon.classList.add("borde-animado");
     MonitoreoFunction();
     modalOpen = true;
     const textDivMonitoreo = document.getElementById('textMonitoreo');
@@ -66,6 +68,7 @@ async function fetchCpuData() {
         const responseDISK = await fetch('/dashboard/client/monitoring/disk/data');
 
         const dataCPU = await responseCPU.json();
+        console.log('datos cpu', dataCPU);
         const dataRAM = await responseRAM.json();
         const dataDisk = await responseDISK.json();
         //Barra de progreso CPU dinámico:

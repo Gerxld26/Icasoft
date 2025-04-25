@@ -25,6 +25,8 @@ function HistorialFunction() {
 }
 openModalHistorial.style.cursor = 'pointer';
 openModalHistorial.addEventListener('click', function () {
+    const contenedorHis = document.querySelector(".ultHist");
+    contenedorHis.classList.add("borde-animado");
     obtenerHistorial(); 
     HistorialFunction();
     imgHist.style.height = '70px';

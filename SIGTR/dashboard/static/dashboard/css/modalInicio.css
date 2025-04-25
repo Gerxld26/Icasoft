@@ -1117,9 +1117,11 @@
     grid-template-areas: "headerModal" "contentData";
     gap: 12px;
 }
-#modalAprendizaje .headerModal{
+
+#modalAprendizaje .headerModal {
     margin-bottom: 0px;
 }
+
 #modalAprendizaje .textHW {
     font-size: 42px;
     position: relative;
@@ -1134,16 +1136,19 @@
     height: 2px;
     background-color: currentColor;
 }
-#modalAprendizaje .contentData{
+
+#modalAprendizaje .contentData {
     display: grid;
     grid-template-areas: "contentConsejos contentConsejos" "contentConsejos contentConsejos";
     column-gap: 15px;
     grid-template-columns: 50%;
 }
-.videoYT{
-    width: 100% ;
+
+.videoYT {
+    width: 100%;
     height: 100%;
 }
+
 /* #modalAprendizaje .centro {
     display: grid;
 }
@@ -1205,24 +1210,14 @@
 
 
 /*MODAL  RED*/
-#modalComprobacionRed.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 1000;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+#modalComprobacionRed .modal-content {
+    display: grid;
+    grid-template-areas: "headerModal" "contentData";
+    grid-template-rows: 15% auto;
 }
 
-#modalComprobacionRed.modal.mostrar {
-    display: flex;
-    opacity: 1;
+#modalComprobacionRed .headerModal {
+    margin-bottom: 0px;
 }
 
 .red-modal-content {
@@ -1240,13 +1235,10 @@
 }
 
 .red-content-data {
-    padding: 20px;
     width: 100%;
-    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;
 }
 
 .red-velocimetro-container {
@@ -1254,28 +1246,38 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;
-    margin-bottom: 20px;
+    gap: 10px;
 }
 
 .red-velocimetro {
+    /*el círculo del velocímetro*/
     width: 250px;
     height: 250px;
     position: relative;
     border-radius: 50%;
-    background: radial-gradient(circle at center, #1e2242 0%, #13162c 80%);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    background: radial-gradient(circle at center, #3140b4 0%, #13162c 80%);
+    box-shadow: inset 0 0 20px #0099ff;
     margin-bottom: 5px;
 }
 
 .red-velocimetro-valor-box {
-    margin-top: 15px;
     text-align: center;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    padding: 8px 15px;
-    display: inline-block;
-    margin-bottom: 20px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.red-velocimetro-valor {
+    font-family: Montserrat, Montserrat-Fixed, Avenir, "Avenir Next LT Pro", Corbel, "URW Gothic", source-sans-pro, sans-serif;
+    font-size: xx-large;
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+}
+
+.red-velocimetro-unidad {
+    font-size: large;
+    font-family: Montserrat, Montserrat-Fixed, Avenir, "Avenir Next LT Pro", Corbel, "URW Gothic", source-sans-pro, sans-serif;
 }
 
 .red-iniciar-seccion {
@@ -1287,43 +1289,11 @@
     box-sizing: border-box;
 }
 
-.btnUlt {
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.btnUlt:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: all 0.4s ease;
-}
-
-.btnUlt:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
-}
-
-.btnUlt:hover:before {
-    left: 100%;
-}
-
-.btnUlt:active {
-    transform: translateY(0);
-}
-
 .red-btn-test {
     background-color: #0099ff;
     color: white;
     border: none;
     border-radius: 5px;
-    padding: 12px 25px;
     font-size: 16px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1376,7 +1346,13 @@
     transform: scale(1.1);
     transition: transform 0.3s ease;
 }
-
+.companyWifi{
+    display: flex;
+    flex-direction: row;
+}
+#analisisRed{
+    width: 500px;
+}
 /* Barra de progreso con animación */
 .red-progreso-container {
     width: 100%;
@@ -1387,7 +1363,7 @@
 .red-progreso-barra-bg {
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 15px;
-    height: 20px;
+    height: 10px;
     overflow: hidden;
     position: relative;
 }
@@ -1404,11 +1380,12 @@
 }
 
 @keyframes progress-pulse {
-    0% { 
+    0% {
         background-position: 0% 50%;
         opacity: 0.7;
     }
-    100% { 
+
+    100% {
         background-position: 100% 50%;
         opacity: 1;
     }
@@ -1431,7 +1408,7 @@
     text-align: center;
     color: #aaa;
     font-style: italic;
-    padding: 5px 0;
+    font-family: Verdana;
     opacity: 1;
     transition: opacity 0.3s ease;
 }
@@ -1446,11 +1423,12 @@
 }
 
 @keyframes fadeIn {
-    from { 
+    from {
         opacity: 0;
         transform: translateY(20px);
     }
-    to { 
+
+    to {
         opacity: 1;
         transform: translateY(0);
     }
@@ -1559,17 +1537,51 @@
 
 .red-marca {
     position: absolute;
-    font-size: 10px;
-    color: #aaa;
+    font-size: 20px;
+    color: white;
 }
 
-.marca-0 { bottom: 50%; left: 10%; transform: translateY(50%); }
-.marca-10 { bottom: 25%; left: 20%; transform: translateY(20%); }
-.marca-50 { top: 20%; left: 25%; transform: translateY(-20%); }
-.marca-100 { top: 10%; left: 50%; transform: translateX(-50%); }
-.marca-250 { top: 20%; right: 25%; transform: translateY(-20%); }
-.marca-500 { bottom: 25%; right: 20%; transform: translateY(20%); }
-.marca-1000 { bottom: 50%; right: 10%; transform: translateY(50%); }
+.marca-0 {
+    bottom: 25%;
+    left: 15%;
+    transform: translateY(50%);
+}
+
+.marca-10 {
+    bottom: 50%;
+    left: 5%;
+    transform: translateY(20%);
+}
+
+.marca-50 {
+    top: 15%;
+    left: 20%;
+    transform: translateY(-20%);
+}
+
+.marca-100 {
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.marca-250 {
+    top: 15%;
+    right: 20%;
+    transform: translateY(-20%);
+}
+
+.marca-500 {
+    bottom: 50%;
+    right: 5%;
+    transform: translateY(20%);
+}
+
+.marca-1000 {
+    bottom: 25%;
+    right: 15%;
+    transform: translateY(50%);
+}
 
 .red-velocimetro-centro {
     position: absolute;
@@ -1597,7 +1609,7 @@
 
 .red-velocimetro-aguja {
     width: 95px;
-    height: 4px;
+    height: 6px;
     background: linear-gradient(90deg, #0066ff, #ff0066);
     border-radius: 4px;
     position: absolute;
@@ -1610,13 +1622,17 @@
     transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+.red-progreso-seccion {
+    display: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .red-modal-content {
         width: 95%;
         max-width: 450px;
     }
-    
+
     .red-btn-test {
         min-width: 200px;
         font-size: 14px;

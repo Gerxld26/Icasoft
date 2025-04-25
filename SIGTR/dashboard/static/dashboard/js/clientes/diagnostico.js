@@ -58,7 +58,9 @@ openModalDiagnostico.style.cursor = 'pointer';
 if (openModalDiagnostico) {
     openModalDiagnostico.addEventListener('click', function () {
         DiagnosticoFunction();
-
+        const contenedorDiagnositco = document.querySelector(".detdiagnostico");
+        contenedorDiagnositco.classList.add("borde-animado");
+        
         if (document.querySelector('.tipoAnalisis')) {
             document.querySelector('.tipoAnalisis').style.display = 'block';
         }

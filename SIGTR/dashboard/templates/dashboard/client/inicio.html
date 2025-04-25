@@ -23,14 +23,15 @@
                             <li class="EN">EN</li>
                         </ul> 
                     </div>-->
+                <div>
+                    ¡Hola, {{ request.user.username }}!
+                </div>
                 <div class="contactos">
                     <div class="correo"><a href="mailto:company.icasofti21@gmail.com" class="linkCorreo">Correo</a>
                     </div>
-                    <div class="wstp"><a href="https://goo.su/V3JAvi" target="_blank"><i class="fa-brands fa-whatsapp fa-fade iconWstp"></i></a></div>
+                    <div class="wstp"><a href="https://goo.su/V3JAvi" target="_blank"><i
+                                class="fa-brands fa-whatsapp fa-fade iconWstp"></i></a></div>
                 </div>
-               <div>
-                    ¡Hola, {{ request.user.username }}!
-               </div>
             </div>
             <div class="content-body">
                 <div class="primero">
@@ -44,7 +45,7 @@
                         <div class="nombreUbi">UBICACIÓN</div>
                         <div class="mapa">
                             <div id="map" style="height: 100%; width: 100%; border: 1px solid #ccc;"></div>
-                        </div> 
+                        </div>
                     </div>
                     <div class="asistencia">
                         <button class="asistenciaButton" id="btnAsistencia">
@@ -111,7 +112,8 @@
                         </audio>
                     </div>
                     <div class="mensajeIA" id="mensajeIA">
-                        <input class="textIA" id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA"><i class="fa-solid fa-paper-plane enviarMessage"></i>  
+                        <input class="textIA" id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA"><i
+                            class="fa-solid fa-paper-plane enviarMessage"></i>
                     </div>
                     <div class="vozIA" id="vozIA">
                         <label for="" class="textoVoz">AYÚDAME</label>
@@ -206,13 +208,14 @@
     {% include "dashboard/client/modalInicio.html" %}
     {% include "dashboard/client/notificaciones.html" %}
     <script>
-        function cerrarSesion(){
-        window.location.href = "{% url 'users:logout' %}"; 
+        function cerrarSesion() {
+            window.location.href = "{% url 'users:logout' %}";
         }
     </script>
     <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!--para la ubicación en tiempo real-->
     <script src="{% static 'dashboard/js/clientes/inicio.js' %}"></script>
+    <script src="{% static 'dashboard/js/clientes/mapa.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/monitoreo.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/antivirus.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/diagnostico.js' %}"></script>

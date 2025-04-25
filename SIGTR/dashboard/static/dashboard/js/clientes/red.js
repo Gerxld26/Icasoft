@@ -21,11 +21,14 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 btnRed.style.pointerEvents = 'auto';
                 abrirModalRed();
+                iniciarTestVelocidad();
             }, 3000);
         }, typeNotification);
     }
     if (btnRed) {
         btnRed.addEventListener('click', (e) => {
+            const contenedorRed = document.querySelector(".red");
+            contenedorRed.classList.add("borde-animado");
             e.preventDefault();
             RedFunction();
             progressBarRed.style.display= "flex";
@@ -35,20 +38,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (modalComprobacionRed) {
             modalComprobacionRed.style.display = 'flex';
             modalComprobacionRed.offsetWidth;
-            modalComprobacionRed.classList.add('mostrar');
             
             resetearInterfaz();
             
             setTimeout(asegurarBotonVisible, 100);
         }
     }
-    if (closeModalComprobacionRed) {
-        closeModalComprobacionRed.addEventListener('click', cerrarModalRed);
-    }
+
+    closeModalComprobacionRed.addEventListener('click', function () {
+        modalComprobacionRed.style.display = 'none';
+        cancelarPrueba();
+    });
     
     window.addEventListener('click', function(event) {
-        if (modalComprobacionRed && event.target === modalComprobacionRed) {
-            cerrarModalRed();
+        if (event.target === modalComprobacionRed) {
+            modalComprobacionRed.style.display = 'none';
         }
     });
 
@@ -64,17 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (botonIniciar) {
             botonIniciar.style.display = 'inline-flex';
             botonIniciar.style.visibility = 'visible';
-        }
-    }
-    
-    
-    function cerrarModalRed() {
-        if (modalComprobacionRed) {
-            modalComprobacionRed.classList.remove('mostrar');
-            setTimeout(() => {
-                modalComprobacionRed.style.display = 'none';
-            }, 300);
-            cancelarPrueba();
         }
     }
     
@@ -117,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const seccionProgreso = document.querySelector('.red-progreso-seccion');
         
         if (seccionEstado) seccionEstado.style.display = 'none';
-        if (seccionProgreso) seccionProgreso.style.display = 'block';
+        if (seccionProgreso) seccionProgreso.style.display = 'grid';
         
         const barraProgreso = document.getElementById('red-progreso-barra');
         const textoProgreso = document.getElementById('red-progreso-texto');
@@ -176,13 +169,17 @@ document.addEventListener('DOMContentLoaded', function() {
             intervalId = null;
             
             actualizarBarraProgreso(100);
-            if (mensajeProgreso) mensajeProgreso.textContent = 'Análisis completado';
+            const iconCheck = '<i id="btnResultadosWifi" class="fa-solid fa-eye-slash" style= "color: white; font-size: 20px;"></i>';
+            if (mensajeProgreso) mensajeProgreso.innerHTML = `Análisis completado ${iconCheck}`;
             
             const velocidadDescarga = data.data.download_speed;
             actualizarVelocimetro(velocidadDescarga);
             
             setTimeout(() => {
-                mostrarResultados(data);
+                const btnResultadosWifi = document.getElementById('btnResultadosWifi');
+                btnResultadosWifi.addEventListener('click', () => {
+                    mostrarResultados(data); 
+                });
             }, 600);
         })
         .catch(error => {
@@ -226,16 +223,35 @@ document.addEventListener('DOMContentLoaded', function() {
             angulo = -90;
         } else if (velocidad < 10) {
             angulo = -90 + (velocidad / 10 * 15);
+            agujas.forEach(aguja => {
+                aguja.style.boxShadow = "7px 0px 19px 9px rgba(0, 217, 255, 0.7)";
+            });
+        
         } else if (velocidad < 50) {
             angulo = -75 + ((velocidad - 10) / 40 * 15);
+            agujas.forEach(aguja => {
+                aguja.style.boxShadow = "7px 0px 19px 9px rgba(186, 7, 79, 0.7)";
+            });
         } else if (velocidad < 100) {
             angulo = -60 + ((velocidad - 50) / 50 * 15);
+            agujas.forEach(aguja => {
+                aguja.style.boxShadow = "7px 0px 19px 9px rgba(244, 0, 98, 0.7)";
+            });
         } else if (velocidad < 250) {
             angulo = -45 + ((velocidad - 100) / 150 * 30);
+            agujas.forEach(aguja => {
+                aguja.style.boxShadow = "7px 0px 19px 9px rgba(255, 153, 0, 0.7)";
+            });
         } else if (velocidad < 500) {
             angulo = -15 + ((velocidad - 250) / 250 * 45);
+            agujas.forEach(aguja => {
+                aguja.style.boxShadow = "7px 0px 19px 9px rgba(0, 247, 255, 0.7)";
+            });
         } else if (velocidad <= 1000) {
             angulo = 30 + ((velocidad - 500) / 500 * 60);
+            agujas.forEach(aguja => {
+                aguja.style.boxShadow = "7px 0px 19px 9px rgba(51, 255, 0, 0.7)";
+            });
         } else {
             angulo = 90;
         }
@@ -300,7 +316,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (seccionProgreso) seccionProgreso.style.display = 'none';
             if (seccionResultados) seccionResultados.style.display = 'block';
-            
+            if (seccionResultados) seccionResultados.style.gridTemplateAreas = `"red-velocimetro-progreso" "analisisRed"`;
+     
             if (typeof mostrarNotificacion === 'function') {
                 mostrarNotificacion('success', 'Análisis de red completado', 3);
             }

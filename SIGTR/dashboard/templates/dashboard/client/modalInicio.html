@@ -456,8 +456,6 @@
         <div class="contentData red-content-data">
             <!-- Estado inicial con velocímetro -->
             <div class="red-estado-seccion">
-                
-                
                 <!-- Velocímetro inicial -->
                 <div class="red-velocimetro-container">
                     <div class="red-velocimetro">
@@ -475,26 +473,22 @@
                         </div>
                         <div class="red-velocimetro-centro"></div>
                     </div>
-                    
                     <!-- Valor de velocidad -->
                     <div class="red-velocimetro-valor-box">
                         <div class="red-velocimetro-valor">0.00</div>
                         <div class="red-velocimetro-unidad">Mbps</div>
                     </div>
-                    
                     <!-- Botón de iniciar integrado en el modal -->
-                    <div class="red-iniciar-seccion">
+                    <!-- <div class="red-iniciar-seccion">
                         <button id="red-btn-iniciar-test" class="red-btn-test">
                             <i class="fa-solid fa-gauge-high"></i> INICIAR PRUEBA DE VELOCIDAD
                         </button>
-                    </div>
+                    </div> -->
                 </div>
             </div>
             
             <!-- Progreso de la prueba (oculto inicialmente) -->
-            <div class="red-progreso-seccion" style="display: none;">
-                <div class="red-seccion-titulo">Analizando conexión</div>
-                
+            <div class="red-progreso-seccion">
                 <!-- Velocímetro para mostrar durante la prueba -->
                 <div id="red-velocimetro-progreso" class="red-velocimetro-container">
                     <div class="red-velocimetro">
@@ -519,18 +513,19 @@
                         <div class="red-velocimetro-unidad">Mbps</div>
                     </div>
                 </div>
-                
-                <div class="red-progreso-container">
-                    <div class="red-progreso-barra-bg">
-                        <div id="red-progreso-barra" class="red-progreso-barra-fill">
-                            <span id="red-progreso-texto">0%</span>
+                <div class="analisisRed" id="analisisRed">
+                    <div class="red-progreso-container">
+                        <div class="red-progreso-barra-bg">
+                            <div id="red-progreso-barra" class="red-progreso-barra-fill">
+                                <span id="red-progreso-texto">0%</span>
+                            </div>
                         </div>
                     </div>
+                    <div id="red-mensaje-progreso" class="red-mensaje-progreso">Conectando con el servidor de pruebas...</div>
                 </div>
-                <div id="red-mensaje-progreso" class="red-mensaje-progreso">Conectando con el servidor de pruebas...</div>
             </div>
             
-            <!-- Resultados de la prueba (oculto inicialmente) -->
+            <!-- Resultados de la prueba (oculto inicialmente) cuando se da en el botón de iniciar test se muestra esto -->
             <div class="red-resultados-seccion" style="display: none;">
                 <div class="red-seccion-titulo">Resultados de la conexión</div>
                 
