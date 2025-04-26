@@ -31,6 +31,12 @@ document.addEventListener('DOMContentLoaded', function() {
             contenedorRed.classList.add("borde-animado");
             e.preventDefault();
             RedFunction();
+            if (btnPressAnalisis) { 
+                abrirModalRed();
+                iniciarTestVelocidad();
+            } else {
+                RedFunction();
+            }
             progressBarRed.style.display= "flex";
         });
     }

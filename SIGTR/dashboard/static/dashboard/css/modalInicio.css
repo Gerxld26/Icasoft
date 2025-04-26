@@ -21,14 +21,17 @@
 .modal-content {
     background: var(--fondoDiv);
     padding: 20px;
-    border-radius: 5px;
+    border-radius: 15px;
     width: 80%;
     height: 80%;
     max-width: 800px;
     max-height: 500px;
     position: relative;
     border: 3px solid rgb(43, 67, 84);
+    box-shadow: 0 0 25px rgba(3, 101, 140, 0.9);
+    color: #ffffff;
     border-radius: 30px;
+    animation: modalopen 0.5s;
 }
 
 .modal .modal-content::before {
@@ -49,6 +52,41 @@
     width: 100%;
     height: 100%;
     border-radius: 30px;
+}
+@keyframes modalopen {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.headerModal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 10px;
+    top: 0;
+    font-size: 34px;
+    cursor: pointer;
+    color: azure;
+    font-weight: 800;
+    transition: color 0.3s;
+}
+
+.close:hover {
+    color: #03a9f4;
+    text-shadow: 0 0 10px rgba(3, 169, 244, 0.8);
 }
 
 @keyframes glowing {
@@ -247,75 +285,21 @@
 }
 
 /* MODAL DIAGNÓSTICO  */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.8);
-    justify-content: center;
-    align-items: center;
+#modalDiagnostico .modal-content {
+    display: grid;
+    grid-template-areas:
+        "headerModal"
+        "contentData";
+    gap: 10px;
 }
-
-.modal-content {
-    position: relative;
-    background-color: #1a1a1a;
-    margin: auto;
-    padding: 20px;
-    border: 2px solid #03658c;
-    border-radius: 15px;
-    width: 80%;
-    max-width: 800px;
-    box-shadow: 0 0 25px rgba(3, 101, 140, 0.9);
-    color: #ffffff;
-    animation: modalopen 0.5s;
+#modalDiagnostico .headerModal{
+    margin-bottom: 0px;
 }
-
-@keyframes modalopen {
-    from {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.headerModal {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 20px;
-    position: relative;
-}
-
-.close {
-    position: absolute;
-    right: 10px;
-    top: 0;
-    font-size: 34px;
-    cursor: pointer;
-    color: azure;
-    font-weight: 800;
-    transition: color 0.3s;
-}
-
-.close:hover {
-    color: #03a9f4;
-    text-shadow: 0 0 10px rgba(3, 169, 244, 0.8);
-}
-
 /* Contenido del modal diagnóstico */
 #modalDiagnostico .contentData {
     display: grid;
     grid-template-areas:
-        "comparacionHW"
+        "tipoAnalisis"
         "comparacionHW"
         "analisisIA";
     gap: 20px;
@@ -479,7 +463,8 @@
 }
 
 .botonIniciar {
-    background: linear-gradient(to right, #0277bd, #03a9f4);
+    background: #b7e0f4;
+    opacity: 1;
     color: white;
     border: none;
     border-radius: 8px;
@@ -496,7 +481,7 @@
 }
 
 .botonIniciar:hover {
-    background: linear-gradient(to right, #0288d1, #29b6f6);
+    background: linear-gradient(to right, #0277bd, #03a9f4);
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(3, 169, 244, 0.4);
 }
@@ -569,6 +554,8 @@
 
 .selectTipoDiagnostico {
     width: 100%;
+    display: grid;
+    gap:10px;
 }
 
 /* Barras de progreso */

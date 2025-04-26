@@ -129,7 +129,7 @@
             <div class="tipoAnalisis">
                 <div class="textHW">DIAGNÓSTICO DEL SISTEMA</div>
                 <div class="cardComparacionHW">
-                    <div class="componentesHW">
+                    <div class="componentesHW" id="scaners">
                         <div class="selectTipoDiagnostico">
                             <select id="scan-type" class="selectDiagnostico">
                                 <option value="QuickScan" selected>Escaneo Rápido</option>
@@ -137,10 +137,7 @@
                                 <option value="CustomScan">Escaneo Personalizado</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="componentesHW" id="custom-scan-options" style="display: none;">
-                        <div class="textComponente">Ruta personalizada:</div>
-                        <div class="resultComponente">
+                        <div class="custom-scan-options" id="custom-scan-options" style="display: none;">
                             <input type="text" id="custom-scan-path" class="inputRuta" placeholder="C:\Carpeta">
                         </div>
                     </div>
@@ -151,7 +148,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Progreso del análisis -->
             <div class="progresoAnalisis" style="display: none;">
                 <div class="textHW">PROGRESO DEL DIAGNÓSTICO</div>
@@ -167,7 +164,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Comparación con diagnósticos previos -->
             <div class="comparacionHW" id="diagnosticosPrevios">
                 <div class="textHW">COMPARACIÓN CON DIAGNÓSTICOS PREVIOS</div>
@@ -186,10 +183,10 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Análisis detallado por IA -->
             <div class="analisisIA" id="analisisisIAContent">
-                <div class="textHW">ANÁLISIS DETALLADO POR IA 
+                <div class="textHW">ANÁLISIS DETALLADO POR IA
                     <button class="btnAnalisis" id="btnVerAnalisisIA">
                         <i class="fa-solid fa-eye-slash verAnalisis"></i>
                         <!-- <i class="fa-solid fa-eye verAnalisis"></i> -->
@@ -226,8 +223,8 @@
             <div class="textHW">ESTADO DE SEGURIDAD</div>
         </div>
         <div class="contentDataAnt antivirus-content">
-      
-            
+
+
             <div class="antivirus-detalles">
                 <div class="antivirus-info">
                     <div>Antivirus habilitado:</div>
@@ -438,7 +435,7 @@
             <div class="textHW">HISTORIAL DE DIAGNÓSTICOS</div>
         </div>
         <div class="contentDataHistorial historial-content">
-            
+
             <div id="contenidoHistorial" class="tabla-contenedor">
                 <!-- Aquí se insertará la tabla de historial -->
             </div>
@@ -486,7 +483,7 @@
                     </div> -->
                 </div>
             </div>
-            
+
             <!-- Progreso de la prueba (oculto inicialmente) -->
             <div class="red-progreso-seccion">
                 <!-- Velocímetro para mostrar durante la prueba -->
@@ -506,7 +503,7 @@
                             <div class="red-velocimetro-aguja"></div>
                         </div>
                     </div>
-                    
+
                     <!-- Valor del velocímetro -->
                     <div class="red-velocimetro-valor-box">
                         <div class="red-velocimetro-valor">0.00</div>
@@ -521,14 +518,15 @@
                             </div>
                         </div>
                     </div>
-                    <div id="red-mensaje-progreso" class="red-mensaje-progreso">Conectando con el servidor de pruebas...</div>
+                    <div id="red-mensaje-progreso" class="red-mensaje-progreso">Conectando con el servidor de pruebas...
+                    </div>
                 </div>
             </div>
-            
+
             <!-- Resultados de la prueba (oculto inicialmente) cuando se da en el botón de iniciar test se muestra esto -->
             <div class="red-resultados-seccion" style="display: none;">
                 <div class="red-seccion-titulo">Resultados de la conexión</div>
-                
+
                 <!-- Resultados de velocidad en tarjetas -->
                 <div class="red-resultados-grid">
                     <div class="red-resultado-item">
@@ -538,7 +536,7 @@
                         <div class="red-resultado-etiqueta">Descarga</div>
                         <div class="red-resultado-valor" id="red-valor-descarga">-- Mbps</div>
                     </div>
-                    
+
                     <div class="red-resultado-item">
                         <div class="red-resultado-icono">
                             <i class="fa-solid fa-upload"></i>
@@ -546,7 +544,7 @@
                         <div class="red-resultado-etiqueta">Subida</div>
                         <div class="red-resultado-valor" id="red-valor-subida">-- Mbps</div>
                     </div>
-                    
+
                     <div class="red-resultado-item">
                         <div class="red-resultado-icono">
                             <i class="fa-solid fa-gauge-simple-high"></i>
@@ -555,27 +553,28 @@
                         <div class="red-resultado-valor" id="red-valor-ping">-- ms</div>
                     </div>
                 </div>
-                
+
                 <!-- Información adicional -->
                 <div class="red-info-seccion">
                     <div class="red-info-fila">
                         <div class="red-info-etiqueta">Servidor:</div>
                         <div class="red-info-valor" id="red-info-servidor">Desconocido</div>
                     </div>
-                    
+
                     <div class="red-info-fila">
                         <div class="red-info-etiqueta">Evaluación:</div>
                         <div class="red-info-valor" id="red-info-evaluacion">Excelente</div>
                     </div>
                 </div>
-                
+
                 <!-- Recomendación -->
                 <div class="red-recomendacion-caja">
                     <div class="red-recomendacion-contenido" id="red-recomendacion-text">
-                        Su conexión es óptima para todas las actividades en línea, incluyendo streaming en 4K y videojuegos.
+                        Su conexión es óptima para todas las actividades en línea, incluyendo streaming en 4K y
+                        videojuegos.
                     </div>
                 </div>
-                
+
                 <!-- Botón para nueva prueba -->
                 <div class="red-nueva-prueba-seccion">
                     <button id="red-btn-nueva-prueba" class="red-btn-test">

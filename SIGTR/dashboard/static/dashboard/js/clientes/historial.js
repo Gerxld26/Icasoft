@@ -28,7 +28,11 @@ openModalHistorial.addEventListener('click', function () {
     const contenedorHis = document.querySelector(".ultHist");
     contenedorHis.classList.add("borde-animado");
     obtenerHistorial(); 
-    HistorialFunction();
+    if (btnPressAnalisis) { 
+        modalHistorial.style.display = 'flex';
+    } else {
+        HistorialFunction();
+    }
     imgHist.style.height = '70px';
     progressBarHistorial.style.display = 'flex';
 

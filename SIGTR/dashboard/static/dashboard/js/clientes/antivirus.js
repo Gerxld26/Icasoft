@@ -27,8 +27,12 @@ openModalAntivirus.style.cursor = 'pointer';
 openModalAntivirus.addEventListener('click', function () {
     const contenedorAnt = document.querySelector(".antivirus");
     contenedorAnt.classList.add("borde-animado");
+    if (btnPressAnalisis) { 
+        modalAntivirus.style.display = 'flex';
+    } else {
+        AntivirusFunction();
+    }
     obtenerEstadoAntivirus();
-    AntivirusFunction();
     imgDetDiag.style.height = '70px';
     openModalAntivirus.style.fontSize = '18px';
     progressBarAnt.style.display = 'flex';

@@ -40,11 +40,15 @@ openModalMantenimiento.style.cursor = 'pointer';
 openModalMantenimiento.addEventListener('click', function () {
     const contenedorMant = document.querySelector(".ultMant");
     contenedorMant.classList.add("borde-animado");
+    if (btnPressAnalisis) { 
+        modalMantenimiento.style.display = 'flex';
+    } else {
+        MantenimientoFunction();
+    }
     openModalMantenimiento.style.fontSize = '18px';
     imgMant.style.display = 'none';
     imgMantGIF.style.display = 'flex';
     progressBarMantenimiento.style.display = 'flex';
-    MantenimientoFunction();
 })
 
 closeModalMantenimiento.addEventListener('click', function () {

@@ -28,24 +28,28 @@ function MonitoreoFunction() {
 /*MODAL MONITOREO*/
 openModalMonitoreo.style.cursor = 'pointer';
 fetchCpuData();
-
 openModalMonitoreo.addEventListener('click', function () {
+    modalOpen = true;
     const contenedorMon = document.querySelector(".monitoreo");
     contenedorMon.classList.add("borde-animado");
-    MonitoreoFunction();
-    modalOpen = true;
     const textDivMonitoreo = document.getElementById('textMonitoreo');
     imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
     progressBar.style.display = 'flex';
     imgGrafico.style.height = '80px';
     textDivMonitoreo.style.padding = '0';
     intervalId = setInterval(fetchCpuData, 5000);
+    if (btnPressAnalisis) { //si el btnPressAnalisis es true.
+        modalMonitoreo.style.display = 'flex';
+    } else {
+        MonitoreoFunction();
+    }
+}); 
 
-});
 
 closeModalbtn.addEventListener('click', function () {
     modalMonitoreo.style.display = 'none';
     modalOpen = false;
+    btnPressAnalisis = false;
     imgGrafico.style.animation = "none";
     clearInterval(intervalId);
     imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
@@ -55,6 +59,7 @@ window.addEventListener('click', function (event) {
     if (event.target == modalMonitoreo) {
         modalMonitoreo.style.display = 'none';
         modalOpen = false;
+        btnPressAnalisis = false;
         imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
         clearInterval(intervalId);
     }
@@ -68,7 +73,6 @@ async function fetchCpuData() {
         const responseDISK = await fetch('/dashboard/client/monitoring/disk/data');
 
         const dataCPU = await responseCPU.json();
-        console.log('datos cpu', dataCPU);
         const dataRAM = await responseRAM.json();
         const dataDisk = await responseDISK.json();
         //Barra de progreso CPU dinámico:

@@ -1,3 +1,4 @@
+let btnPressAnalisis = false;
 let audio = document.getElementById('audioRobot');
 let video = document.getElementById('robotGIF');
 let videOjos = document.getElementById('robotGIFOjos');
@@ -84,7 +85,7 @@ function animarProgreso(span, porcentajeFinal, callback, typeNotification) {
             span.style.width = actual + '%';
             span.textContent = actual + '%';
         }
-    }, 20);
+    }, 30);
 }
 async function fecthTemp() {
     const responseTemp = await fetch('/dashboard/client/tamano-temp/');
@@ -101,7 +102,7 @@ $(document).ready(function () {
     const videoRobot = document.getElementById("video-container");
     const videoRobotInput = document.getElementById("video-container2");
     const mensajeIA = document.getElementById('mensajeIA');
-    const input = document.querySelector('.textIA');
+    const input = document.getElementById('textIAID');
     const btnAnalisis = document.getElementById('btnAnalisiCompleto');
 
     $("#robotimg").on('click', function () {
@@ -150,6 +151,7 @@ $(document).ready(function () {
         }, 20); // velocidad
     }
     btnAnalisis.addEventListener('click', function () {
+        btnPressAnalisis = true;
         const allImgs = document.querySelectorAll('.imgDetDiag');
         const allTextsTitulo = document.getElementById('textMonitoreo');
         const imgGraficoMon = document.getElementById('imgGraficoMonitoreo');
@@ -198,14 +200,24 @@ $(document).ready(function () {
 $("#textIAID").on('keypress', function (e) {
     const textAsistente = document.getElementById('textAsistente');
     const asistenteSoporte = document.getElementById('asistenteSoporte');
+    const headerChat = document.getElementById('header-chat');
+    const bodyChat = document.getElementById('body-chat');
     const vozIA = document.getElementById('vozIA');
     if (e.which === 13) { //si empiezas a digitar
         var mensaje = $(this).val().trim();
 
         if (mensaje !== "") {
             textAsistente.style.display = 'none';
-            asistenteSoporte.style.gridTemplateAreas = "imagenIA mensajeIA";
-            asistenteSoporte.style.gridTemplateRows = '10px auto';
+            asistenteSoporte.style.gridTemplateAreas = `"imagenIA" "mensajeIA" "vozIA"`;
+            asistenteSoporte.style.gridTemplateRows = 'auto 55% auto';
+            videOjos.style.width = '40%';
+
+            mensajeIA.style.gridTemplateAreas = `"header-chat" "body-chat" "footer-chat"`;
+            mensajeIA.style.gridTemplateRows = '15% auto 15%'; 
+            headerChat.style.display = 'grid';
+            headerChat.style.alignItems = "center";
+            headerChat.style.justifyItems = 'center';
+            bodyChat.style.display = 'grid';
         }
     }
 });

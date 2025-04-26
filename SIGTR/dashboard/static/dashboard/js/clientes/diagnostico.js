@@ -21,9 +21,11 @@ let scanType = "QuickScan";
 let customPath = "";
 
 if (scanTypeSelect) {
+    const scaners = document.getElementById('scaners');
     scanTypeSelect.addEventListener('change', function () {
         if (this.value === 'CustomScan' && customScanOptions) {
             customScanOptions.style.display = 'flex';
+            scaners.style.gap = '10px';
         } else if (customScanOptions) {
             customScanOptions.style.display = 'none';
         }
@@ -39,6 +41,7 @@ function actualizarProgressBar(elemento, porcentaje) {
         }
     }
 }
+
 function DiagnosticoFunction() {
     openModalDiagnostico.style.pointerEvents = 'none';
     spanDiagnostico.style.width = '0%';
@@ -57,7 +60,12 @@ function DiagnosticoFunction() {
 openModalDiagnostico.style.cursor = 'pointer';
 if (openModalDiagnostico) {
     openModalDiagnostico.addEventListener('click', function () {
-        DiagnosticoFunction();
+        if (btnPressAnalisis) { 
+            modalDiagnostico.style.display = 'flex';
+        } else {
+            DiagnosticoFunction();
+        }
+        obtenerDatosDiagnostico();
         const contenedorDiagnositco = document.querySelector(".detdiagnostico");
         contenedorDiagnositco.classList.add("borde-animado");
         
