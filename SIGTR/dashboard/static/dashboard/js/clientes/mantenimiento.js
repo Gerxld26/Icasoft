@@ -1,5 +1,5 @@
 const actionUrls = window.ACTION_URLS = {
-    cleanup: "/dashboard/client/maintenance/clear-space/",
+    cleanup: "/dashboard/client/clear-space/",
     update: "/dashboard/client/maintenance/update-software/",
     defrag: "/dashboard/client/maintenance/defragment-disk/",
     repair: "/dashboard/client/maintenance/repair-disk/"
@@ -229,7 +229,6 @@ function manejarEstadoRespuesta(data) {
 
 // Función para ejecutar acciones de mantenimiento
 async function ejecutarAccion(accion, boton) {
-
     limpiarContador();
     mostrarCargando(boton, true);
 
@@ -248,11 +247,13 @@ async function ejecutarAccion(accion, boton) {
     }
 
     try {
+        // CAMBIO AQUÍ: Usar método POST en lugar de GET
         const response = await fetch(url, {
-            method: 'GET',
+            method: 'POST',  // Cambiado de 'GET' a 'POST'
             headers: {
                 'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')  // Añadir el token CSRF
             },
             credentials: 'same-origin'
         });
@@ -272,7 +273,7 @@ async function ejecutarAccion(accion, boton) {
         console.error('Error:', error);
         mostrarResultado(`
             <div>
-                <p><strong>EROR INESPERADO</strong></p>
+                <p><strong>ERROR INESPERADO</strong></p>
                 <p>${error.message || "No se pudo ejecutar la acción."}</p>
                 <p>Por favor, inténtelo de nuevo o contacte con soporte técnico.</p>
             </div>
@@ -280,6 +281,60 @@ async function ejecutarAccion(accion, boton) {
     } finally {
         // Restaurar el botón a su estado normal
         mostrarCargando(boton, false);
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+async function actualizarInfoArchivosTemporales() {
+    try {
+        const response = await fetch('/dashboard/client/get-temp-size/', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error obteniendo información de archivos temporales: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Actualizar el elemento en el dashboard
+            const archTemp = document.getElementById('archTemp');
+            if (archTemp) {
+                archTemp.innerHTML = `
+                    <div class="temp-info">
+                        <div class="temp-size">Archivos Temporales: ${data.total_temp_size || '0 MB'}</div>
+                        <div class="temp-files-count">
+                            <small style="display:block; font-size:0.7em; color:#888;">
+                                ${data.total_temp_files} archivos temporales encontrados
+                            </small>
+                            <small style="display:block; font-size:0.7em; color:#888;">
+                                ${data.files_in_use_count} archivos en uso (${data.files_in_use_size})
+                            </small>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error al actualizar información de archivos temporales:', error);
     }
 }
 

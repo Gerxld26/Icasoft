@@ -1,8 +1,10 @@
 from django.http import JsonResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import authenticate, login #
+from django.contrib.auth import authenticate, login 
+from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
+import heapq
 from django.db.models import Count, F, Func, Value
 from django.db.models.functions import TruncMonth
 from users.models import User, UserProfile
@@ -15,13 +17,17 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
 import logging
 import os
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.http import JsonResponse
+import os
+import shutil
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
 from openai import OpenAI
 import psutil
-import speedtest #
+import speedtest 
 import platform
 import logging
 import time
@@ -35,19 +41,31 @@ import GPUtil
 from users.models import UserProfile
 from .forms import UserProfileForm
 from .forms import TicketStatusForm
-
+from django.core.exceptions import PermissionDenied
+from virustotal_python import Virustotal
 from django.utils.dateparse import parse_date
 from .models import LearningVideo
 from .forms import LearningVideoForm
 from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.safestring import mark_safe
-
+import traceback
 from django.middleware.csrf import get_token
-
+from django.views.decorators.http import require_GET
+import os
+import tempfile
+import time
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .utils import perform_speed_test
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -107,40 +125,74 @@ def client_recommendations(request):
     return render(request, "dashboard/client/recommendations.html")
 
 #View del wifi
+import socket
+
+def check_internet_connection(host="8.8.8.8", port=53, timeout=3):
+    try:
+        socket.setdefaulttimeout(timeout)
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+        return True
+    except (socket.error, socket.timeout):
+        return False
+
+def check_speedtest_servers(max_attempts=3):
+    st = speedtest.Speedtest()
+    
+    for attempt in range(max_attempts):
+        try:
+            st.get_servers()
+            st.get_best_server()
+            return True
+        except Exception as e:
+            logger.warning(f"Intento {attempt + 1} de conexión a servidores fallido: {str(e)}")
+            if attempt == max_attempts - 1:
+                return False
+
+@login_required
 @require_http_methods(["GET", "POST"])
 def speed_test(request):
-    """
-    Vista de prueba de velocidad con manejo explícito de autenticación
-    """
-    if not request.user.is_authenticated:
-        return JsonResponse({
-            'status': 'error',
-            'message': 'No autenticado',
-            'csrf_token': get_token(request)
-        }, status=401)
-    
-    # Realizar prueba de velocidad
     try:
+        if not check_internet_connection():
+            logger.warning("No hay conexión a internet")
+            return JsonResponse({
+                'status': 'error',
+                'type': 'no_internet',
+                'message': 'No se detecta conexión a internet'
+            }, status=503)
+        
+        if not check_speedtest_servers():
+            logger.error("No se puede conectar a servidores de speedtest")
+            return JsonResponse({
+                'status': 'error',
+                'type': 'speedtest_server_error',
+                'message': 'No se pueden encontrar servidores de speedtest disponibles'
+            }, status=503)
+        
         st = speedtest.Speedtest()
         
-        server = st.get_best_server()
+        st.get_best_server()
         
-        #velocidad de descarga
-        st.download()
-        download_speed = st.results.download / 1_000_000 
+        logger.info(f"Iniciando prueba de velocidad para usuario {request.user.username}")
         
-        # velocidad de subida
-        st.upload()
-        upload_speed = st.results.upload / 1_000_000  
+        # descarga
+        logger.info("Iniciando prueba de descarga...")
+        download_speed = st.download() / 1_000_000 
         
+        # subida 
+        logger.info("Iniciando prueba de subida...")
+        upload_speed = st.upload() / 1_000_000 
+        
+        #  ping
         ping = st.results.ping
         
-        return JsonResponse({
+        server = st.results.server
+
+        resultado = {
             'status': 'success',
             'user': {
                 'username': request.user.username,
                 'email': request.user.email,
-                'role': request.user.role
+                'role': getattr(request.user, 'role', 'No definido')
             },
             'data': {
                 'download_speed': round(download_speed, 2),
@@ -148,16 +200,30 @@ def speed_test(request):
                 'ping': round(ping, 2),
                 'server': {
                     'name': server.get('sponsor', 'Desconocido'),
-                    'location': server.get('name', 'Sin ubicación')
+                    'location': f"{server.get('name', 'Sin ubicación')} - {server.get('country', 'N/A')}",
+                    'id': server.get('id', 'N/A')
                 }
             }
-        })
+        }
+        
+        logger.info(f"Prueba de velocidad completada: Download {resultado['data']['download_speed']} Mbps, Upload {resultado['data']['upload_speed']} Mbps")
+        
+        return JsonResponse(resultado)
+    
+    except speedtest.SpeedtestException as speed_err:
+        logger.error(f"Error de Speedtest: {str(speed_err)}")
+        return JsonResponse({
+            'status': 'error',
+            'type': 'speedtest_error', 
+            'message': f"Error en prueba de velocidad: {str(speed_err)}"
+        }, status=500)
     
     except Exception as e:
-        logger.error(f"Error en prueba de velocidad: {str(e)}")
+        logger.error(f"Error inesperado en prueba de velocidad: {str(e)}", exc_info=True)
         return JsonResponse({
             'status': 'error', 
-            'message': str(e)
+            'type': 'unexpected_error',
+            'message': "Error interno al realizar la prueba de velocidad"
         }, status=500)
     
 # Vista para asistencia técnica
@@ -213,7 +279,6 @@ def client_diagnosis(request):
 @user_passes_test(is_client)
 def client_chat(request):
     if request.method == "GET":
-        # Renderiza la página del chat
         return render(request, "dashboard/client/client_chat.html")
 
 
@@ -228,7 +293,7 @@ def cpu_monitoring_data(request):
             "speed": "N/A",
             "processes": 0,
             "threads": 0,
-            "sockets": 1,  # Valor por defecto
+            "sockets": 1, 
             "cores": 0,
             "logical_processors": 0,
             "uptime": "0:00:00",
@@ -439,6 +504,174 @@ def gpu_monitoring_data(request):
         logger.error(f"Error en gpu_monitoring_data: {e}")
         return JsonResponse({"error": str(e)}, status=500)
     
+#ANTIVIRUS
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def system_virus_scan(request):
+    try:
+        virustotal_api_key = os.environ.get('virus_total_api_key')
+        if not virustotal_api_key:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Configuración de API de VirusTotal no encontrada'
+            }, status=500)
+
+        scan_results = {
+            'total_files_scanned': 0,
+            'potentially_malicious': [],
+            'clean_files': 0,
+            'scan_logs': []  # Nuevo campo para logs detallados
+        }
+
+        scan_paths = [
+            os.path.expanduser('~'),
+            os.path.join(os.path.expanduser('~'), 'Downloads'),
+            os.path.join(os.path.expanduser('~'), 'Documents'),
+        ]
+
+        def get_files_to_scan(directory, max_files=10):
+            files_to_scan = []
+            try:
+                for root, _, files in os.walk(directory):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        if os.path.getsize(file_path) < 32 * 1024 * 1024:
+                            files_to_scan.append(file_path)
+                            if len(files_to_scan) >= max_files:
+                                break
+                    if len(files_to_scan) >= max_files:
+                        break
+            except Exception as e:
+                logger.warning(f"Error escaneando directorio {directory}: {str(e)}")
+            return files_to_scan
+
+        for path in scan_paths:
+            if os.path.exists(path):
+                files_to_scan = get_files_to_scan(path)
+                
+                for file_path in files_to_scan:
+                    try:
+                        with open(file_path, 'rb') as f:
+                            files = {'file': f}
+                            response = requests.post(
+                                'https://www.virustotal.com/vtapi/v2/file/scan',
+                                params={'apikey': virustotal_api_key},
+                                files=files
+                            )
+                        
+                        if response.status_code == 200:
+                            scan_result = response.json()
+                            
+                            report_response = requests.get(
+                                'https://www.virustotal.com/vtapi/v2/file/report',
+                                params={
+                                    'apikey': virustotal_api_key,
+                                    'resource': scan_result['resource']
+                                }
+                            )
+                            
+                            if report_response.status_code == 200:
+                                analysis_results = report_response.json()
+                                
+                                scan_results['total_files_scanned'] += 1
+                                
+                                log_entry = {
+                                    'file': os.path.basename(file_path),
+                                    'status': 'clean',
+                                    'details': 'Archivo escaneado correctamente'
+                                }
+                                
+                                if analysis_results.get('positives', 0) > 0:
+                                    log_entry['status'] = 'threat'
+                                    log_entry['details'] = f"Amenazas detectadas: {analysis_results['positives']} de {analysis_results['total']} motores"
+                                    
+                                    scan_results['potentially_malicious'].append({
+                                        'file': file_path,
+                                        'detections': analysis_results['positives'],
+                                        'total_engines': analysis_results['total']
+                                    })
+                                else:
+                                    scan_results['clean_files'] += 1
+                                
+                                scan_results['scan_logs'].append(log_entry)
+                   
+                    except PermissionError:
+                        scan_results['scan_logs'].append({
+                            'file': os.path.basename(file_path),
+                            'status': 'error',
+                            'details': 'Permiso denegado'
+                        })
+                    except Exception as e:
+                        scan_results['scan_logs'].append({
+                            'file': os.path.basename(file_path),
+                            'status': 'error',
+                            'details': str(e)
+                        })
+
+        return JsonResponse({
+            'status': 'success',
+            'scan_results': scan_results
+        })
+
+    except Exception as e:
+        logger.error(f"Error en escaneo de sistema: {str(e)}")
+        return JsonResponse({
+            'status': 'error', 
+            'message': str(e)
+        }, status=500)
+
+# Vista adicional para obtener detalles del sistema
+@login_required
+@require_http_methods(["GET"])
+def system_security_info(request):
+    """
+    Obtener información de seguridad básica del sistema
+    """
+    try:
+        # Información de procesos
+        processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'status']):
+            try:
+                processes.append({
+                    'pid': proc.info['pid'],
+                    'name': proc.info['name'],
+                    'status': proc.info['status']
+                })
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+
+        # Información de red
+        network_connections = []
+        for conn in psutil.net_connections():
+            try:
+                network_connections.append({
+                    'fd': conn.fd,
+                    'family': str(conn.family),
+                    'type': str(conn.type),
+                    'laddr': str(conn.laddr),
+                    'raddr': str(conn.raddr),
+                    'status': conn.status
+                })
+            except Exception:
+                pass
+
+        return JsonResponse({
+            'status': 'success',
+            'system_info': {
+                'total_processes': len(processes),
+                'network_connections': len(network_connections)
+            },
+            'processes': processes[:20],  
+            'network_connections': network_connections[:20]  
+        })
+
+    except Exception as e:
+        logger.error(f"Error obteniendo información del sistema: {str(e)}")
+        return JsonResponse({
+            'status': 'error', 
+            'message': str(e)
+        }, status=500)
 
 # Diagnóstico del sistema (incluye CPU, RAM, Disco, y GPU)
 @login_required
@@ -534,7 +767,6 @@ def check_defender_status():
 # Función para ejecutar un escaneo con Microsoft Defender
 def run_defender_scan(scan_type, custom_path=None):
     try:
-        # Determinar el comando según el tipo de escaneo
         if scan_type == "FullScan":
             command = "Start-MpScan -ScanType FullScan"
         elif scan_type == "CustomScan" and custom_path:
@@ -653,74 +885,389 @@ def client_repair_disk(request):
 
     except Exception as e:
         return JsonResponse({"status": "error", "message": f"Error inesperado: {str(e)}"}, status=500)
-
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import JsonResponse
-import os
-
+    
+def get_temp_directories():
+    return [
+        tempfile.gettempdir(),
+        os.getenv('TEMP', '/tmp'),
+        os.getenv('TMPDIR', '/tmp'),
+        os.path.expanduser('~/.cache'),
+        '/var/tmp',
+        os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Temp') if os.name == 'nt' else None,
+        os.path.join(os.path.expanduser('~'), 'Library', 'Caches') if os.name == 'darwin' else None,
+    ]
+    
+def is_file_in_use(file_path):
+    try:
+        with open(file_path, 'rb') as f:
+            f.read(1)
+        return False
+    except (PermissionError, OSError):
+        return True
+    
 def formatear_tamano(bytes_size):
-    for unidad in ['B', 'KB', 'MB', 'GB', 'TB']:
-        if bytes_size < 1024:
+    if bytes_size == 0:
+        return "0 B"
+        
+    unidades = ['B', 'KB', 'MB', 'GB', 'TB']
+    for unidad in unidades:
+        if bytes_size < 1024.0:
             return f"{bytes_size:.2f} {unidad}"
-        bytes_size /= 1024
+        bytes_size /= 1024.0
     return f"{bytes_size:.2f} PB"
 
+
+
 @login_required
+@require_GET
+def get_temp_size(request):
+    try:
+        # Usar la función común para obtener los directorios temporales
+        temp_directories = get_temp_directories()
+        temp_directories = [d for d in temp_directories if d and os.path.exists(d) and os.path.isdir(d)]
+
+        total_temp_size = 0
+        total_temp_files = 0
+        files_in_use_size = 0
+        files_in_use_count = 0
+
+        for temp_dir in temp_directories:
+            for root, _, files in os.walk(temp_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    
+                    try:
+                        if os.path.isfile(file_path) and os.path.getsize(file_path) > 0:
+                            file_size = os.path.getsize(file_path)
+                            
+                            # Usar la función común para verificar si el archivo está en uso
+                            if is_file_in_use(file_path):
+                                files_in_use_size += file_size
+                                files_in_use_count += 1
+                            else:
+                                total_temp_size += file_size
+                                total_temp_files += 1
+                    except Exception:
+                        continue
+
+        return JsonResponse({
+            "status": "success",
+            "total_temp_size": formatear_tamano(total_temp_size),
+            "total_temp_files": total_temp_files,
+            "files_in_use_size": formatear_tamano(files_in_use_size),
+            "files_in_use_count": files_in_use_count
+        })
+
+    except Exception as e:
+        logger.error(f"Error en get_temp_size: {str(e)}")
+        return JsonResponse({
+            "status": "error",
+            "message": str(e)
+        }, status=500)
+
+        
+@login_required
+@require_POST
 @user_passes_test(is_client)
 def client_clear_space(request):
-    """
-    Limpia archivos temporales para liberar espacio en el sistema.
-    """
     try:
-        # Directorios de archivos temporales comunes
-        temp_directories = [
-            os.getenv('TEMP', '/tmp'),
-            os.path.expanduser('~/.cache'),
-        ]
-
+        # Parámetros configurables
+        old_files_hours = 24  # Eliminar archivos más antiguos que X horas
+        min_file_size = 1024  # Ignorar archivos menores a X bytes (1KB por defecto)
+        old_files_threshold = time.time() - (old_files_hours * 60 * 60)
+        
+        # Usar la función común para obtener los directorios temporales
+        temp_directories = get_temp_directories()
+        temp_directories = [d for d in temp_directories if d and os.path.exists(d) and os.path.isdir(d)]
+        
+        # Inicializar contadores y listas
         total_deleted = 0
         total_failed = 0
         total_bytes_deleted = 0
         failed_files = []
-
+        deleted_files = []
+        files_in_use_details = []
+        skipped_files = 0
+        
+        # Recorrer directorios temporales
         for temp_dir in temp_directories:
-            if os.path.exists(temp_dir):
-                for root, dirs, files in os.walk(temp_dir):
+            try:
+                logger.info(f"Procesando directorio temporal: {temp_dir}")
+                for root, _, files in os.walk(temp_dir):
                     for file in files:
                         file_path = os.path.join(root, file)
                         try:
-                            if os.path.isfile(file_path):
-                                total_bytes_deleted += os.path.getsize(file_path)
-                                os.remove(file_path)
-                                total_deleted += 1
+                            # Verificar si es un archivo y existe
+                            if not os.path.isfile(file_path) or not os.path.exists(file_path):
+                                continue
+                                
+                            # Obtener tamaño y tiempo de modificación
+                            try:
+                                file_size = os.path.getsize(file_path)
+                                file_mod_time = os.path.getmtime(file_path)
+                            except (OSError, PermissionError):
+                                total_failed += 1
+                                continue
+                                
+                            # Ignorar archivos pequeños para optimizar rendimiento
+                            if file_size < min_file_size:
+                                skipped_files += 1
+                                continue
+                                
+                            # Verificar si el archivo está en uso usando la función común
+                            if is_file_in_use(file_path):
+                                files_in_use_details.append({
+                                    'path': file_path,
+                                    'size': formatear_tamano(file_size)
+                                })
+                                total_failed += 1
+                                continue
+                                
+                            # Verificar si el archivo es antiguo (más viejo que el umbral)
+                            if file_mod_time < old_files_threshold:
+                                try:
+                                    # Intentar eliminar el archivo
+                                    os.remove(file_path)
+                                    total_deleted += 1
+                                    total_bytes_deleted += file_size
+                                    deleted_files.append({
+                                        'path': file_path,
+                                        'size': formatear_tamano(file_size)
+                                    })
+                                    logger.info(f"Archivo eliminado: {file_path} ({formatear_tamano(file_size)})")
+                                except Exception as e:
+                                    logger.error(f"Error al eliminar {file_path}: {str(e)}")
+                                    failed_files.append({
+                                        'path': file_path,
+                                        'size': formatear_tamano(file_size),
+                                        'error': str(e)
+                                    })
+                                    total_failed += 1
                         except Exception as e:
-                            total_failed += 1
-                            failed_files.append(file_path)
-                            print(f"Error al eliminar {file_path}: {e}")
-
-        tamano_legible = formatear_tamano(total_bytes_deleted)
-
-        message = (
-            f"Archivos eliminados: {total_deleted}.<br>"
-            f"Tamaño liberado: {tamano_legible}.<br>"
-        )
-        if total_failed > 0:
-            message += f"Archivos en uso no eliminados: {total_failed}."
-
+                            logger.error(f"Error procesando {file_path}: {str(e)}")
+                            continue
+            except Exception as e:
+                logger.error(f"Error al procesar directorio {temp_dir}: {str(e)}")
+                continue
+        
+        # Preparar respuesta detallada
+        tamano_liberado = formatear_tamano(total_bytes_deleted)
+        
+        # Calcular el tamaño total de archivos en uso de manera segura
+        total_failed_size = 0
+        for file in files_in_use_details:
+            try:
+                if os.path.exists(file['path']) and os.access(file['path'], os.R_OK):
+                    total_failed_size += os.path.getsize(file['path'])
+            except Exception:
+                continue
+        
+        message = f"Archivos eliminados: {total_deleted}.<br>Tamaño liberado: {tamano_liberado}.<br>Archivos en uso no eliminados: {len(files_in_use_details)}."
+        
+        logger.info(f"Limpieza completada: {message}")
+        
         return JsonResponse({
             "status": "success",
             "message": message,
-            "failed_files": failed_files,
             "total_deleted": total_deleted,
-            "space_freed": tamano_legible
+            "space_freed": tamano_liberado,
+            "files_in_use": len(files_in_use_details),
+            "total_failed_size": formatear_tamano(total_failed_size),
+            "details": {
+                "directories_checked": len(temp_directories),
+                "skipped_files": skipped_files,
+                "oldest_file_age_hours": old_files_hours
+            }
         })
-
     except Exception as e:
+        logger.error(f"Error en client_clear_space: {str(e)}")
         return JsonResponse({
             "status": "error",
             "message": f"Error inesperado: {str(e)}"
         }, status=500)
 
+@login_required
+@require_GET
+@user_passes_test(is_client)
+def get_largest_temp_files(request):
+    temp_directories = [
+        tempfile.gettempdir(),
+        os.getenv('TEMP', '/tmp'),
+        os.getenv('TMPDIR', '/tmp'),
+        os.path.expanduser('~/.cache'),
+        '/var/tmp',
+        os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Temp') if os.name == 'nt' else None,
+        os.path.join(os.path.expanduser('~'), 'Library', 'Caches') if os.name == 'darwin' else None,
+    ]
+    
+    temp_directories = [d for d in temp_directories if d and os.path.exists(d) and os.path.isdir(d)]
+    
+    max_files = 20
+    largest_files = []
+    
+    for temp_dir in temp_directories:
+        try:
+            for root, _, files in os.walk(temp_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    try:
+                        if not os.path.isfile(file_path) or not os.path.exists(file_path):
+                            continue
+                            
+                        file_size = os.path.getsize(file_path)
+                        
+                        if file_size < 1024 * 1024:
+                            continue
+                            
+                        if len(largest_files) < max_files:
+                            heapq.heappush(largest_files, (file_size, file_path))
+                        elif file_size > largest_files[0][0]:
+                            heapq.heappushpop(largest_files, (file_size, file_path))
+                    except (OSError, PermissionError):
+                        continue
+        except Exception:
+            continue
+    
+    large_files_info = []
+    largest_files.sort(reverse=True)
+    
+    for size, path in largest_files:
+        large_files_info.append({
+            'path': path,
+            'size': formatear_tamano(size),
+            'size_bytes': size,
+            'can_delete': os.access(path, os.W_OK)
+        })
+    
+    return JsonResponse({
+        "status": "success",
+        "large_files": large_files_info,
+        "total_found": len(large_files_info)
+    })
+
+@login_required
+@require_POST
+@user_passes_test(is_client)
+def client_clear_specific_temp(request):
+    try:
+        data = json.loads(request.body)
+        file_paths = data.get('file_paths', [])
+        
+        if not file_paths:
+            return JsonResponse({
+                "status": "error",
+                "message": "No se proporcionaron archivos para eliminar"
+            })
+        
+        deleted = 0
+        failed = 0
+        total_size_freed = 0
+        failed_details = []
+        
+        for path in file_paths:
+            try:
+                if os.path.exists(path) and os.path.isfile(path):
+                    size = os.path.getsize(path)
+                    os.remove(path)
+                    deleted += 1
+                    total_size_freed += size
+                else:
+                    failed += 1
+                    failed_details.append({
+                        "path": path,
+                        "reason": "Archivo no encontrado"
+                    })
+            except Exception as e:
+                failed += 1
+                failed_details.append({
+                    "path": path,
+                    "reason": str(e)
+                })
+        
+        return JsonResponse({
+            "status": "success",
+            "message": f"Archivos eliminados: {deleted}. Espacio liberado: {formatear_tamano(total_size_freed)}",
+            "deleted": deleted,
+            "failed": failed,
+            "space_freed": formatear_tamano(total_size_freed),
+            "failed_details": failed_details
+        })
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": f"Error al eliminar archivos: {str(e)}"
+        }, status=500)
+
+@login_required
+@require_GET
+def get_system_temp_info(request):
+    try:
+        temp_directories = [
+            tempfile.gettempdir(),
+            os.getenv('TEMP', '/tmp'),
+            os.getenv('TMPDIR', '/tmp'),
+            os.path.expanduser('~/.cache'),
+        ]
+        
+        temp_directories = [d for d in temp_directories if d and os.path.exists(d) and os.path.isdir(d)]
+        
+        system_info = {
+            'temp_directories': temp_directories,
+            'disk_usage': {},
+            'recommendations': []
+        }
+        
+        for temp_dir in temp_directories:
+            try:
+                total_size = 0
+                file_count = 0
+                large_file_count = 0
+                
+                for root, _, files in os.walk(temp_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        try:
+                            if os.path.isfile(file_path):
+                                size = os.path.getsize(file_path)
+                                total_size += size
+                                file_count += 1
+                                
+                                if size > 10 * 1024 * 1024:
+                                    large_file_count += 1
+                        except (OSError, PermissionError):
+                            continue
+                
+                system_info['disk_usage'][temp_dir] = {
+                    'total_size': formatear_tamano(total_size),
+                    'total_size_bytes': total_size,
+                    'file_count': file_count,
+                    'large_file_count': large_file_count
+                }
+                
+                if total_size > 1 * 1024 * 1024 * 1024:
+                    system_info['recommendations'].append(
+                        f"El directorio {temp_dir} ocupa más de 1GB. Se recomienda limpiarlo con frecuencia."
+                    )
+                
+                if large_file_count > 5:
+                    system_info['recommendations'].append(
+                        f"Se encontraron {large_file_count} archivos grandes en {temp_dir}. Considere eliminarlos manualmente."
+                    )
+                
+            except Exception:
+                continue
+        
+        return JsonResponse({
+            "status": "success",
+            "system_info": system_info
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": f"Error al obtener información del sistema: {str(e)}"
+        }, status=500)
+        
 @login_required
 @user_passes_test(is_client)
 def client_update_software(request):
@@ -798,7 +1345,6 @@ def client_update_software(request):
             }, status=500)
 
     except Exception as e:
-        # Capturamos errores inesperados
         return JsonResponse({
             "status": "error",
             "message": f"Error inesperado: {str(e)}"
@@ -838,7 +1384,6 @@ def client_defragment_disk(request):
                     "message": f"Error al verificar la unidad {drive}: {str(e)}"
                 }, status=500)
 
-            # Verificar si la unidad es un SSD
             try:
                 disk_check = subprocess.run(
                     ["wmic", "diskdrive", "get", "model,mediaType"],
@@ -947,24 +1492,7 @@ def client_defragment_disk(request):
             "status": "error",
             "message": f"Error inesperado: {str(e)}"
         }, status=500)
-
-@login_required
-@user_passes_test(is_client)
-def client_tamano_temp(request):
-    temp_dir = tempfile.gettempdir()
-    total_tamano = 0
-
-    for archivo in os.listdir(temp_dir):
-        ruta = os.path.join(temp_dir, archivo)
-        if os.path.isfile(ruta):
-            total_tamano += os.path.getsize(ruta)
-
-    tamano_legible = formatear_tamano(total_tamano)
-
-    return JsonResponse({
-        'tamano_total': tamano_legible
-    })
-
+        
 @login_required
 @user_passes_test(is_client)
 def client_learning_center(request):

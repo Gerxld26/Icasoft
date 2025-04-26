@@ -1,7 +1,5 @@
 from django.urls import path
 
-
-
 from .views import (
     # Dashboards
     admin_dashboard,
@@ -44,13 +42,17 @@ from .views import (
     client_update_software,
     client_defragment_disk,
     client_repair_disk,
-    #Archivos temporal views
-    client_tamano_temp,
+    get_temp_size,  
+    get_largest_temp_files,
+    get_system_temp_info,
+    client_clear_specific_temp, 
     # Monitoring views (pages)
     client_monitoring_cpu,
     client_monitoring_ram,
     client_monitoring_disk,
     client_monitoring_gpu,
+    system_security_info,
+    system_virus_scan,
 
     # Monitoring views (API data)
     cpu_monitoring_data,
@@ -102,19 +104,25 @@ urlpatterns = [
     path("client/diagnosis/comparison/", client_comparison, name="client_comparison"),
     path("client/diagnosis/defender/status/", defender_status_api, name="defender_status_api"),
     path("client/maintenance/", client_maintenance, name="client_maintenance"),
-    path("client/tamano-temp/", client_tamano_temp, name="client_tamano_temp"),
     path("client/recommendations/", client_recommendations, name="client_recommendations"),
     path("client/learning-center/", client_learning_center, name="client_learning_center"),
     path("client/chat/", client_chat, name="client_chat"),
     path("client/historial/", client_historial, name="client_historial"),
-     path('speed-test/', speed_test, name='speed_test'),
+    path('speed-test/', speed_test, name='speed_test'),
 
-    # Mantenimiento
-        path("client/maintenance/clear-space/", client_clear_space, name="client_clear_space"),
-        path("client/maintenance/update-software/", client_update_software, name="client_update_software"),
-        path("client/maintenance/defragment-disk/", client_defragment_disk, name="client_defragment_disk"),
-        path("client/maintenance/repair-disk/", client_repair_disk, name="client_repair_disk"),
-
+    # Mantenimiento y limpieza de archivos
+    path("client/maintenance/clear-space/", client_clear_space, name="client_maintenance_clear_space"),
+    path("client/maintenance/update-software/", client_update_software, name="client_update_software"),
+    path("client/maintenance/defragment-disk/", client_defragment_disk, name="client_defragment_disk"),
+    path("client/maintenance/repair-disk/", client_repair_disk, name="client_repair_disk"),
+    path('client/get-temp-size/', get_temp_size, name='get_temp_size'),
+    path('client/clear-space/', client_clear_space, name='client_clear_space'),
+    path('client/get-largest-temp-files/', get_largest_temp_files, name='get_largest_temp_files'),
+    path('client/clear-specific-temp/', client_clear_specific_temp, name='client_clear_specific_temp'),
+    path('client/get-system-temp-info/', get_system_temp_info, name='get_system_temp_info'),
+    path('system/virus-scan/', system_virus_scan, name='system_virus_scan'),
+    path('system/security-info/', system_security_info, name='system_security_info'),
+        
     # Monitoring routes (pages)
     path("client/monitoring/cpu/", client_monitoring_cpu, name="client_monitoring_cpu"),
     path("client/monitoring/ram/", client_monitoring_ram, name="client_monitoring_ram"),
