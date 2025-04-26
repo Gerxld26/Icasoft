@@ -226,40 +226,73 @@
             <div class="textHW">ESTADO DE SEGURIDAD</div>
         </div>
         <div class="contentDataAnt antivirus-content">
-      
-            
-            <div class="antivirus-detalles">
-                <div class="antivirus-info">
-                    <div>Antivirus habilitado:</div>
-                    <div id="antivirusHabilitado">-</div>
+            <div id="antivirus-progreso" class="antivirus-progreso" style="display: none;">
+                <div class="progreso-titulo">Analizando sistema</div>
+                <div class="progreso-barra-contenedor">
+                    <div id="antivirus-progreso-barra" class="progreso-barra"></div>
                 </div>
-                <div class="antivirus-info">
-                    <div>Protección en tiempo real:</div>
-                    <div id="proteccionTiempoReal">-</div>
+                <div id="antivirus-progreso-texto" class="progreso-texto">Iniciando análisis...</div>
+                <div id="antivirus-progreso-pasos" class="progreso-pasos">
+                    <div class="paso">
+                        <span class="paso-icono"><i class="fas fa-hourglass-half"></i></span>
+                        <span class="paso-texto">Iniciando análisis</span>
+                    </div>
+                    <div class="paso">
+                        <span class="paso-icono"><i class="fas fa-hourglass-half"></i></span>
+                        <span class="paso-texto">Escaneando archivos</span>
+                    </div>
+                    <div class="paso">
+                        <span class="paso-icono"><i class="fas fa-hourglass-half"></i></span>
+                        <span class="paso-texto">Verificando amenazas</span>
+                    </div>
+                    <div class="paso">
+                        <span class="paso-icono"><i class="fas fa-hourglass-half"></i></span>
+                        <span class="paso-texto">Finalizando análisis</span>
+                    </div>
                 </div>
-                <div class="antivirus-info">
-                    <div>Versión de Antivirus:</div>
-                    <div id="versionAntivirus">-</div>
+                <div class="archivos-escaneados-container">
+                    <div class="titulo-archivos-escaneados">Archivos escaneados:</div>
+                    <div id="archivos-escaneados-lista" class="lista-archivos-escaneados"></div>
+                </div>
+                <div class="contenedor-logs-animados">
+                    <div id="antivirus-log-container" class="log-actual"></div>
                 </div>
             </div>
-
-            <div class="antivirus-analisis">
-                <div class="analisis-componente">
-                    <div class="titulo">Estado de Protección</div>
-                    <div id="estadoProteccion" class="contenido">-</div>
+ 
+            <div id="antivirus-resultados">
+                <div class="antivirus-detalles">
+                    <div class="antivirus-info">
+                        <div>Antivirus habilitado:</div>
+                        <div id="antivirusHabilitado">-</div>
+                    </div>
+                    <div class="antivirus-info">
+                        <div>Protección en tiempo real:</div>
+                        <div id="proteccionTiempoReal">-</div>
+                    </div>
+                    <div class="antivirus-info">
+                        <div>Versión de Antivirus:</div>
+                        <div id="versionAntivirus">-</div>
+                    </div>
                 </div>
-                <div class="analisis-componente">
-                    <div class="titulo">Últimas Amenazas</div>
-                    <div id="ultimasAmenazas" class="contenido">-</div>
-                </div>
-                <div class="analisis-componente">
-                    <div class="titulo">Recomendaciones</div>
-                    <div id="recomendacionesSeguridad" class="contenido">-</div>
+ 
+                <div class="antivirus-analisis">
+                    <div class="analisis-componente">
+                        <div class="titulo">Estado de Protección</div>
+                        <div id="estadoProteccion" class="contenido">-</div>
+                    </div>
+                    <div class="analisis-componente">
+                        <div class="titulo">Últimas Amenazas</div>
+                        <div id="ultimasAmenazas" class="contenido">-</div>
+                    </div>
+                    <div class="analisis-componente">
+                        <div class="titulo">Recomendaciones</div>
+                        <div id="recomendacionesSeguridad" class="contenido">-</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+ </div>
 
 <!-- MODAL MANTENIMIENTO  -->
 <div id="modalMantenimiento" class="modal">

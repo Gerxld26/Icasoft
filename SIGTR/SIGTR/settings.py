@@ -14,9 +14,36 @@ from pathlib import Path
 from decouple import config
 from pathlib import Path
 import logging
+from dotenv import load_dotenv
 
+
+load_dotenv()
 from django.contrib.messages import constants as messages
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/speed_test.log',
+        },
+    },
+    'loggers': {
+        '': {  
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
+SPEEDTEST_CONFIG = {
+    'TIMEOUT': 10,  
+    'THREADS': 3,   
+}
 
 MESSAGE_TAGS = {
     messages.DEBUG: 'debug',
