@@ -465,7 +465,7 @@ body {
 }
 
 .header-chat {
-    background-color: rgb(3, 101, 140);
+    background-color:  rgb(53 143 179 / 72%);
     color: white;
     border-color: none;
     border-top-left-radius: 30px;
@@ -490,7 +490,7 @@ p.message_chat {
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
     border-top-left-radius: 10px;
-    box-shadow: -3px 4px 7px 2px rgb(247 253 255);
+    box-shadow: -3px 4px 4px 0px rgb(47 49 50);
 }
 
 .userRequest {
@@ -507,7 +507,7 @@ p.message_chat_user {
     border-top-right-radius: 10px;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
-    box-shadow: 5px 4px 10px 2px rgb(3, 101, 140);
+    box-shadow: 3px 4px 4px 0px rgb(47 49 50);
 }
 
 .footer-chat {
@@ -583,11 +583,17 @@ p.message_chat_user {
 }
 
 /*cuando el chat se abra: */
+.modo-chat-activo #mensajeIA{
+    background: linear-gradient(180deg, transparent, #349ac0);
+}
 .modo-chat-activo #header-chat,
 .modo-chat-activo #body-chat {
     display: grid;
 }
-
+.modo-chat-activo #body-chat {
+    backdrop-filter: blur(6rem);
+    border-radius: 10px;
+}
 .modo-chat-activo #footer-chat {
     width: 95%;
     grid-template-columns: 80% auto;
@@ -596,9 +602,16 @@ p.message_chat_user {
     border: none;
     height: 80%;
 }
-
+.modo-chat-activo .iaResponse {
+    margin-left: 15px;
+    margin-top: 10px;
+}
+.modo-chat-activo .userRequest{
+    margin-right: 15px;
+    margin-top: 10px;
+}
 .modo-chat-activo .contentChatBtn {
-    background: #03658c;
+    background: #0a3f54;
 }
 
 .modo-chat-activo .enviarMessage {
