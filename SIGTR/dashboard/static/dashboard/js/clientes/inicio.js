@@ -22,7 +22,7 @@ let contador = 0;
 
 function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', index) {
     const mensajeFormateado = mensaje.replace(/<br>/g, '\n');
-    
+
     let elemento;
     if (tipo === 'success') {
         success.innerHTML = `
@@ -76,7 +76,7 @@ function animarProgreso(span, porcentajeFinal, callback, typeNotification) {
             clearInterval(intervalo);
             if (typeof typeNotification === 'function') {
                 setTimeout(() => {
-                    typeNotification(); 
+                    typeNotification();
                 }, 1500);
             }
             if (typeof callback === 'function') {
@@ -93,14 +93,14 @@ function animarProgreso(span, porcentajeFinal, callback, typeNotification) {
 async function fetchTemp() {
     try {
         const responseTemp = await fetch('/dashboard/client/get-temp-size/');
-        
+
         if (!responseTemp.ok) {
             throw new Error(`HTTP error! status: ${responseTemp.status}`);
         }
-        
+
         const dataTemp = await responseTemp.json();
         const archTemp = document.getElementById('archTemp');
-        
+
         if (dataTemp.status === 'success') {
             archTemp.innerHTML = `
                 <div class="temp-info">
@@ -113,18 +113,18 @@ async function fetchTemp() {
                     </div>
                 </div>
             `;
-            
+
             const tempIndicator = document.querySelector('.temp-indicator');
             if (tempIndicator) {
                 const sizeInMB = parseFloat(dataTemp.total_temp_size);
                 let indicatorClass = 'low';
-                
+
                 if (sizeInMB >= 500) {
                     indicatorClass = 'high';
                 } else if (sizeInMB >= 100) {
                     indicatorClass = 'medium';
                 }
-                
+
                 tempIndicator.className = `temp-indicator ${indicatorClass}`;
             }
         } else {
@@ -178,10 +178,10 @@ async function clearTempSpace() {
             </div>
             <div class="status-text">Iniciando limpieza...</div>
         `;
-        
+
         const progressBar = cleaningStatus.querySelector('.progress-bar');
         const statusText = cleaningStatus.querySelector('.status-text');
-        
+
         let progress = 0;
         const progressInterval = setInterval(() => {
             progress += 5;
@@ -191,7 +191,7 @@ async function clearTempSpace() {
             }
             progressBar.style.width = `${progress}%`;
             progressBar.querySelector('span').textContent = `${progress}%`;
-            
+
             if (progress < 30) {
                 statusText.textContent = "Escaneando archivos temporales...";
             } else if (progress < 60) {
@@ -200,9 +200,9 @@ async function clearTempSpace() {
                 statusText.textContent = "Limpiando archivos temporales...";
             }
         }, 200);
-        
-        const response = await fetch('/dashboard/client/clear-space/', { 
-            method: 'POST',  
+
+        const response = await fetch('/dashboard/client/clear-space/', {
+            method: 'POST',
             headers: {
                 'X-CSRFToken': getCookie('csrftoken'),
                 'Content-Type': 'application/json'
@@ -210,21 +210,21 @@ async function clearTempSpace() {
         });
 
         clearInterval(progressInterval);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        
+
         progressBar.style.width = '100%';
         progressBar.querySelector('span').textContent = '100%';
-        
+
         if (data.status === 'success') {
             statusText.textContent = "¡Limpieza completada con éxito!";
-            
+
             mostrarNotificacion('success', data.message);
-            
+
             const resultadoLimpieza = document.getElementById('resultadoLimpieza') || createResultElement();
             resultadoLimpieza.style.display = 'block';
             resultadoLimpieza.innerHTML = `
@@ -239,14 +239,14 @@ async function clearTempSpace() {
                     <button class="close-result">×</button>
                 </div>
             `;
-            
+
             const closeButton = resultadoLimpieza.querySelector('.close-result');
             if (closeButton) {
                 closeButton.addEventListener('click', () => {
                     resultadoLimpieza.style.display = 'none';
                 });
             }
-            
+
             fetchTemp();
         } else {
             statusText.textContent = "Error durante la limpieza";
@@ -255,12 +255,12 @@ async function clearTempSpace() {
     } catch (error) {
         console.error('Error al limpiar espacio:', error);
         mostrarNotificacion('danger', 'Error al limpiar archivos temporales');
-        
+
         const cleaningStatus = document.getElementById('cleaningStatus');
         if (cleaningStatus) {
             const progressBar = cleaningStatus.querySelector('.progress-bar');
             const statusText = cleaningStatus.querySelector('.status-text');
-            
+
             progressBar.style.width = '100%';
             progressBar.style.backgroundColor = '#dc3545';
             progressBar.querySelector('span').textContent = 'Error';
@@ -273,10 +273,10 @@ function createCleaningStatus() {
     const element = document.createElement('div');
     element.id = 'cleaningStatus';
     element.className = 'cleaning-status';
-    
+
     const container = document.querySelector('.modal-body') || document.body;
     container.appendChild(element);
-    
+
     return element;
 }
 
@@ -284,26 +284,26 @@ function createResultElement() {
     const element = document.createElement('div');
     element.id = 'resultadoLimpieza';
     element.className = 'cleaning-result-container';
-    
+
     const container = document.querySelector('.modal-body') || document.body;
     container.appendChild(element);
-    
+
     return element;
 }
 
 async function mostrarArchivosMasGrandes() {
     try {
         const response = await fetch('/dashboard/client/get-largest-temp-files/');
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (data.status === 'success' && data.large_files && data.large_files.length > 0) {
             const largeFilesContainer = document.getElementById('largeFilesContainer') || createLargeFilesContainer();
-            
+
             let tableHtml = `
                 <h4>Archivos temporales más grandes</h4>
                 <table class="large-files-table">
@@ -317,11 +317,11 @@ async function mostrarArchivosMasGrandes() {
                     </thead>
                     <tbody>
             `;
-            
+
             data.large_files.forEach(file => {
                 const fileName = file.path.split('/').pop();
                 const location = file.path.replace(fileName, '');
-                
+
                 tableHtml += `
                     <tr data-path="${file.path}">
                         <td>${fileName}</td>
@@ -333,21 +333,21 @@ async function mostrarArchivosMasGrandes() {
                     </tr>
                 `;
             });
-            
+
             tableHtml += `
                     </tbody>
                 </table>
             `;
-            
+
             largeFilesContainer.innerHTML = tableHtml;
             largeFilesContainer.style.display = 'block';
-            
+
             const deleteButtons = largeFilesContainer.querySelectorAll('.delete-file-btn');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', async (event) => {
                     const filePath = event.target.dataset.path;
                     await eliminarArchivoEspecifico(filePath);
-                    
+
                     mostrarArchivosMasGrandes();
                     fetchTemp();
                 });
@@ -367,10 +367,10 @@ function createLargeFilesContainer() {
     const element = document.createElement('div');
     element.id = 'largeFilesContainer';
     element.className = 'large-files-container';
-    
+
     const container = document.querySelector('.modal-body') || document.body;
     container.appendChild(element);
-    
+
     return element;
 }
 
@@ -386,19 +386,19 @@ async function eliminarArchivoEspecifico(filePath) {
                 file_paths: [filePath]
             })
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (data.status === 'success') {
             mostrarNotificacion('success', `Archivo eliminado: ${data.deleted} (${data.space_freed})`);
         } else {
             mostrarNotificacion('danger', data.message);
         }
-        
+
         return data;
     } catch (error) {
         console.error('Error al eliminar archivo específico:', error);
@@ -407,19 +407,32 @@ async function eliminarArchivoEspecifico(filePath) {
     }
 }
 
+async function fetchCpuUse() {
+    try {
+
+        const responseCPUPr = await fetch('/dashboard/client/monitoring/cpu/data/');
+        const dataCPUPor = await responseCPUPr.json();
+        //Barra de progreso CPU dinámico:
+        const useCPU = document.getElementById('useCPU');
+        useCPU.textContent = `CPU en uso: ${dataCPUPor.usage} %`
+
+    } catch (error) {
+
+    }
+}
 $(document).ready(function () {
     fetchTemp();
-    
+    fetchCpuUse();
     const btnLiberarEspacio = document.getElementById('liberarEspacio');
     if (btnLiberarEspacio) {
         btnLiberarEspacio.addEventListener('click', clearTempSpace);
     }
-    
+
     const btnMostrarGrandes = document.getElementById('mostrarGrandes');
     if (btnMostrarGrandes) {
         btnMostrarGrandes.addEventListener('click', mostrarArchivosMasGrandes);
     }
-    
+
     initMapAsistencia();
     const robotImg = document.getElementById("robotimg");
     const videoRobot = document.getElementById("video-container");
@@ -518,88 +531,28 @@ $(document).ready(function () {
             progress.style.display = 'flex';
         });
     });
-});
-function initBasicMap() {
-    const defaultLat = -12.0464;
-    const defaultLng = -77.0428;
-    const defaultZoom = 15;
+    // Activar al presionar Enter con texto
+    $("#textIAID").on('keydown', function (e) {
+        const asistenteSoporte = document.getElementById('asistenteSoporte');
 
-    const mapInicio = L.map("map", {
-        center: [defaultLat, defaultLng],
-        zoom: defaultZoom,
-        zoomControl: false
-    });
+        if (e.key === 'Enter') { //presionar enter
+            e.preventDefault();
+            const mensaje = $(this).val().trim();
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19
-    }).addTo(mapInicio);
-
-    L.control.zoom({
-        position: 'topright'
-    }).addTo(mapInicio);
-
-    // Icono azul personalizado
-    const userIcon = L.icon({
-        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-    });
-
-    let marcadorUbi = null;
-
-    // Ver si el navegador soporta geolocalización
-
-    navigator.geolocation.watchPosition(
-        function (position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-
-            if (!marcadorUbi) {
-                // Crear el marcador por primera vez
-                marcadorUbi = L.marker([lat, lng], { icon: userIcon }).addTo(mapInicio);
-                marcadorUbi.bindPopup("Tu ubicación actual").openPopup();
-                mapInicio.setView([lat, lng], defaultZoom);
-            } else {
-                // Actualizar posición
-                marcadorUbi.setLatLng([lat, lng]);
+            if (mensaje !== "") { //si es diferente de vacío
+                asistenteSoporte.classList.add('modo-chat-activo');
             }
-        },
-        function (error) {
-            console.error("Error obteniendo la ubicación:", error.message);
-        },
-        {
-            enableHighAccuracy: true,
-            maximumAge: 10000,
-            timeout: 10000
         }
-    );
+    });
 
-}
+    // Desactivar si el input se borra
+    $("#textIAID").on('input', function () {
+        const asistenteSoporte = document.getElementById('asistenteSoporte');
+        const mensaje = $(this).val().trim();
 
-$("#textIAID").on('keypress', function (e) {
-    const textAsistente = document.getElementById('textAsistente');
-    const asistenteSoporte = document.getElementById('asistenteSoporte');
-    const headerChat = document.getElementById('header-chat');
-    const bodyChat = document.getElementById('body-chat');
-    const vozIA = document.getElementById('vozIA');
-    if (e.which === 13) {
-        var mensaje = $(this).val().trim();
-
-        if (mensaje !== "") {
-            textAsistente.style.display = 'none';
-            asistenteSoporte.style.gridTemplateAreas = `"imagenIA" "mensajeIA" "vozIA"`;
-            asistenteSoporte.style.gridTemplateRows = 'auto 55% auto';
-            videOjos.style.width = '40%';
-
-            mensajeIA.style.gridTemplateAreas = `"header-chat" "body-chat" "footer-chat"`;
-            mensajeIA.style.gridTemplateRows = '15% auto 15%'; 
-            headerChat.style.display = 'grid';
-            headerChat.style.alignItems = "center";
-            headerChat.style.justifyItems = 'center';
-            bodyChat.style.display = 'grid';
+        if (mensaje === "") {
+            asistenteSoporte.classList.remove('modo-chat-activo');
         }
-    }
+    });
 });
+

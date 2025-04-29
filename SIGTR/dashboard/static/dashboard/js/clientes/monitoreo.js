@@ -1,7 +1,7 @@
 let chartGlobal;
 let modalOpen = false;
 let intervalId;
-
+let discosCriticos = [];
 /*MONITOREO*/
 const modalMonitoreo = document.getElementById('modalMonitoreo');
 const openModalMonitoreo = document.getElementById('btnMonitoreo');
@@ -27,7 +27,7 @@ function MonitoreoFunction() {
 
 /*MODAL MONITOREO*/
 openModalMonitoreo.style.cursor = 'pointer';
-fetchCpuData();
+
 openModalMonitoreo.addEventListener('click', function () {
     modalOpen = true;
     const contenedorMon = document.querySelector(".monitoreo");
@@ -113,6 +113,7 @@ async function fetchCpuData() {
             spanCPU.style.width = dataCPU.usage + '%';
             spanCPU.innerHTML = dataCPU.usage + '%';
             spanCPU.style.backgroundColor = "red";
+            mostrarNotificacion('danger', 'El uso del CPU es peligroso', 0);
         }
         //RAM
         if (parseInt(dataRAM.percent) >= 0 && parseInt(dataRAM.percent) <= 50) {
@@ -128,6 +129,7 @@ async function fetchCpuData() {
             spanRAM.style.width = dataRAM.percent + '%';
             spanRAM.innerHTML = dataRAM.percent + '%';
             spanRAM.style.backgroundColor = "red"; // Rojo
+            mostrarNotificacion('danger', 'El uso de la Memoria es alta', 1);
         }
 
         //DISCOS
@@ -170,6 +172,10 @@ async function fetchCpuData() {
                 diskBar.style.width = diskUsage + '%';
                 diskBar.innerHTML = diskUsage + '%';
                 diskBar.style.backgroundColor = "red";
+                if (!discosCriticos.includes(diskDetails.device)) {
+                    discosCriticos.push(diskDetails.device);
+                }
+                // mostrarNotificacion('danger', 'El uso del disco es alto en la partición ' + diskDetails.device, 2);
             }
         });
 
@@ -198,12 +204,13 @@ async function fetchCpuData() {
 }
 
 const ctxDoughnut = document.getElementById('donutsTickets');
+Chart.register(ChartDataLabels);
 chartGlobal = new Chart(ctxDoughnut, {
     type: 'doughnut',
     data: {
         labels: ['CPU', 'MEMORIA', 'DISCO'],
         datasets: [{
-            label: 'En uso ',
+            label: 'En uso (%)',
             data: [0, 0, 0], // Los valores reales de los segmentos
             backgroundColor: [
                 'rgb(27, 12, 92)',
@@ -229,13 +236,14 @@ chartGlobal = new Chart(ctxDoughnut, {
             datalabels: {
                 display: true,
                 color: 'white',
-                formatter: (value) => {
-                    return `${value}%`;
-                },
+                formatter: (value) => `${value}%`,
                 align: 'center',
                 anchor: 'center'
             }
         }
     }
+});
+$(document).ready(function () {
+    fetchCpuData();
 });
 

@@ -307,7 +307,6 @@ openModalAntivirus.addEventListener('click', function () {
     } else {
         AntivirusFunction();
     }
-    obtenerEstadoAntivirus();
     imgDetDiag.style.height = '70px';
     openModalAntivirus.style.fontSize = '18px';
     progressBarAnt.style.display = 'flex';

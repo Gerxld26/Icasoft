@@ -453,21 +453,67 @@ body {
     grid-area: mensajeIA;
     display: grid;
     width: 80%;
-    border: 1px solid var(--borde);
     border-radius: 30px;
+    background: linear-gradient(180deg, #85c9df, rgb(2 147 205), #b6e1ef);
 }
-#mensajeIA .header-chat, .body-chat{
+
+#mensajeIA .header-chat,
+.body-chat {
     display: none;
+    width: 100%;
+    height: 100%;
 }
-.header-chat{
-    background-color: #007ea7;
+
+.header-chat {
+    background-color: rgb(3, 101, 140);
     color: white;
+    border-color: none;
     border-top-left-radius: 30px;
     border-top-right-radius: 30px;
+    align-items: center;
+    justify-items: center;
+    font-size: x-large;
 }
-.footer-chat{
+
+.body-chat {
+    width: 95%;
+    display: none;
+    /* overflow: scroll; */
+}
+
+p.message_chat {
+    background: rgb(3, 101, 140);
+    color: #ffffff;
+    height: max-content;
+    width: max-content;
+    padding: 5px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-top-left-radius: 10px;
+    box-shadow: -3px 4px 7px 2px rgb(247 253 255);
+}
+
+.userRequest {
+    display: grid;
+    justify-content: end;
+}
+
+p.message_chat_user {
+    background: white;
+    color: black;
+    height: max-content;
+    width: max-content;
+    padding: 5px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+    box-shadow: 5px 4px 10px 2px rgb(3, 101, 140);
+}
+
+.footer-chat {
     display: grid;
     grid-template-areas: "textIACont contentChatBtn";
+    grid-template-columns: 90% auto;
     border: 1px solid;
     border-radius: 30px;
     height: 100%;
@@ -479,15 +525,40 @@ body {
     font-style: oblique;
     align-items: center;
 }
-.textIA {
-    background: white;
+
+#textIAID {
+    width: 100%;
+    display: grid;
+    text-align: center;
+    background: none;
     border: none;
-    outline: none;
-    font-size: 20px;
 }
 
 .enviarMessage {
     cursor: pointer;
+}
+
+#textIAID:focus {
+    outline: none;
+    border: none;
+    /* opcional, si también quieres quitar el borde */
+}
+
+.textIACont {
+    background: white;
+    height: 100%;
+    display: grid;
+    border-radius: 30px;
+}
+
+.contentChatBtn {
+    height: 100%;
+    border-radius: 30px;
+    display: grid;
+}
+
+.btnChat {
+    background: none;
 }
 
 .vozIA {
@@ -511,6 +582,54 @@ body {
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(53, 53, 53));
 }
 
+/*cuando el chat se abra: */
+.modo-chat-activo #header-chat,
+.modo-chat-activo #body-chat {
+    display: grid;
+}
+
+.modo-chat-activo #footer-chat {
+    width: 95%;
+    grid-template-columns: 80% auto;
+    gap: 8px;
+    background: none;
+    border: none;
+    height: 80%;
+}
+
+.modo-chat-activo .contentChatBtn {
+    background: #03658c;
+}
+
+.modo-chat-activo .enviarMessage {
+    font-size: x-large;
+    color: white;
+}
+
+.modo-chat-activo #textAsistente {
+    display: none;
+}
+
+.modo-chat-activo #vozIA {
+    display: none;
+}
+
+.modo-chat-activo #mensajeIA {
+    grid-template-areas: "header-chat" "body-chat" "footer-chat";
+    grid-template-rows: 15% auto 15%;
+    gap: 10px;
+    justify-items: center;
+    align-items: center;
+}
+
+.asistenteSoporte.modo-chat-activo {
+    grid-template-areas: "imagenIA" "mensajeIA";
+    grid-template-rows: auto 65%;
+}
+
+.modo-chat-activo #robotGIFOjos {
+    width: 45%;
+}
 /*cuarta columna:*/
 .analisis {
     justify-items: center;
@@ -652,7 +771,7 @@ body {
     transform: translateY(-3px);
     box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
     border-radius: 30px;
-    background:var(--fondoBotones);
+    background: var(--fondoBotones);
     border: 1px solid rgba(0, 123, 255, 0.4);
 }
 

@@ -46,6 +46,7 @@ from .views import (
     get_largest_temp_files,
     get_system_temp_info,
     client_clear_specific_temp, 
+
     # Monitoring views (pages)
     client_monitoring_cpu,
     client_monitoring_ram,
