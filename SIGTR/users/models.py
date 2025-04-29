@@ -18,7 +18,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("role", "admin")
-        extra_fields.setdefault("can_add_admin", True)  # Solo superadmin puede agregar otros admins
+        extra_fields.setdefault("can_add_admin", True)  
 
         if extra_fields.get("is_staff") is not True:
             raise ValueError("El superusuario debe tener is_staff=True.")
