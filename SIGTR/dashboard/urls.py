@@ -47,6 +47,8 @@ from .views import (
     get_system_temp_info,
     client_clear_specific_temp, 
 
+    #Mapa
+    google_maps,
     # Monitoring views (pages)
     client_monitoring_cpu,
     client_monitoring_ram,

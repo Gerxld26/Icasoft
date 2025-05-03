@@ -30,7 +30,6 @@ async function mostrarVideos() {
         })
 
         $("#contentConsej").html(textVideos);
-        console.log('Datos centro:', dataLearning.videos);
     } catch (error) {
         console.error('Hubo un problema al obtener los videos:', error);
     }

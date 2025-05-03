@@ -44,6 +44,7 @@ from .forms import TicketStatusForm
 from django.core.exceptions import PermissionDenied
 from virustotal_python import Virustotal
 from django.utils.dateparse import parse_date
+from django.conf import settings
 from .models import LearningVideo
 from .forms import LearningVideoForm
 from django.db.models import Q
@@ -503,9 +504,14 @@ def gpu_monitoring_data(request):
     except Exception as e:
         logger.error(f"Error en gpu_monitoring_data: {e}")
         return JsonResponse({"error": str(e)}, status=500)
-    
-#ANTIVIRUS
 
+def google_maps(request):
+     return {
+        'google_api_key': settings.GOOGLE_API_KEY
+    }
+
+
+#ANTIVIRUS
 @login_required
 @require_http_methods(["GET", "POST"])
 def system_virus_scan(request):

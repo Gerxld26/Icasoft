@@ -433,7 +433,6 @@ $(document).ready(function () {
         btnMostrarGrandes.addEventListener('click', mostrarArchivosMasGrandes);
     }
 
-    initMapAsistencia();
     const robotImg = document.getElementById("robotimg");
     const videoRobot = document.getElementById("video-container");
     const videoRobotInput = document.getElementById("video-container2");

@@ -54,6 +54,8 @@ MESSAGE_TAGS = {
 }
 # Leer la clave desde el entorno
 OPENAI_API_KEY = config("OPENAI_API_KEY", default=None)
+GOOGLE_API_KEY = config('API_KEY_MAPS')
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -123,7 +125,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'SIGTR.context_processors.user_role', 
-                'dashboard.views.base_context_processor',  
+                'dashboard.views.base_context_processor', 
+                'dashboard.views.google_maps', 
             ],
         },
     },

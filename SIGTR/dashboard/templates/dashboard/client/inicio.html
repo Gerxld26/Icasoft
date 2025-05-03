@@ -6,6 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}" async defer></script>  -->
     <link rel="stylesheet" href="{% static 'dashboard/css/principal.css' %}">
     <link rel="icon" type="image/x-icon" href="{% static 'dashboard/icon/iconICASOFT.ico' %}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -117,12 +118,18 @@
                             <h1>ICASOFT IA</h1>
                         </div>
                         <div class="body-chat" id="body-chat">
-                            <div class="iaResponse"><p class="message_chat">Hola</p></div>
-                            <div class="userRequest"><p class="message_chat_user">Hi</p></div>
+                            <div class="iaResponse">
+                                <p class="message_chat">Hola</p>
+                            </div>
+                            <div class="userRequest">
+                                <p class="message_chat_user">Hi</p>
+                            </div>
                         </div>
                         <div class="footer-chat" id="footer-chat">
-                            <div class="textIACont"><input id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA"></div>
-                            <div class="contentChatBtn"><button class="btnChat"><i class="fa-solid fa-paper-plane enviarMessage"></i></button></div>
+                            <div class="textIACont"><input id="textIAID" type="text"
+                                    placeholder="Envía un mensaje a ICASOFT IA"></div>
+                            <div class="contentChatBtn"><button class="btnChat"><i
+                                        class="fa-solid fa-paper-plane enviarMessage"></i></button></div>
                         </div>
                     </div>
                     <div class="vozIA" id="vozIA">
@@ -217,26 +224,28 @@
     <!--MODALS:-->
     {% include "dashboard/client/modalInicio.html" %}
     {% include "dashboard/client/notificaciones.html" %}
+    {% include "tickets/modalAsistencia.html" %}
     <script>
         function cerrarSesion() {
             window.location.href = "{% url 'users:logout' %}";
         }
     </script>
     <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!--para la ubicación en tiempo real-->
     <script src="{% static 'dashboard/js/clientes/inicio.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/mapa.js' %}"></script>
+    <script src="{% static 'dashboard/js/clientes/mapa.js' %}"></script> 
     <script src="{% static 'dashboard/js/clientes/monitoreo.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/antivirus.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/diagnostico.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/mantenimiento.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/red.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/centroAprendizaje.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/asistenciaTecnica.js' %}"></script>
+    <!-- <script src="{% static 'dashboard/js/clientes/asistenciaTecnica.js' %}"></script> -->
     <script src="{% static 'dashboard/js/clientes/historial.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/recomendaciones.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/red.js' %}"></script>
-
+    
+    <script
+    src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=marker&callback=initMap"
+    async defer></script>
 </body>
 
 </html>

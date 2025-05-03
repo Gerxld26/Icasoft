@@ -199,7 +199,7 @@ async function fetchCpuData() {
         }
 
     } catch (error) {
-        console.log('Error al cargar datos de la RAM: ', error);
+        console.log('Error al cargar datos de Monitoreo: ', error);
     }
 }
 
