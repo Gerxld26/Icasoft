@@ -96,7 +96,6 @@
                     </div>
                     <div class="imagenIA">
                         <img class="robot" src="{% static 'dashboard/img/robotIA.webp' %}" alt="" id="robotimg">
-
                         <div class="video-container" id="video-container">
                             <video class="robot" id="robotGIF" autoplay muted>
                                 <source src="{% static 'dashboard/video/robotHablando.mp4' %}" type="video/mp4">
@@ -117,12 +116,17 @@
                             <h1>ICASOFT IA</h1>
                         </div>
                         <div class="body-chat" id="body-chat">
-                            <div class="iaResponse"><p class="message_chat">Hola</p></div>
-                            <div class="userRequest"><p class="message_chat_user">Hi</p></div>
+                            <!-- Se eliminan los mensajes por defecto -->
                         </div>
                         <div class="footer-chat" id="footer-chat">
-                            <div class="textIACont"><input id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA"></div>
-                            <div class="contentChatBtn"><button class="btnChat"><i class="fa-solid fa-paper-plane enviarMessage"></i></button></div>
+                            <div class="textIACont">
+                                <input id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA">
+                            </div>
+                            <div class="contentChatBtn">
+                                <button class="btnChat">
+                                    <i class="fa-solid fa-paper-plane enviarMessage"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="vozIA" id="vozIA">
@@ -236,6 +240,8 @@
     <script src="{% static 'dashboard/js/clientes/historial.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/recomendaciones.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/red.js' %}"></script>
+    <script src="{% static 'dashboard/js/clientes/chat.js' %}"></script>
+
 
 </body>
 
