@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 import heapq
+import re
 from django.db.models import Count, F, Func, Value
 from django.db.models.functions import TruncMonth
 from users.models import User, UserProfile
@@ -20,6 +21,7 @@ import os
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
 import os
+import random
 import shutil
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
@@ -275,6 +277,127 @@ def client_diagnosis(request):
     return render(request, "dashboard/client/diagnosis.html")
 
 
+class IcasoftToolsContext:
+    TOOLS = {
+        'diagnostico': {
+            'keywords': ['lenta', 'lento', 'rendimiento', 'rapido'],
+            'solution': 'Usa el módulo de Análisis Completo del Sistema para diagnosticar problemas de rendimiento.'
+        },
+        'antivirus': {
+            'keywords': ['virus', 'malware', 'seguridad'],
+            'solution': 'Ejecuta un análisis completo con el módulo de Antivirus ICASOFT.'
+        },
+        'monitoreo': {
+            'keywords': ['temperatura', 'recursos', 'uso de cpu'],
+            'solution': 'Revisa el Monitoreo del Sistema para identificar procesos que consumen muchos recursos.'
+        },
+        'mantenimiento': {
+            'keywords': ['limpieza', 'optimizar', 'mejorar'],
+            'solution': 'Utiliza el módulo de Mantenimiento para optimizar tu sistema.'
+        },
+        'red': {
+            'keywords': ['wifi', 'internet', 'conexion', 'red'],
+            'solution': 'Usa la herramienta de Comprobación de Red para diagnosticar problemas de conectividad.'
+        }
+    }
+
+    @classmethod
+    def get_tool_recommendation(cls, user_input):
+        user_input = user_input.lower()
+        
+        for tool, details in cls.TOOLS.items():
+            if any(keyword in user_input for keyword in details['keywords']):
+                return details['solution']
+        
+        return 'Explora las herramientas de ICASOFT en el menú principal para encontrar la solución.'
+
+class ConversationManager:
+    def __init__(self):
+        self.conversation_history = [
+            {
+                "role": "system", 
+                "content": """
+                Eres el Asistente Virtual de ICASOFT Ingeniería 21. 
+                Características:
+                - Respuestas breves y precisas
+                - Siempre recomienda herramientas específicas de ICASOFT
+                - Usa un tono profesional y amigable
+                - Enfócate en soluciones prácticas
+                - Si no hay solución específica, dirige al usuario a Asistencia Técnica
+                """
+            }
+        ]
+        self.client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+    def add_message(self, role, content):
+        self.conversation_history.append({
+            "role": role,
+            "content": content
+        })
+
+    def generate_response(self, user_input):
+        try:
+            self.add_message("user", user_input)
+
+            tool_recommendation = IcasoftToolsContext.get_tool_recommendation(user_input)
+
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=self.conversation_history + [
+                    {"role": "system", "content": f"Herramienta recomendada: {tool_recommendation}"}
+                ],
+                max_tokens=100,
+                temperature=0.7
+            )
+
+            assistant_response = response.choices[0].message.content.strip()
+            
+            if not assistant_response:
+                assistant_response = tool_recommendation
+
+            full_response = f"{assistant_response} {tool_recommendation}"
+            
+            self.add_message("assistant", full_response)
+
+            return full_response
+
+        except Exception as e:
+            print(f"Error en generación de respuesta: {str(e)}")
+            return "Te recomendamos contactar a Asistencia Técnica de ICASOFT para resolver tu problema."
+
+conversation_manager = ConversationManager()
+    
+#CHAT IA
+@csrf_exempt
+@require_http_methods(["POST"])
+def chatIA(request):
+    try:
+        data = json.loads(request.body)
+        user_input = data.get('message', '').strip()
+
+        if not user_input:
+            return JsonResponse({
+                'response': 'Por favor, escribe tu consulta.'
+            })
+
+        response = conversation_manager.generate_response(user_input)
+        
+        return JsonResponse({
+            'response': response
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'response': 'Hubo un problema al procesar tu solicitud.'
+        }, status=400)
+    
+    except Exception as e:
+        print(f"Error en chatIA: {str(e)}")
+        return JsonResponse({
+            'response': 'Te recomendamos contactar a Asistencia Técnica de ICASOFT.'
+        }, status=500)
+    
+    
 # Vista para el Chat del Cliente
 @login_required
 @user_passes_test(is_client)
@@ -977,16 +1100,13 @@ def get_temp_size(request):
 @user_passes_test(is_client)
 def client_clear_space(request):
     try:
-        # Parámetros configurables
-        old_files_hours = 24  # Eliminar archivos más antiguos que X horas
-        min_file_size = 1024  # Ignorar archivos menores a X bytes (1KB por defecto)
+        old_files_hours = 24 
+        min_file_size = 1024 
         old_files_threshold = time.time() - (old_files_hours * 60 * 60)
         
-        # Usar la función común para obtener los directorios temporales
         temp_directories = get_temp_directories()
         temp_directories = [d for d in temp_directories if d and os.path.exists(d) and os.path.isdir(d)]
         
-        # Inicializar contadores y listas
         total_deleted = 0
         total_failed = 0
         total_bytes_deleted = 0
@@ -995,7 +1115,6 @@ def client_clear_space(request):
         files_in_use_details = []
         skipped_files = 0
         
-        # Recorrer directorios temporales
         for temp_dir in temp_directories:
             try:
                 logger.info(f"Procesando directorio temporal: {temp_dir}")
@@ -1003,11 +1122,9 @@ def client_clear_space(request):
                     for file in files:
                         file_path = os.path.join(root, file)
                         try:
-                            # Verificar si es un archivo y existe
                             if not os.path.isfile(file_path) or not os.path.exists(file_path):
                                 continue
                                 
-                            # Obtener tamaño y tiempo de modificación
                             try:
                                 file_size = os.path.getsize(file_path)
                                 file_mod_time = os.path.getmtime(file_path)
@@ -1015,12 +1132,10 @@ def client_clear_space(request):
                                 total_failed += 1
                                 continue
                                 
-                            # Ignorar archivos pequeños para optimizar rendimiento
                             if file_size < min_file_size:
                                 skipped_files += 1
                                 continue
                                 
-                            # Verificar si el archivo está en uso usando la función común
                             if is_file_in_use(file_path):
                                 files_in_use_details.append({
                                     'path': file_path,
@@ -1029,10 +1144,8 @@ def client_clear_space(request):
                                 total_failed += 1
                                 continue
                                 
-                            # Verificar si el archivo es antiguo (más viejo que el umbral)
                             if file_mod_time < old_files_threshold:
                                 try:
-                                    # Intentar eliminar el archivo
                                     os.remove(file_path)
                                     total_deleted += 1
                                     total_bytes_deleted += file_size
@@ -1056,10 +1169,8 @@ def client_clear_space(request):
                 logger.error(f"Error al procesar directorio {temp_dir}: {str(e)}")
                 continue
         
-        # Preparar respuesta detallada
         tamano_liberado = formatear_tamano(total_bytes_deleted)
         
-        # Calcular el tamaño total de archivos en uso de manera segura
         total_failed_size = 0
         for file in files_in_use_details:
             try:

@@ -73,10 +73,14 @@ from .views import (
     tech_profile,
     tech_cases,
     tech_reports,
-    change_connection_status
+    change_connection_status,
+    chatIA
 )
 
 urlpatterns = [
+    #chat
+    path('chatIA/', chatIA, name='chat'),
+    
     # Dashboards
     path("admin/", admin_dashboard, name="admin_dashboard"),
     path("tech/", tech_dashboard, name="tech_dashboard"),

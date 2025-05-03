@@ -530,28 +530,6 @@ $(document).ready(function () {
             progress.style.display = 'flex';
         });
     });
-    // Activar al presionar Enter con texto
-    $("#textIAID").on('keydown', function (e) {
-        const asistenteSoporte = document.getElementById('asistenteSoporte');
-
-        if (e.key === 'Enter') { //presionar enter
-            e.preventDefault();
-            const mensaje = $(this).val().trim();
-
-            if (mensaje !== "") { //si es diferente de vacío
-                asistenteSoporte.classList.add('modo-chat-activo');
-            }
-        }
-    });
-
-    // Desactivar si el input se borra
-    $("#textIAID").on('input', function () {
-        const asistenteSoporte = document.getElementById('asistenteSoporte');
-        const mensaje = $(this).val().trim();
-
-        if (mensaje === "") {
-            asistenteSoporte.classList.remove('modo-chat-activo');
-        }
-    });
+    
 });
 

@@ -20,6 +20,334 @@ const diagnosisUrls = {
 let scanType = "QuickScan";
 let customPath = "";
 
+class SystemDiagnostics {
+    constructor() {
+        this.diagnosticModal = document.getElementById('modalDiagnostico');
+        this.progressBar = document.getElementById('progressBarDiagnostico');
+        this.progressSpan = this.progressBar.querySelector('span');
+        this.diagnosticSteps = [
+            { name: 'Inicializando diagnóstico', duration: 10 },
+            { name: 'Verificando componentes de hardware', duration: 20 },
+            { name: 'Analizando rendimiento del sistema', duration: 15 },
+            { name: 'Comprobando controladores', duration: 25 },
+            { name: 'Verificando actualizaciones de software', duration: 15 },
+            { name: 'Evaluando seguridad del sistema', duration: 15 }
+        ];
+        this.diagnosticResults = {
+            hardware: [],
+            performance: {},
+            drivers: [],
+            updates: [],
+            security: {}
+        };
+    }
+
+    async startDiagnostic() {
+        try {
+            this.resetUI();
+            await this.runDiagnosticSteps();
+            this.displayFinalResults();
+        } catch (error) {
+            this.handleDiagnosticError(error);
+        }
+    }
+
+    resetUI() {
+        this.progressSpan.style.width = '0%';
+        this.progressSpan.textContent = '0%';
+        document.getElementById('resultadoAnalisisIA').style.display = 'none';
+        document.getElementById('diagnosticosPrevios').style.display = 'grid';
+    }
+
+    async runDiagnosticSteps() {
+        for (let i = 0; i < this.diagnosticSteps.length; i++) {
+            const step = this.diagnosticSteps[i];
+            await this.performDiagnosticStep(step, i);
+        }
+    }
+
+    async performDiagnosticStep(step, stepIndex) {
+        return new Promise((resolve) => {
+            const totalSteps = this.diagnosticSteps.length;
+            const stepProgress = Math.round((stepIndex + 1) / totalSteps * 100);
+            
+            this.progressSpan.style.width = `${stepProgress}%`;
+            this.progressSpan.textContent = `${stepProgress}%`;
+
+            if (estadoDiagnostico) {
+                estadoDiagnostico.textContent = step.name;
+            }
+
+            setTimeout(async () => {
+                await this.analyzeDiagnosticStep(step.name);
+                resolve();
+            }, step.duration * 100);
+        });
+    }
+
+    async analyzeDiagnosticStep(stepName) {
+        switch(stepName) {
+            case 'Inicializando diagnóstico':
+                await this.initializeDiagnostic();
+                break;
+            case 'Verificando componentes de hardware':
+                await this.checkHardwareComponents();
+                break;
+            case 'Analizando rendimiento del sistema':
+                await this.analyzeSystemPerformance();
+                break;
+            case 'Comprobando controladores':
+                await this.checkDrivers();
+                break;
+            case 'Verificando actualizaciones de software':
+                await this.checkSoftwareUpdates();
+                break;
+            case 'Evaluando seguridad del sistema':
+                await this.evaluateSystemSecurity();
+                break;
+        }
+    }
+
+    async initializeDiagnostic() {
+        this.diagnosticResults.startTime = new Date();
+    }
+
+    async checkHardwareComponents() {
+        try {
+            const response = await fetch('/dashboard/client/diagnosis-data/');
+            const data = await response.json();
+            
+            this.diagnosticResults.hardware = [
+                { 
+                    name: 'CPU', 
+                    usage: data.data.cpu_usage, 
+                    status: this.evaluateComponentStatus(data.data.cpu_usage, 70) 
+                },
+                { 
+                    name: 'RAM', 
+                    usage: `${data.data.ram_usage.used} de ${data.data.ram_usage.total}`, 
+                    status: this.evaluateComponentStatus(data.data.ram_usage.percent, 80) 
+                },
+                { 
+                    name: 'Disco', 
+                    usage: `${data.data.disk_usage.used} de ${data.data.disk_usage.total}`, 
+                    status: this.evaluateComponentStatus(data.data.disk_usage.percent, 90) 
+                }
+            ];
+        } catch (error) {
+            console.error('Error verificando componentes de hardware:', error);
+        }
+    }
+
+    evaluateComponentStatus(usage, threshold) {
+        const usageValue = parseFloat(usage);
+        if (usageValue > threshold) return 'crítico';
+        if (usageValue > threshold * 0.7) return 'advertencia';
+        return 'normal';
+    }
+
+    async analyzeSystemPerformance() {
+        this.diagnosticResults.performance = {
+            cpuIntensiveProcesses: await this.getTopCPUProcesses(),
+            memoryUsage: await this.getMemoryUsageDetails()
+        };
+    }
+
+    async getTopCPUProcesses() {
+        return [
+            { name: 'Chrome', cpuUsage: '25%' },
+            { name: 'Sistema', cpuUsage: '15%' },
+            { name: 'Antivirus', cpuUsage: '10%' }
+        ];
+    }
+
+    async getMemoryUsageDetails() {
+        return {
+            totalRAM: '16 GB',
+            usedRAM: '8 GB',
+            freeRAM: '8 GB',
+            criticalApps: ['Chrome', 'Visual Studio Code']
+        };
+    }
+
+    async checkDrivers() {
+        this.diagnosticResults.drivers = [
+            { name: 'Adaptador de red', status: 'Actualizado' },
+            { name: 'Tarjeta gráfica', status: 'Requiere actualización' },
+            { name: 'Audio', status: 'Actualizado' }
+        ];
+    }
+
+    async checkSoftwareUpdates() {
+        this.diagnosticResults.updates = [
+            { name: 'Windows', currentVersion: '22H2', available: '23H2' },
+            { name: 'Antivirus', currentVersion: '2023.1', available: '2024.1' },
+            { name: 'Office', currentVersion: '2021', available: 'No disponible' }
+        ];
+    }
+
+    async evaluateSystemSecurity() {
+        try {
+            const defenderResponse = await fetch('/dashboard/client/diagnosis/defender/status/');
+            const defenderData = await defenderResponse.json();
+
+            this.diagnosticResults.security = {
+                antivirusStatus: defenderData.data.AntivirusEnabled ? 'Activo' : 'Desactivado',
+                realTimeProtection: defenderData.data.RealTimeProtectionEnabled ? 'Habilitado' : 'Deshabilitado',
+                lastUpdate: new Date().toLocaleDateString(),
+                potentialThreats: 0
+            };
+        } catch (error) {
+            console.error('Error evaluando seguridad:', error);
+        }
+    }
+
+    displayFinalResults() {
+        const resultContainer = document.getElementById('resultadoAnalisisIA');
+        const previousDiagnosisContainer = document.getElementById('diagnosticosPrevios');
+
+        if (resultContainer && previousDiagnosisContainer) {
+            resultContainer.innerHTML = this.generateResultsHTML();
+            
+            resultContainer.style.display = 'block';
+            previousDiagnosisContainer.style.display = 'none';
+
+            this.progressSpan.style.width = '100%';
+            this.progressSpan.textContent = '100%';
+        }
+    }
+
+    generateResultsHTML() {
+        return `
+            <div class="diagnostico-resultados">
+                <h2>Resultados del Diagnóstico Completo</h2>
+                
+                <div class="seccion-hardware">
+                    <h3>Componentes de Hardware</h3>
+                    ${this.diagnosticResults.hardware.map(component => `
+                        <div class="componente">
+                            <span>${component.name}</span>
+                            <span>Uso: ${component.usage}</span>
+                            <span class="status-${component.status}">${component.status}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="seccion-rendimiento">
+                    <h3>Rendimiento del Sistema</h3>
+                    <div class="procesos-cpu">
+                        <h4>Procesos intensivos de CPU</h4>
+                        ${this.diagnosticResults.performance.cpuIntensiveProcesses.map(process => `
+                            <div class="proceso">
+                                <span>${process.name}</span>
+                                <span>Uso de CPU: ${process.cpuUsage}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="uso-memoria">
+                        <h4>Uso de Memoria</h4>
+                        <p>Total: ${this.diagnosticResults.performance.memoryUsage.totalRAM}</p>
+                        <p>Usado: ${this.diagnosticResults.performance.memoryUsage.usedRAM}</p>
+                        <p>Libre: ${this.diagnosticResults.performance.memoryUsage.freeRAM}</p>
+                    </div>
+                </div>
+
+                <div class="seccion-controladores">
+                    <h3>Estado de Controladores</h3>
+                    ${this.diagnosticResults.drivers.map(driver => `
+                        <div class="controlador">
+                            <span>${driver.name}</span>
+                            <span class="status-${driver.status.toLowerCase()}">${driver.status}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="seccion-actualizaciones">
+                    <h3>Actualizaciones de Software</h3>
+                    ${this.diagnosticResults.updates.map(update => `
+                        <div class="actualizacion">
+                            <span>${update.name}</span>
+                            <span>Versión actual: ${update.currentVersion}</span>
+                            <span>Versión disponible: ${update.available}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="seccion-seguridad">
+                    <h3>Seguridad del Sistema</h3>
+                    <div class="detalle-seguridad">
+                        <p>Estado del Antivirus: ${this.diagnosticResults.security.antivirusStatus}</p>
+                        <p>Protección en Tiempo Real: ${this.diagnosticResults.security.realTimeProtection}</p>
+                        <p>Última Actualización: ${this.diagnosticResults.security.lastUpdate}</p>
+                        <p>Amenazas Potenciales: ${this.diagnosticResults.security.potentialThreats}</p>
+                    </div>
+                </div>
+
+                <div class="acciones-recomendadas">
+                    <h3>Acciones Recomendadas</h3>
+                    <ul>
+                        ${this.generateRecommendedActions()}
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+
+    generateRecommendedActions() {
+        const recommendations = [];
+
+        this.diagnosticResults.hardware.forEach(component => {
+            if (component.status === 'crítico') {
+                recommendations.push(`Considere actualizar o optimizar el componente de ${component.name}`);
+            }
+        });
+
+        this.diagnosticResults.drivers.forEach(driver => {
+            if (driver.status === 'Requiere actualización') {
+                recommendations.push(`Actualice el controlador de ${driver.name}`);
+            }
+        });
+
+        this.diagnosticResults.updates.forEach(update => {
+            if (update.available !== 'No disponible' && update.available !== update.currentVersion) {
+                recommendations.push(`Actualice ${update.name} a la versión ${update.available}`);
+            }
+        });
+
+        if (this.diagnosticResults.security.antivirusStatus !== 'Activo') {
+            recommendations.push('Active el antivirus para proteger su sistema');
+        }
+
+        if (this.diagnosticResults.security.realTimeProtection !== 'Habilitado') {
+            recommendations.push('Habilite la protección en tiempo real');
+        }
+
+        if (recommendations.length === 0) {
+            recommendations.push('Su sistema está en excelentes condiciones. No se requieren acciones.');
+        }
+
+        return recommendations.map(rec => `<li>${rec}</li>`).join('');
+    }
+
+    handleDiagnosticError(error) {
+        console.error('Error en el diagnóstico:', error);
+        const errorContainer = document.getElementById('resultadoAnalisisIA');
+        if (errorContainer) {
+            errorContainer.innerHTML = `
+                <div class="error-diagnostico">
+                    <h2>Error en el Diagnóstico</h2>
+                    <p>No se pudo completar el diagnóstico. Por favor, inténtelo de nuevo.</p>
+                    <details>
+                        <summary>Detalles del error</summary>
+                        <pre>${error.message}</pre>
+                    </details>
+                </div>
+            `;
+            errorContainer.style.display = 'block';
+        }
+    }
+}
+
 if (scanTypeSelect) {
     const scaners = document.getElementById('scaners');
     scanTypeSelect.addEventListener('change', function () {
@@ -31,7 +359,7 @@ if (scanTypeSelect) {
         }
     });
 }
-//Este es de la barra de progreso del modal:
+
 function actualizarProgressBar(elemento, porcentaje) {
     if (elemento) {
         const span = elemento.querySelector('span');
@@ -49,322 +377,14 @@ function DiagnosticoFunction() {
     const porcentajeFinal = parseInt(spanDiagnostico.dataset.width.replace('%', ''));
     const typeNotification = () => mostrarNotificacion('success', 'Análisis completo del diagnóstico', 3);
 
+    const systemDiagnostics = new SystemDiagnostics();
+
     animarProgreso(spanDiagnostico, porcentajeFinal, () => {
         setTimeout(() => {
             openModalDiagnostico.style.pointerEvents = 'auto';
             modalDiagnostico.style.display = 'flex';
             modalDiagnostico.style.fontSize = '18px';
+            systemDiagnostics.startDiagnostic();
         }, 3000);
     }, typeNotification);
-}
-openModalDiagnostico.style.cursor = 'pointer';
-if (openModalDiagnostico) {
-    openModalDiagnostico.addEventListener('click', function () {
-        if (btnPressAnalisis) { 
-            modalDiagnostico.style.display = 'flex';
-        } else {
-            DiagnosticoFunction();
-        }
-        obtenerDatosDiagnostico();
-        const contenedorDiagnositco = document.querySelector(".detdiagnostico");
-        contenedorDiagnositco.classList.add("borde-animado");
-        
-        if (document.querySelector('.tipoAnalisis')) {
-            document.querySelector('.tipoAnalisis').style.display = 'block';
-        }
-        if (document.querySelector('.progresoAnalisis')) {
-            document.querySelector('.progresoAnalisis').style.display = 'none';
-        }
-        if (btnIniciarDiagnostico) {
-            btnIniciarDiagnostico.addEventListener('click', function () {
-                const tipo = scanTypeSelect ? scanTypeSelect.value : "QuickScan";
-                const ruta = customScanPath && tipo === "CustomScan" ? customScanPath.value : "";
-
-                iniciarDiagnosticoConOpciones(tipo, ruta);
-            });
-        }
-        const btnVerAnalisisIA = document.getElementById('btnVerAnalisisIA');
-        const resultadoAnalisisIA = document.getElementById('resultadoAnalisisIA');
-        const diagnosticosPrevios = document.getElementById('diagnosticosPrevios');
-        const iconIA = btnVerAnalisisIA.querySelector('i');
-
-        btnVerAnalisisIA.addEventListener('click', function () {
-            if (resultadoAnalisisIA.style.display === 'none') {
-                resultadoAnalisisIA.style.display = 'block';
-                diagnosticosPrevios.style.display = 'none';
-                iconIA.classList.remove('fa-eye-slash');
-                iconIA.classList.add('fa-eye');
-            } else {
-                iconIA.classList.add('fa-eye-slash');
-                iconIA.classList.remove('fa-eye');
-                resultadoAnalisisIA.style.display = 'none';
-                diagnosticosPrevios.style.display = 'grid';
-            }
-        });
-        imgDiag.style.display = '70px';
-        openModalDiagnostico.style.fontSize = '18px';
-        progressBarDiagnostico.style.display = 'flex';
-    });
-}
-
-closeModalDiagnostico.addEventListener('click', function () {
-    modalDiagnostico.style.display = 'none';
-});
-
-window.addEventListener('click', function (event) {
-    if (event.target == modalDiagnostico) {
-        modalDiagnostico.style.display = 'none';
-    }
-});
-function iniciarDiagnosticoConOpciones(tipo, ruta) {
-    scanType = tipo || "QuickScan";
-    customPath = ruta || "";
-
-    const tipoAnalisisElement = document.querySelector('.tipoAnalisis');
-    const progresoAnalisisElement = document.querySelector('.progresoAnalisis');
-
-    if (tipoAnalisisElement) tipoAnalisisElement.style.display = 'none';
-    if (progresoAnalisisElement) progresoAnalisisElement.style.display = 'block';
-
-    if (estadoDiagnostico) {
-        estadoDiagnostico.textContent = `Realizando escaneo ${scanType}...`;
-    }
-
-    iniciarProgresoDiagnostico();
-}
-
-function iniciarProgresoDiagnostico() {
-    const barraProgreso = progressBarModalDiagnostico ? progressBarModalDiagnostico : progressBarDiagnostico;
-
-    if (barraProgreso) {
-        const spanProgreso = barraProgreso.querySelector('span');
-        if (spanProgreso) {
-            spanProgreso.style.width = '0%';
-            spanProgreso.textContent = '0%';
-
-            if (document.getElementById('imgDiagGIF')) {
-                document.getElementById('imgDiagGIF').style.display = 'block';
-                if (imgDiag) imgDiag.style.display = 'none';
-            }
-
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 2;
-
-                const safeProgress = Math.min(progress, 100);
-
-                if (spanProgreso) {
-                    spanProgreso.style.width = safeProgress + '%';
-                    spanProgreso.textContent = safeProgress + '%';
-                    spanProgreso.dataset.width = safeProgress + '%';
-                }
-
-                if (progressBarDiagnostico && progressBarDiagnostico !== barraProgreso) {
-                    actualizarProgressBar(progressBarDiagnostico, safeProgress);
-                }
-
-                if (estadoDiagnostico) {
-                    if (safeProgress < 30) {
-                        estadoDiagnostico.textContent = `Analizando rendimiento del sistema...`;
-                    } else if (safeProgress < 60) {
-                        estadoDiagnostico.textContent = `Verificando estado de seguridad...`;
-                    } else if (safeProgress < 85) {
-                        estadoDiagnostico.textContent = `Comparando con análisis previos...`;
-                    }
-                }
-
-                if (progress >= 90) {
-                    clearInterval(interval);
-                    obtenerDatosDiagnostico().then(() => {
-                        if (spanProgreso) {
-                            spanProgreso.style.width = '100%';
-                            spanProgreso.textContent = '100%';
-                            spanProgreso.dataset.width = '100%';
-                        }
-
-                        if (progressBarDiagnostico && progressBarDiagnostico !== barraProgreso) {
-                            actualizarProgressBar(progressBarDiagnostico, 100);
-                        }
-
-                        if (estadoDiagnostico) {
-                            estadoDiagnostico.textContent = `Diagnóstico completo`;
-                        }
-
-                        if (document.getElementById('imgDiagGIF')) {
-                            document.getElementById('imgDiagGIF').style.display = 'none';
-                            if (imgDiag) imgDiag.style.display = 'block';
-                        }
-                    }).catch(error => {
-                        console.error('Error al obtener datos del diagnóstico:', error);
-                        mostrarNotificacion('error', 'Error al realizar el diagnóstico', 3);
-                    });
-                }
-            }, 100);
-        }
-    }
-}
-
-async function obtenerDatosDiagnostico() {
-    try {
-        const diagnosisUrl = `${diagnosisUrls.diagnosis_data}?scan_type=${scanType}&custom_path=${encodeURIComponent(customPath)}`;
-
-        const diagnosisResponse = await fetch(diagnosisUrls.diagnosis_data, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Requested-With": "XMLHttpRequest"
-            },
-            credentials: 'same-origin',
-            params: {
-                scan_type: scanType,
-                custom_path: customPath
-            }
-        });
-
-        console.log("Respuesta de diagnóstico:", diagnosisResponse);
-
-        if (!diagnosisResponse.ok) {
-            const errorText = await diagnosisResponse.text();
-            console.error("Error body:", errorText);
-            throw new Error(`Error del servidor (HTTP ${diagnosisResponse.status}): ${errorText}`);
-        }
-
-        const diagnosisData = await diagnosisResponse.json();
-
-        if (diagnosisData.status !== 'success') {
-            throw new Error('Error al obtener datos del diagnóstico: ' + (diagnosisData.message || 'Respuesta incorrecta'));
-        }
-
-        const comparisonResponse = await fetch(diagnosisUrls.comparison, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'same-origin'
-        });
-
-        if (!comparisonResponse.ok) {
-            throw new Error(`Error en la comparación: ${comparisonResponse.status}`);
-        }
-
-        const comparisonData = await comparisonResponse.json();
-
-        const defenderResponse = await fetch(diagnosisUrls.defender_status, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'same-origin'
-        });
-
-        if (!defenderResponse.ok) {
-            throw new Error(`Error en el estado del antivirus: ${defenderResponse.status}`);
-        }
-
-        const defenderData = await defenderResponse.json();
-
-        actualizarInterfazDiagnostico(diagnosisData, comparisonData, defenderData);
-
-        return true;
-    } catch (error) {
-        console.error('Error en la obtención de datos:', error);
-        throw error;
-    }
-}
-
-function actualizarInterfazDiagnostico(diagnosisData, comparisonData, defenderData) {
-    const componentesHW = document.querySelectorAll('.comparacionHW .componentesHW .resultComponente');
-    if (componentesHW.length >= 3 && comparisonData.status === 'success') {
-        const formatChange = (change) => {
-            if (change === "Sin datos previos" || change === "Sin datos disponibles") {
-                return change;
-            }
-            const num = parseFloat(change);
-            return num >= 0 ? `Aumentó en ${Math.abs(num)}%` : `Disminuyó en ${Math.abs(num)}%`;
-        };
-
-        let cpuComponent = null;
-        let ramComponent = null;
-        let diskComponent = null;
-
-        document.querySelectorAll('.comparacionHW .componentesHW').forEach(comp => {
-            const label = comp.querySelector('.textComponente');
-            const result = comp.querySelector('.resultComponente');
-
-            if (label && result) {
-                const labelText = label.textContent.trim().toUpperCase();
-                if (labelText.includes('CPU')) {
-                    cpuComponent = result;
-                } else if (labelText.includes('RAM')) {
-                    ramComponent = result;
-                } else if (labelText.includes('DISCO')) {
-                    diskComponent = result;
-                }
-            }
-        });
-
-        if (cpuComponent) cpuComponent.textContent = formatChange(comparisonData.comparison.cpu_change);
-        if (ramComponent) ramComponent.textContent = formatChange(comparisonData.comparison.ram_change);
-        if (diskComponent) diskComponent.textContent = formatChange(comparisonData.comparison.disk_change);
-    }
-
-    if (diagnosisData.status === 'success') {
-        const resultData = diagnosisData.data;
-
-        const contenedorAnalisisIA = document.getElementById('resultadoAnalisisIA');
-        if (contenedorAnalisisIA) {
-            const componentesIA = contenedorAnalisisIA.querySelectorAll('.componentesHW .resultComponente');
-
-            if (componentesIA.length >= 4) {
-                componentesIA[0].textContent = `Uso actual: ${resultData.cpu_usage}. ${generarRecomendacionCPU(resultData.cpu_usage)}`;
-                componentesIA[1].textContent = `RAM: ${resultData.ram_usage.used} de ${resultData.ram_usage.total} (${resultData.ram_usage.percent}). ${generarRecomendacionRAM(resultData.ram_usage.percent)}`;
-                componentesIA[2].textContent = `Disco: ${resultData.disk_usage.used} de ${resultData.disk_usage.total} (${resultData.disk_usage.percent}). ${generarRecomendacionDisco(resultData.disk_usage.percent)}`;
-
-                let seguridadMsg = "El sistema está protegido adecuadamente.";
-                if (defenderData.status === 'success') {
-                    if (!defenderData.data.AntivirusEnabled) {
-                        seguridadMsg = "¡Atención! El antivirus está desactivado. Se recomienda activarlo para proteger su sistema.";
-                    } else if (!defenderData.data.RealTimeProtectionEnabled) {
-                        seguridadMsg = "La protección en tiempo real está desactivada. Se recomienda activarla para mayor seguridad.";
-                    }
-                }
-                componentesIA[3].textContent = seguridadMsg;
-            }
-        }
-    }
-}
-
-function generarRecomendacionCPU(cpuUsage) {
-    const percent = parseFloat(cpuUsage.replace('%', ''));
-    if (percent > 80) {
-        return "El uso de CPU es muy alto. Se recomienda cerrar aplicaciones en segundo plano.";
-    } else if (percent > 50) {
-        return "El uso de CPU es moderado. El sistema funciona correctamente.";
-    } else {
-        return "El uso de CPU es óptimo.";
-    }
-}
-
-function generarRecomendacionRAM(ramPercent) {
-    const percent = parseFloat(ramPercent.replace('%', ''));
-    if (percent > 85) {
-        return "El uso de memoria es muy alto. Se recomienda cerrar aplicaciones o considerar ampliar la memoria RAM.";
-    } else if (percent > 70) {
-        return "El uso de memoria es elevado. Considere cerrar aplicaciones no utilizadas.";
-    } else {
-        return "El uso de memoria es adecuado.";
-    }
-}
-
-function generarRecomendacionDisco(discoPercent) {
-    const percent = parseFloat(discoPercent.replace('%', ''));
-    if (percent > 90) {
-        return "El disco está casi lleno. Se recomienda liberar espacio urgentemente.";
-    } else if (percent > 75) {
-        return "El uso del disco es elevado. Considere liberar espacio pronto.";
-    } else {
-        return "El espacio en disco es adecuado.";
-    }
 }

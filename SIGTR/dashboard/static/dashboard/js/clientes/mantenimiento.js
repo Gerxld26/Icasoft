@@ -3,41 +3,41 @@ const actionUrls = window.ACTION_URLS = {
     update: "/dashboard/client/maintenance/update-software/",
     defrag: "/dashboard/client/maintenance/defragment-disk/",
     repair: "/dashboard/client/maintenance/repair-disk/"
-};
-
-const modalMantenimiento = document.getElementById('modalMantenimiento');
-const openModalMantenimiento = document.getElementById('btnAbrirModalMantenimiento');
-const closeModalMantenimiento = document.getElementById('closeModalMant');
-const progressBarMantenimiento = document.getElementById('progressBarMantenimiento');
-const spanMant = progressBarMantenimiento.querySelector('span');
-const imgMant = document.getElementById('imgMant');
-const imgMantGIF = document.getElementById('imgMantGIF');
-
-// Referencias a los botones de acción de mantenimiento
-const btnLiberarEspacio = document.querySelector('#cardData1 .btnCardDataFunction');
-const btnActualizarSoftware = document.querySelector('#cardData2 .btnCardDataFunction');
-const btnDesfragmentar = document.querySelector('#cardData3 .btnCardDataFunction');
-const btnReparar = document.querySelector('#cardData4 .btnCardDataFunction');
-let resultadoMantenimiento = document.getElementById('mantenimientoResultado');
-let contadorIntervalo = null;
-
-function MantenimientoFunction() {
-    openModalMantenimiento.style.pointerEvents = 'none'; //evitar que el usuario haga click en el botón
+ };
+ 
+ const modalMantenimiento = document.getElementById('modalMantenimiento');
+ const openModalMantenimiento = document.getElementById('btnAbrirModalMantenimiento');
+ const closeModalMantenimiento = document.getElementById('closeModalMant');
+ const progressBarMantenimiento = document.getElementById('progressBarMantenimiento');
+ const spanMant = progressBarMantenimiento.querySelector('span');
+ const imgMant = document.getElementById('imgMant');
+ const imgMantGIF = document.getElementById('imgMantGIF');
+ 
+ const btnLiberarEspacio = document.querySelector('#cardData1 .btnCardDataFunction');
+ const btnActualizarSoftware = document.querySelector('#cardData2 .btnCardDataFunction');
+ const btnDesfragmentar = document.querySelector('#cardData3 .btnCardDataFunction');
+ const btnReparar = document.querySelector('#cardData4 .btnCardDataFunction');
+ let resultadoMantenimiento = document.getElementById('mantenimientoResultado');
+ let contadorIntervalo = null;
+ 
+ function MantenimientoFunction() {
+    openModalMantenimiento.style.pointerEvents = 'none';
     spanMant.style.width = '0%';
     spanMant.textContent = '0%';
     const porcentajeFinal = parseInt(spanMant.dataset.width.replace('%', ''));
     const typeNotification = () => mostrarNotificacion('success', 'Análisis completo del mantenimiento', 5);
-
+ 
     animarProgreso(spanMant, porcentajeFinal, () => {
         setTimeout(() => {
             modalMantenimiento.style.display = 'flex';
             modalMantenimiento.style.fontSize = '18px';
-            openModalMantenimiento.style.pointerEvents = 'auto'; //reactivar el botón al terminar la animación
+            openModalMantenimiento.style.pointerEvents = 'auto';
         }, 3000);
     }, typeNotification);
-}
-openModalMantenimiento.style.cursor = 'pointer';
-openModalMantenimiento.addEventListener('click', function () {
+ }
+ 
+ openModalMantenimiento.style.cursor = 'pointer';
+ openModalMantenimiento.addEventListener('click', function () {
     const contenedorMant = document.querySelector(".ultMant");
     contenedorMant.classList.add("borde-animado");
     if (btnPressAnalisis) { 
@@ -49,29 +49,26 @@ openModalMantenimiento.addEventListener('click', function () {
     imgMant.style.display = 'none';
     imgMantGIF.style.display = 'flex';
     progressBarMantenimiento.style.display = 'flex';
-})
-
-closeModalMantenimiento.addEventListener('click', function () {
+ })
+ 
+ closeModalMantenimiento.addEventListener('click', function () {
     limpiarContador();
-
     modalMantenimiento.style.display = 'none';
-})
-
-window.addEventListener('click', function (event) {
+ })
+ 
+ window.addEventListener('click', function (event) {
     if (event.target == modalMantenimiento) {
         limpiarContador();
         modalMantenimiento.style.display = 'none';
     }
-});
-
-// Función para mostrar mensajes de resultado
-function mostrarResultado(mensaje, tipo = 'info') {
-
+ });
+ 
+ function mostrarResultado(mensaje, tipo = 'info') {
     if (!resultadoMantenimiento) {
         resultadoMantenimiento = document.createElement('div');
         resultadoMantenimiento.id = 'mantenimientoResultado';
         resultadoMantenimiento.className = `resultado-${tipo}`;
-
+ 
         let icono = 'fas fa-info-circle';
         if (tipo === 'success') {
             icono = 'fas fa-check-circle';
@@ -84,13 +81,12 @@ function mostrarResultado(mensaje, tipo = 'info') {
              <div id="iconResult"><i class="${icono}"></i></div>
             <div id="resultadoMensaje">${mensaje}</div>
         `;
-
+ 
         const contentData = document.querySelector('#modalMantenimiento .contentData');
         contentData.appendChild(resultadoMantenimiento);
-
+ 
     } else {
         resultadoMantenimiento.className = `resultado-${tipo}`;
-        // Actualizar el icono
         let icono = 'fas fa-info-circle';
         if (tipo === 'success') {
             icono = 'fas fa-check-circle';
@@ -100,55 +96,48 @@ function mostrarResultado(mensaje, tipo = 'info') {
             icono = 'fas fa-exclamation-triangle';
         } else {
         }
-
+ 
         const iconoElement = resultadoMantenimiento.querySelector('i');
         if (iconoElement) {
             iconoElement.className = `${icono}`;
         }
-
-        // Actualizar el mensaje
+ 
         const mensajeElement = resultadoMantenimiento.querySelector('#resultadoMensaje');
         if (mensajeElement) {
             mensajeElement.innerHTML = mensaje;
         }
-
-        // Mostrar el elemento
+ 
         resultadoMantenimiento.style.display = 'grid';
     }
-
-}
-
-// Función para limpiar cualquier contador activo
-function limpiarContador() {
+ }
+ 
+ function limpiarContador() {
     if (contadorIntervalo) {
         clearInterval(contadorIntervalo);
         contadorIntervalo = null;
     }
-}
-
-// Función para mostrar estado de carga en botón
-function mostrarCargando(boton, cargando = true) {
+ }
+ 
+ function mostrarCargando(boton, cargando = true) {
     if (!boton) return;
-
+ 
     if (cargando) {
-
         boton.dataset.originalText = boton.innerHTML;
         boton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Procesando...`;
         boton.disabled = true;
         boton.style.opacity = '0.7';
     } else {
-
         if (boton.dataset.originalText) {
             boton.innerHTML = boton.dataset.originalText;
         }
         boton.disabled = false;
         boton.style.opacity = '1';
     }
-}
-
-function manejarEstadoRespuesta(data) {
+ }
+ 
+ function manejarEstadoRespuesta(data) {
     limpiarContador();
-
+ 
     switch (data.status) {
         case 'in_progress':
             mostrarResultado(`
@@ -158,8 +147,7 @@ function manejarEstadoRespuesta(data) {
                     <p class="countdown">Tiempo transcurrido: <span id="tiempo-transcurrido">0</span> segundos</p>
                 </div>
             `, 'warning');
-
-            // Iniciar contador
+ 
             let segundos = 0;
             contadorIntervalo = setInterval(() => {
                 segundos++;
@@ -167,7 +155,7 @@ function manejarEstadoRespuesta(data) {
                 if (tiempoElement) {
                     tiempoElement.textContent = segundos;
                 }
-
+ 
                 if (segundos >= 30) {
                     clearInterval(contadorIntervalo);
                     contadorIntervalo = null;
@@ -179,9 +167,8 @@ function manejarEstadoRespuesta(data) {
                 }
             }, 1000);
             break;
-
+ 
         case 'scheduled':
-            // Para operaciones programadas para el reinicio
             mostrarResultado(`
                 <div>
                     <p><i class="fas fa-clock text-warning"></i> <strong>Operación programada para el próximo reinicio</strong></p>
@@ -190,14 +177,12 @@ function manejarEstadoRespuesta(data) {
                     <button id="btn-recordatorio" class="btn btn-sm btn-outline-warning mt-2">Recordármelo más tarde</button>
                 </div>
             `, 'warning');
-
-            // Agregar funcionalidad al botón de recordatorio
+ 
             setTimeout(() => {
                 const btnRecordatorio = document.getElementById('btn-recordatorio');
                 if (btnRecordatorio) {
                     btnRecordatorio.addEventListener('click', () => {
                         alert('Se te recordará sobre esta tarea pendiente en 1 hora.');
-                        // Aquí podrías implementar un sistema de recordatorios
                         mostrarResultado(`
                             <p><i class="fas fa-bell text-info"></i> <strong>Recordatorio programado</strong></p>
                             <p>Se te recordará sobre la operación pendiente en 1 hora.</p>
@@ -207,14 +192,14 @@ function manejarEstadoRespuesta(data) {
                 }
             }, 100);
             break;
-
+ 
         case 'success':
             mostrarResultado(`
                 <div>ESPACIO LIBERADO EXITOSAMENTE</div>
                 <div id="resultadoMensaje">${data.message}</div>
             `, 'success');
             break;
-
+ 
         case 'error':
         default:
             mostrarResultado(`
@@ -225,14 +210,12 @@ function manejarEstadoRespuesta(data) {
             `, 'error');
             break;
     }
-}
-
-// Función para ejecutar acciones de mantenimiento
-async function ejecutarAccion(accion, boton) {
+ }
+ 
+ async function ejecutarAccion(accion, boton) {
     limpiarContador();
     mostrarCargando(boton, true);
-
-    // Obtener la URL
+ 
     const url = actionUrls[accion];
     if (!url) {
         console.error(`URL no encontrada para la acción: ${accion}`);
@@ -245,30 +228,27 @@ async function ejecutarAccion(accion, boton) {
         mostrarCargando(boton, false);
         return;
     }
-
+ 
     try {
-        // CAMBIO AQUÍ: Usar método POST en lugar de GET
         const response = await fetch(url, {
-            method: 'POST',  // Cambiado de 'GET' a 'POST'
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCookie('csrftoken')  // Añadir el token CSRF
+                'X-CSRFToken': getCookie('csrftoken')
             },
             credentials: 'same-origin'
         });
-
-        // Verificar si la respuesta es correcta
+ 
         if (!response.ok) {
             throw new Error(`Error del servidor (HTTP ${response.status})`);
         }
-
-        // Procesar la respuesta JSON
+ 
         const data = await response.json();
         console.log("Datos recibidos:", data);
-
+ 
         manejarEstadoRespuesta(data);
-
+ 
     } catch (error) {
         console.error('Error:', error);
         mostrarResultado(`
@@ -279,12 +259,11 @@ async function ejecutarAccion(accion, boton) {
             </div>
         `, 'error');
     } finally {
-        // Restaurar el botón a su estado normal
         mostrarCargando(boton, false);
     }
-}
-
-function getCookie(name) {
+ }
+ 
+ function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
@@ -297,71 +276,109 @@ function getCookie(name) {
         }
     }
     return cookieValue;
-}
-
-async function actualizarInfoArchivosTemporales() {
+ }
+ 
+ async function fetchAndDisplayTempInfo() {
+    const archTemp = document.getElementById('archTemp');
+    
+    if (!archTemp) {
+        console.error('Elemento archTemp no encontrado en el DOM');
+        return;
+    }
+    
+    archTemp.innerHTML = `
+        <div class="loading-temp-info">
+            <i class="fas fa-spinner fa-spin" style="margin-right: 8px; color: #00c8ff;"></i>
+            <span>Cargando archivos temporales...</span>
+        </div>
+    `;
+ 
     try {
         const response = await fetch('/dashboard/client/get-temp-size/', {
-            method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         });
-
+ 
         if (!response.ok) {
             throw new Error(`Error obteniendo información de archivos temporales: ${response.status}`);
         }
-
+ 
         const data = await response.json();
         
         if (data.status === 'success') {
-            // Actualizar el elemento en el dashboard
-            const archTemp = document.getElementById('archTemp');
-            if (archTemp) {
-                archTemp.innerHTML = `
-                    <div class="temp-info">
-                        <div class="temp-size">Archivos Temporales: ${data.total_temp_size || '0 MB'}</div>
-                        <div class="temp-files-count">
-                            <small style="display:block; font-size:0.7em; color:#888;">
-                                ${data.total_temp_files} archivos temporales encontrados
-                            </small>
-                            <small style="display:block; font-size:0.7em; color:#888;">
-                                ${data.files_in_use_count} archivos en uso (${data.files_in_use_size})
-                            </small>
-                        </div>
+            archTemp.innerHTML = `
+                <div class="temp-info">
+                    <div class="temp-size">Archivos Temporales: ${data.total_temp_size || '0 MB'}</div>
+                    <div class="temp-files-count">
+                        <small style="display:block; font-size:0.7em; color:#888;">
+                            ${data.files_in_use_count} archivos en uso 
+                        </small>
                     </div>
-                `;
+                </div>
+            `;
+ 
+            const tempIndicator = document.querySelector('.temp-indicator');
+            if (tempIndicator) {
+                actualizarIndicadorTemporal(data.total_temp_size, tempIndicator);
             }
+        } else {
+            archTemp.innerHTML = `
+                <div class="temp-error">
+                    Error al obtener información de archivos temporales
+                    <small style="display:block; font-size:0.7em; color:#d55;">
+                        ${data.message || 'Error desconocido'}
+                    </small>
+                </div>
+            `;
         }
     } catch (error) {
         console.error('Error al actualizar información de archivos temporales:', error);
+        
+        archTemp.innerHTML = `
+            <div class="temp-error">
+                Error al conectar con el servidor
+                <small style="display:block; font-size:0.7em; color:#d55;">
+                    Intente nuevamente más tarde
+                </small>
+                <button id="retry-temp-fetch" class="retry-button">Reintentar</button>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            const retryButton = document.getElementById('retry-temp-fetch');
+            if (retryButton) {
+                retryButton.addEventListener('click', fetchAndDisplayTempInfo);
+            }
+        }, 100);
     }
-}
-
-// Inicializar al cargar el DOM
-document.addEventListener('DOMContentLoaded', function () {
-
+ }
+ 
+ document.addEventListener('DOMContentLoaded', function () {
+    fetchAndDisplayTempInfo();
+    setInterval(fetchAndDisplayTempInfo, 60000);
+ 
     if (btnLiberarEspacio) {
         btnLiberarEspacio.addEventListener('click', function () {
             ejecutarAccion('cleanup', this);
         });
     }
-
+ 
     if (btnActualizarSoftware) {
         btnActualizarSoftware.addEventListener('click', function () {
             ejecutarAccion('update', this);
         });
     }
-
+ 
     if (btnDesfragmentar) {
         btnDesfragmentar.addEventListener('click', function () {
             ejecutarAccion('defrag', this);
         });
     }
-
+ 
     if (btnReparar) {
         btnReparar.addEventListener('click', function () {
             ejecutarAccion('repair', this);
         });
     }
-});
+ });
