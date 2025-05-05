@@ -6,15 +6,8 @@ const btnAsistencia = document.getElementById('btnAsistencia');
 
 openModalAsistencia.addEventListener('click', function () {
     modalAsistencia.style.display = 'flex';
-    setTimeout(() => {
-        google.maps.event.trigger(mapaAsist, 'resize');
-        if (marcadorMovido) {
-            mapaAsist.setCenter(markerAsist.getPosition());
-        } else {
-            mapaAsist.setCenter(ubicacionInicial);
-        }
-    }, 200);
-    console.log('Abriendo modal asistencia');
+    mapaAsistencia();
+
 })
 closeModalAsis.addEventListener('click', function () {
     modalAsistencia.style.display = 'none';
@@ -39,15 +32,8 @@ function tecnicosDisp(lat, lon) { //la lat y lon que se le pasa es del cliente.
             return response.json();
         })
         .then(data => {
-            console.log("Técnicos recibidos:", data);
 
-            // Verificar si hay técnicos dentro del límite permitido
-            if (!data.has_nearby_technicians) {
-                btnAsistencia.disabled = true;
-            } else {
-                btnAsistencia.disabled = true;
-            }
-
+            btnAsistencia.disabled = !data.has_nearby_technicians;
             updateTechniciansList(data.technicians);
         })
         .catch(error => {
@@ -79,27 +65,26 @@ function updateTechniciansList(technicians) {
             option.textContent = `${tech.username} - ${tech.distance} km - ${tech.district_name}`;
             nearbyGroup.appendChild(option);
             locationTech(tech.latitude, tech.longitude);
-            console.log('Latitud tech: ',tech.latitude, 'Longitud tech: ',tech.longitude);
         });
         
         select.appendChild(nearbyGroup);
     }
     
-    // técnicos lejanos (deshabilitados)
-    if (distantTechs.length > 0) {
-        const distantGroup = document.createElement('optgroup');
-        distantGroup.label = 'Técnicos fuera de rango (no disponibles)';
+    // // técnicos lejanos (deshabilitados)
+    // if (distantTechs.length > 0) {
+    //     const distantGroup = document.createElement('optgroup');
+    //     distantGroup.label = 'Técnicos fuera de rango (no disponibles)';
         
-        distantTechs.forEach(tech => {
-            const option = document.createElement('option');
-            option.value = tech.id;
-            option.disabled = true;
-            option.textContent = `${tech.username} - ${tech.distance} km - ${tech.district_name} (demasiado lejos)`;
-            distantGroup.appendChild(option);
-        });
+    //     distantTechs.forEach(tech => {
+    //         const option = document.createElement('option');
+    //         option.value = tech.id;
+    //         option.disabled = true;
+    //         option.textContent = `${tech.username} - ${tech.distance} km - ${tech.district_name} (demasiado lejos)`;
+    //         distantGroup.appendChild(option);
+    //     });
         
-        select.appendChild(distantGroup);
-    }
+    //     select.appendChild(distantGroup);
+    // }
 
     if (nearbyTechs.length > 0) {
         select.value = nearbyTechs[0].id;
@@ -107,7 +92,60 @@ function updateTechniciansList(technicians) {
         select.value = "";
     }
 }
-$(document).ready(function () {
+const formData = document.getElementById('formAsistencia'); 
+document.getElementById('formAsistencia').addEventListener("submit", function (event) {
+    event.preventDefault();
+    if(formData.checkValidity()){
+        const datos ={
+            descripcion: document.getElementById('descripcion').value,
+            latitud: document.getElementById('id_latitude').value,
+            longitud: document.getElementById('id_longitude').value,
+            tecnico: document.getElementById('technician').value,
+        }
+        fetch("/tickets/asistencia/", {
+            method: "POST",
+            body: JSON.stringify(datos), 
+            headers: {
+                "Content-Type": "application/json", 
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+    
+                Swal.fire({
+                    icon: data.status === "success" ? "success" : "error",
+                    title: data.status === "success" ? "Éxito" : "Error",
+                    text: data.message,
+                    confirmButtonColor: "#3085d6",
+                    confirmButtonText: "Entendido"
+                }).then((result) => {
+                    if (result.isConfirmed && data.status === "success") {
+                       modalAsistencia.style.display='none';
+                    }
+                });
+    
+                btnAsistencia.disabled = false;
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Hubo un problema con la solicitud. Inténtalo nuevamente.",
+                    confirmButtonColor: "#d33",
+                    confirmButtonText: "Cerrar"
+                });
+                btnAsistencia.disabled = false;
+            });
+    }else{
+        formData.reportValidity();
+    }
+})
 
-});
 

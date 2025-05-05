@@ -26,7 +26,7 @@
     max-width: 800px;
     max-height: 500px;
     position: relative;
-    border: 3px solid rgb(43, 67, 84);
+    border: 2px solid rgb(4, 90, 152);
     box-shadow: 0 0 25px rgba(3, 101, 140, 0.9);
     color: #ffffff;
     border-radius: 30px;
@@ -52,6 +52,7 @@
     height: 100%;
     border-radius: 30px;
 }
+
 @keyframes modalopen {
     from {
         opacity: 0;
@@ -115,6 +116,11 @@
         "headerModal"
         "contentDataMonitoreo";
     gap: 10px;
+    width: 100%;
+    height: 80%;
+    max-width: 900px;
+    max-height: 500px;
+    grid-template-rows: 10% auto;
 }
 
 .contentDataMonitoreo {
@@ -123,6 +129,7 @@
         "contentMonitoreoGrafico componentes";
     justify-items: center;
     grid-auto-columns: 50% auto;
+    padding-right: 15px;
 }
 
 .contentMonitoreoGrafico {
@@ -178,6 +185,7 @@
         "contentCompHW contentHW";
     grid-template-columns: 30% auto;
     width: 100%;
+    padding-right: 10px;
     background: rgba(250, 250, 250, 0.063);
 }
 
@@ -204,7 +212,7 @@
     justify-content: center;
 }
 
-.contentCompHW {
+#modalMonitoreo .contentCompHW {
     display: grid;
     grid-template-areas:
         "textCompMonitoreo"
@@ -229,12 +237,10 @@
     height: 100%;
 }
 
-.contentHW {
+#modalMonitoreo .contentHW {
     display: grid;
-    flex-direction: column;
-    justify-items: center;
     width: 100%;
-    gap: 10px;
+    gap: 5px;
 }
 
 .textContentHW {
@@ -243,6 +249,16 @@
     display: grid;
     width: 80%;
     justify-items: start;
+}
+
+div#sistemaOperativotext {
+    display: grid;
+    align-items: center;
+}
+
+div#cpu-name {
+    display: grid;
+    align-items: center;
 }
 
 .progress-text {
@@ -263,7 +279,7 @@
 .progress-bar-Monitoreo {
     position: relative;
     height: 25px;
-    width: 80%;
+    width: 100%;
     border-radius: 30px;
     background-color: white;
     box-shadow: 5px 5px 10px rgb(3, 101, 140);
@@ -283,6 +299,21 @@
     transition: width .5s linear;
 }
 
+#modalMonitoreo.two-columns #contentDisco {
+    grid-template-areas: 'device device';
+    column-gap: 10px;
+}
+
+#modalMonitoreo.two-columns .modal-content {
+    height: 100%;
+    max-height: 600px;
+}
+
+.Disco {
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
 /* MODAL DIAGNÓSTICO  */
 #modalDiagnostico .modal-content {
     display: grid;
@@ -291,9 +322,11 @@
         "contentData";
     gap: 10px;
 }
-#modalDiagnostico .headerModal{
+
+#modalDiagnostico .headerModal {
     margin-bottom: 0px;
 }
+
 /* Contenido del modal diagnóstico */
 #modalDiagnostico .contentData {
     display: grid;
@@ -382,61 +415,9 @@
     padding-left: 15px;
 }
 
-/*progress bar*/
-.progress-bar-Monitoreo {
-    position: relative;
-    height: 25px;
-    width: 80%;
-    border-radius: 30px;
-    background-color: white;
-    box-shadow: 5px 5px 10px rgb(3, 101, 140);
-    text-align: center;
-}
-
-.progress-bar-Monitoreo span {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0%;
-    height: 100%;
-    color: white;
-    align-items: center;
-    border-radius: 30px;
-    background: white;
-    transition: width .5s linear;
-}
-
 #resultadoAnalisisIA {
     margin-top: 15px;
     transition: all 0.3s ease;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.7);
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-content {
-    position: relative;
-    background-color: #1a1a1a;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #03658c;
-    border-radius: 15px;
-    width: 80%;
-    max-width: 800px;
-    box-shadow: 0 0 20px rgba(3, 101, 140, 0.8);
-    color: #ffffff;
-    animation: modalopen 0.5s;
 }
 
 .selectDiagnostico {
@@ -554,7 +535,7 @@
 .selectTipoDiagnostico {
     width: 100%;
     display: grid;
-    gap:10px;
+    gap: 10px;
 }
 
 /* Barras de progreso */
@@ -926,239 +907,257 @@
 /* MODAL ANTIVIRUS */
 .antivirus-modal {
     z-index: 1000;
- }
- 
- .antivirus-modal-content {
+}
+
+.antivirus-modal-content {
     background-color: #1e2837;
     border-radius: 10px;
     max-width: 500px;
     width: 100%;
- }
- 
- .antivirus-header {
+}
+
+.antivirus-header {
     background-color: #2c3e50;
     color: #ecf0f1;
     padding: 15px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
- }
- 
- .antivirus-content {
+}
+
+.antivirus-content {
     padding: 20px;
     color: #ecf0f1;
- }
- 
- .antivirus-progreso {
+}
+
+.antivirus-progreso {
     text-align: center;
- }
- 
- .progreso-titulo {
+}
+
+.progreso-titulo {
     font-size: 1.2em;
     margin-bottom: 15px;
     color: #3498db;
- }
- 
- .progreso-barra-contenedor {
+}
+
+.progreso-barra-contenedor {
     width: 100%;
     height: 20px;
     background-color: #2c3e50;
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: 10px;
- }
- 
- .progreso-barra {
+}
+
+.progreso-barra {
     width: 0%;
     height: 100%;
     background-color: #2ecc71;
     transition: width 0.5s ease;
- }
- 
- .progreso-texto {
+}
+
+.progreso-texto {
     margin-bottom: 15px;
     color: #bdc3c7;
- }
- 
- .progreso-pasos {
+}
+
+.progreso-pasos {
     display: flex;
     justify-content: space-between;
     margin-top: 20px;
- }
- 
- .progreso-pasos .paso {
+}
+
+.progreso-pasos .paso {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 22%;
- }
- 
- .paso-icono {
+}
+
+.paso-icono {
     font-size: 1.5em;
     margin-bottom: 5px;
- }
- 
- .paso-texto {
+}
+
+.paso-texto {
     font-size: 0.8em;
     color: #95a5a6;
- }
- 
- .paso-icono.completado {
+}
+
+.paso-icono.completado {
     color: #2ecc71;
- }
- 
- .paso-icono.error {
+}
+
+.paso-icono.error {
     color: #e74c3c;
- }
- 
- .antivirus-detalles,
- .antivirus-analisis {
+}
+
+.antivirus-detalles,
+.antivirus-analisis {
     margin-top: 15px;
- }
- 
- .antivirus-info,
- .analisis-componente {
+}
+
+.antivirus-info,
+.analisis-componente {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
     padding: 10px;
     background-color: #2c3e50;
     border-radius: 5px;
- }
- 
- .analisis-componente .titulo {
+}
+
+.analisis-componente .titulo {
     font-weight: bold;
     color: #3498db;
- }
- 
- .antivirus-analisis ul {
+}
+
+.antivirus-analisis ul {
     list-style-type: disc;
     padding-left: 20px;
     margin: 0;
- }
- 
- .antivirus-analisis .analisis-componente .contenido {
+}
+
+.antivirus-analisis .analisis-componente .contenido {
     text-align: left;
- }
- 
- #estadoProteccion {
+}
+
+#estadoProteccion {
     font-weight: bold;
- }
- 
- #estadoProteccion.protegido {
+}
+
+#estadoProteccion.protegido {
     color: #2ecc71;
- }
- 
- #estadoProteccion.amenaza {
+}
+
+#estadoProteccion.amenaza {
     color: #e74c3c;
- }
- 
- #estadoProteccion.advertencia {
+}
+
+#estadoProteccion.advertencia {
     color: #f39c12;
- }
- 
- .contenedor-logs-animados {
+}
+
+#archivos-escaneados-lista {
+    overflow-y: scroll;
+    height: 40px;
+}
+
+.contenedor-logs-animados {
     position: relative;
     height: 100px;
     overflow: hidden;
     margin-top: 15px;
-    background-color: rgba(0,0,0,0.1);
+    background-color: rgba(0, 0, 0, 0.1);
     border-radius: 8px;
-    padding: 10px;
- }
- 
- .log-actual {
+}
+
+.log-actual {
     position: absolute;
     width: 100%;
     transition: opacity 0.3s ease;
- }
- 
- .log-actual.fade-out {
+}
+
+.log-actual.fade-out {
     opacity: 0;
- }
- 
- .log-actual.fade-in {
+}
+
+.log-actual.fade-in {
     opacity: 1;
- }
- 
- .entrada-log {
+}
+
+.entrada-log {
     display: flex;
     align-items: center;
     margin-bottom: 8px;
     padding: 8px;
     border-radius: 5px;
     transition: background-color 0.3s ease;
- }
- 
- .entrada-log:hover {
-    background-color: rgba(255,255,255,0.05);
- }
- 
- .entrada-log .icono-estado {
+}
+
+.entrada-log:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.entrada-log .icono-estado {
     margin-right: 12px;
     font-size: 20px;
- }
- 
- .entrada-log .detalles-log {
+}
+
+.entrada-log .detalles-log {
     display: flex;
     flex-direction: column;
- }
- 
- .entrada-log .nombre-archivo {
+}
+
+.entrada-log .nombre-archivo {
     font-weight: bold;
     color: #3498db;
     margin-bottom: 4px;
- }
- 
- .entrada-log .descripcion-log {
+}
+
+.entrada-log .descripcion-log {
     font-size: 0.9em;
     color: #95a5a6;
- }
- 
- .entrada-log.clean .icono-estado i {
+}
+
+.entrada-log.clean .icono-estado i {
     color: #2ecc71;
- }
- 
- .entrada-log.threat .icono-estado i {
+}
+
+.entrada-log.threat .icono-estado i {
     color: #e74c3c;
- }
- 
- .entrada-log.error .icono-estado i {
+}
+
+.entrada-log.error .icono-estado i {
     color: #f39c12;
- }
- 
- .archivos-escaneados-container {
+}
+
+.archivos-escaneados-container {
     margin-top: 15px;
-    background-color: rgba(0,0,0,0.1);
+    background-color: rgba(0, 0, 0, 0.1);
     border-radius: 5px;
     padding: 10px;
- }
- 
- .titulo-archivos-escaneados {
+}
+
+.titulo-archivos-escaneados {
     font-weight: bold;
     margin-bottom: 10px;
     color: #3498db;
- }
- 
- .lista-archivos-escaneados {
+}
+
+.lista-archivos-escaneados {
     max-height: 150px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
- }
- 
- .archivo-escaneado {
-    background-color: rgba(255,255,255,0.05);
+}
+
+.archivo-escaneado {
+    background-color: rgba(255, 255, 255, 0.05);
     padding: 5px 10px;
     margin-bottom: 5px;
     border-radius: 3px;
     font-size: 0.9em;
     color: #ecf0f1;
     transition: background-color 0.3s ease;
- }
- 
- .archivo-escaneado:hover {
-    background-color: rgba(255,255,255,0.1);
- }
+}
+
+.archivo-escaneado:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+div#verAntivirus {
+    align-items: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#verMasAnt {
+    padding: 5px;
+    border-radius: 30px;
+    background: #00ffaa;
+    box-shadow: 2px 2px 10px #00aaff;
+}
+
 /* MODAL HISTORIAL*/
 .historial-modal .tabla-contenedor {
     max-height: 400px;
@@ -1176,10 +1175,13 @@
     background-color: #2c3e50;
     color: white;
 }
+
 .fila-resaltada {
-    background-color: rgba(155, 236, 42, 0.2); /* Amarillo clarito */
+    background-color: rgba(155, 236, 42, 0.2);
+    /* Amarillo clarito */
     font-weight: bold;
 }
+
 .tabla-historial th,
 .tabla-historial td {
     border: 1px solid #34495e;
@@ -1305,28 +1307,12 @@ iframe.videoYt {
     width: 100%;
     height: 100%;
 }
-/* #modalAprendizaje .centro {
-    display: grid;
-}
-
-#modalAprendizaje .contentImg {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    height: 100%;
-    align-items: center;
-}
-
-.ytCentro {
-    font-size: 70px;
-    color: red;
-} */
 
 .contentCentro {
     display: grid;
     grid-template-areas: "textConsejo" "contentBtnCnetro";
     align-items: center;
-    gap:10px;
+    gap: 10px;
 }
 
 .contentCentro .textConsejo {
@@ -1378,17 +1364,7 @@ iframe.videoYt {
 }
 
 .red-modal-content {
-    position: relative;
-    width: 90%;
     max-width: 550px;
-    margin: auto;
-    background-color: #1a1a2e;
-    border-radius: 8px;
-    border: 1px solid #0099ff;
-    box-shadow: 0 0 20px rgba(0, 153, 255, 0.3);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
 }
 
 .red-content-data {
@@ -1503,13 +1479,16 @@ iframe.videoYt {
     transform: scale(1.1);
     transition: transform 0.3s ease;
 }
-.companyWifi{
+
+.companyWifi {
     display: flex;
     flex-direction: row;
 }
-#analisisRed{
+
+#analisisRed {
     width: 500px;
 }
+
 /* Barra de progreso con animación */
 .red-progreso-container {
     width: 100%;
@@ -1568,6 +1547,8 @@ iframe.videoYt {
     font-family: Verdana;
     opacity: 1;
     transition: opacity 0.3s ease;
+    display: grid;
+    gap: 10px;
 }
 
 /* Resultados */
@@ -1783,6 +1764,17 @@ iframe.videoYt {
     display: none;
 }
 
+#btnResultadosWifi {
+    padding: 5px;
+    width: 40%;
+    border-radius: 30px;
+    color: white;
+    background: #01aded;
+    font-style: normal;
+    box-shadow: inset 0px 0px 11px 1px #263080;
+    cursor: pointer;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .red-modal-content {
@@ -1811,7 +1803,7 @@ iframe.videoYt {
     gap: 10px;
 }
 
-#modalAsistencia .contentData {
+#modalAsistencia .contentData #formAsistencia {
     display: grid;
     grid-template-areas: "asistencia1" "asistencia1" "asistencia2" "asistencia4" "asistencia5";
     gap: 15px;
@@ -1832,7 +1824,23 @@ iframe.videoYt {
 .asistencia2 .inputDescrip {
     width: 100%;
 }
-
+.asistencia5{
+    display: grid;
+    grid-template-areas: 'botones botones';
+    grid-template-columns: 50%;
+    gap: 10px;
+}
+.asistencia5 #contactRef {
+    display: grid;
+    width: 100%;
+    justify-items: center;
+}
+a.btnAsistencia {
+    display: flex;
+    gap: 10px;
+    text-decoration: none;
+    justify-content: center;
+}
 #contentDireccion .inputDescrip {
     width: 100%;
     height: 40px;
@@ -1846,6 +1854,11 @@ iframe.videoYt {
 #contentDireccion .textAsistencia {
     border-top-left-radius: 30px;
     border-bottom-left-radius: 30px;
+    padding-left: 10px;
+}
+input#descripcion {
+    height: 40px;
+    padding-left: 10px;
 }
 
 .btnUbiCliente {

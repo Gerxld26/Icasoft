@@ -21,177 +21,83 @@ MAX_DISTANCE_KM = 20  # Distancia máxima para considerar a un técnico como "ce
 @user_passes_test(lambda user: user.role == "client")
 def asistencia(request):
     if request.method == "POST":
-        form = TicketRequestForm(request.POST)
-        if form.is_valid():
-            ticket = form.save(commit=False)
-            ticket.client = request.user
-            
-            # Si se seleccionó un técnico específico, verificar que no esté demasiado lejos
-            technician_id = request.POST.get('technician')
-            if not technician_id:
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"status": "error", "message": "Datos inválidos."}, status=400)
+
+        required_fields = ["descripcion", "latitud", "longitud", "tecnico"]
+        missing = [field for field in required_fields if not data.get(field)]
+        if missing:
+            return JsonResponse({
+                "status": "error",
+                "message": f"Faltan los siguientes campos requeridos: {', '.join(missing)}"
+            })
+
+        try:
+            latitude = float(data["latitud"])
+            longitude = float(data["longitud"])
+        except ValueError:
+            return JsonResponse({
+                "status": "error",
+                "message": "Las coordenadas deben ser valores numéricos válidos."
+            })
+
+        technician_id = data["tecnico"]
+
+        try:
+            technician = User.objects.get(id=technician_id)
+            tech_profile = UserProfile.objects.get(user=technician)
+
+            if not all([tech_profile.latitude, tech_profile.longitude]):
                 return JsonResponse({
                     "status": "error",
-                    "message": "Debe seleccionar un técnico para atender su solicitud."
+                    "message": "No se pueden determinar las coordenadas del técnico."
                 })
-                
-            try:
-                technician = User.objects.get(id=technician_id)
-                tech_profile = UserProfile.objects.get(user=technician)
-                
-                # Verificar que las coordenadas estén presentes
-                if not all([ticket.latitude, ticket.longitude, tech_profile.latitude, tech_profile.longitude]):
-                    return JsonResponse({
-                        "status": "error",
-                        "message": "No se pueden determinar las coordenadas del cliente o técnico."
-                    })
-                
-                # Calcular la distancia entre el cliente y el técnico
-                client_location = (float(ticket.latitude), float(ticket.longitude))
-                tech_location = (float(tech_profile.latitude), float(tech_profile.longitude))
-                distance = geodesic(client_location, tech_location).km
-                
-                # Verificar si el técnico está demasiado lejos
-                if distance > MAX_DISTANCE_KM:
-                    return JsonResponse({
-                        "status": "error",
-                        "message": f"El técnico seleccionado está a {distance:.1f} km de distancia, lo cual excede el límite permitido de {MAX_DISTANCE_KM} km. Por favor, seleccione un técnico más cercano o ajuste su ubicación."
-                    })
-                
-                # Si pasa la validación, asignar el técnico
-                ticket.assigned_to = technician
-                
-            except (User.DoesNotExist, UserProfile.DoesNotExist) as e:
+
+            client_location = (latitude, longitude)
+            tech_location = (float(tech_profile.latitude), float(tech_profile.longitude))
+            distance = geodesic(client_location, tech_location).km
+
+            if distance > MAX_DISTANCE_KM:
                 return JsonResponse({
                     "status": "error",
-                    "message": "El técnico seleccionado no existe o no tiene un perfil válido."
+                    "message": f"El técnico seleccionado está a {distance:.1f} km, lo cual excede el límite permitido de {MAX_DISTANCE_KM} km."
                 })
-            except Exception as e:
-                logger.error(f"Error al validar la distancia: {str(e)}")
-                return JsonResponse({
-                    "status": "error",
-                    "message": "Error al procesar la solicitud. Por favor, inténtelo de nuevo."
-                })
-                
-            # Guardar el ticket si todo está en orden
-            ticket.save()
+
+            # Crear el ticket
+            ticket = Ticket.objects.create(
+                client=request.user,
+                assigned_to=technician,
+                description=data["descripcion"],
+                latitude=latitude,
+                longitude=longitude
+            )
 
             return JsonResponse({
                 "status": "success",
                 "message": "¡Solicitud enviada correctamente!",
-                "redirect_url": reverse('client_diagnosis')  
             })
-        return JsonResponse({
-            "status": "error",
-            "message": "Error en el formulario",
-            "errors": form.errors
-        })
-    
-    # Obtener técnicos online más cercanos
-    client_lat = request.GET.get('latitude', None)
-    client_lon = request.GET.get('longitude', None)
-    
-    # Si no hay coordenadas en la solicitud, usar valores predeterminados
-    if not client_lat or not client_lon:
-        client_location = (-12.0464, -77.0428)  # Coordenadas predeterminadas (Lima, Perú)
-    else:
-        client_location = (float(client_lat), float(client_lon))
 
-    # Obtener técnicos cercanos
-    technician_distances = get_nearby_technicians_list(client_location)
-
-    return render(request, 'tickets/modalAsistencia.html', {
-        'form': TicketRequestForm(),
-        'technicians': technician_distances,
-        'max_distance': MAX_DISTANCE_KM  # Pasar la constante al template
-    })
-
-@login_required
-@user_passes_test(lambda user: user.role == "client")
-def request_assistance(request):
-    if request.method == "POST":
-        form = TicketRequestForm(request.POST)
-        if form.is_valid():
-            ticket = form.save(commit=False)
-            ticket.client = request.user
-            
-            # Si se seleccionó un técnico específico, verificar que no esté demasiado lejos
-            technician_id = request.POST.get('technician')
-            if not technician_id:
-                return JsonResponse({
-                    "status": "error",
-                    "message": "Debe seleccionar un técnico para atender su solicitud."
-                })
-                
-            try:
-                technician = User.objects.get(id=technician_id)
-                tech_profile = UserProfile.objects.get(user=technician)
-                
-                # Verificar que las coordenadas estén presentes
-                if not all([ticket.latitude, ticket.longitude, tech_profile.latitude, tech_profile.longitude]):
-                    return JsonResponse({
-                        "status": "error",
-                        "message": "No se pueden determinar las coordenadas del cliente o técnico."
-                    })
-                
-                # Calcular la distancia entre el cliente y el técnico
-                client_location = (float(ticket.latitude), float(ticket.longitude))
-                tech_location = (float(tech_profile.latitude), float(tech_profile.longitude))
-                distance = geodesic(client_location, tech_location).km
-                
-                # Verificar si el técnico está demasiado lejos
-                if distance > MAX_DISTANCE_KM:
-                    return JsonResponse({
-                        "status": "error",
-                        "message": f"El técnico seleccionado está a {distance:.1f} km de distancia, lo cual excede el límite permitido de {MAX_DISTANCE_KM} km. Por favor, seleccione un técnico más cercano o ajuste su ubicación."
-                    })
-                
-                # Si pasa la validación, asignar el técnico
-                ticket.assigned_to = technician
-                
-            except (User.DoesNotExist, UserProfile.DoesNotExist) as e:
-                return JsonResponse({
-                    "status": "error",
-                    "message": "El técnico seleccionado no existe o no tiene un perfil válido."
-                })
-            except Exception as e:
-                logger.error(f"Error al validar la distancia: {str(e)}")
-                return JsonResponse({
-                    "status": "error",
-                    "message": "Error al procesar la solicitud. Por favor, inténtelo de nuevo."
-                })
-                
-            # Guardar el ticket si todo está en orden
-            ticket.save()
-
+        except User.DoesNotExist:
             return JsonResponse({
-                "status": "success",
-                "message": "¡Solicitud enviada correctamente!",
-                "redirect_url": reverse('client_diagnosis')  
+                "status": "error",
+                "message": "El técnico seleccionado no existe."
             })
-        return JsonResponse({
-            "status": "error",
-            "message": "Error en el formulario",
-            "errors": form.errors
-        })
-    
-    # Obtener técnicos online más cercanos
-    client_lat = request.GET.get('latitude', None)
-    client_lon = request.GET.get('longitude', None)
-    
-    # Si no hay coordenadas en la solicitud, usar valores predeterminados
-    if not client_lat or not client_lon:
-        client_location = (-12.0464, -77.0428)  # Coordenadas predeterminadas (Lima, Perú)
-    else:
-        client_location = (float(client_lat), float(client_lon))
 
-    # Obtener técnicos cercanos
-    technician_distances = get_nearby_technicians_list(client_location)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({
+                "status": "error",
+                "message": "El técnico no tiene un perfil válido."
+            })
 
-    return render(request, 'tickets/request_assistance.html', {
-        'form': TicketRequestForm(),
-        'technicians': technician_distances,
-        'max_distance': MAX_DISTANCE_KM  # Pasar la constante al template
-    })
+        except Exception as e:
+            logger.error(f"Error en la creación del ticket: {str(e)}")
+            return JsonResponse({
+                "status": "error",
+                "message": "Ocurrió un error al procesar tu solicitud."
+            })
+
 
 @login_required
 @user_passes_test(lambda user: user.role == "client")

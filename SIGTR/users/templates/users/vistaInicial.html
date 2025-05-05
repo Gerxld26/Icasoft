@@ -61,11 +61,14 @@
                     <div class="datosDesktop">
                         <div class="datoHW">
                             <div class="IconHW"><i class="fa-solid fa-temperature-arrow-down temperaturaCPU"></i></div>
-                            <div class="valorHW">CPU: 60°C</div>
+                            <div class="valorHW" id="useCPU"></div>
                         </div>
                         <div class="datoHW">
                             <div class="IconHW"><i class="fa-regular fa-file temperaturaRAM"></i></div>
-                            <div class="valorHW" id="archTemp"></div>
+                            <div>
+                                <div class="valorHW" id="archTemp"></div>
+                                <div class="valorHW" id="archUso" style="font-size: small; color: rgb(255 255 255 / 45%);"></div>
+                            </div>
                         </div>
                     </div>
                     <div class="recomendaciones">
@@ -113,23 +116,23 @@
                             <h1>ICASOFT IA</h1>
                         </div>
                         <div class="body-chat" id="body-chat">
-                            <div class="iaResponse">
-                                <p class="message_chat">Hola</p>
-                            </div>
-                            <div class="userRequest">
-                                <p class="message_chat_user">Hi</p>
-                            </div>
+                            
                         </div>
                         <div class="footer-chat" id="footer-chat">
-                            <div class="textIACont"><input id="textIAID" type="text"
-                                    placeholder="Envía un mensaje a ICASOFT IA"></div>
-                            <div class="contentChatBtn"><button class="btnChat"><i
-                                        class="fa-solid fa-paper-plane enviarMessage"></i></button></div>
+                            <div class="contentFooter">
+                                <div class="textIACont">
+                                    <input id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA">
+                                </div>
+                                <div class="contentChatBtn">
+                                    <button class="btnChat" id="audioSend">
+                                        <i class="fa-solid fa-microphone microfono"></i>
+                                    </button>
+                                    <button class="btnChat" id="sendChat" style="display: none;">
+                                        <i class="fa-solid fa-paper-plane enviarMessage"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="vozIA" id="vozIA">
-                        <label for="" class="textoVoz">AYÚDAME</label>
-                        <i class="fa-solid fa-microphone microfono"></i>
                     </div>
                 </div>
                 <div class="analisis">
@@ -217,16 +220,19 @@
         </div>
     </div>
     {% include "dashboard/client/modalInicio.html" %}
-    <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!--para la ubicación en tiempo real-->
-    <script src="{% static 'dashboard/js/clientes/mapa.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/recomendaciones.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/centroAprendizaje.js' %}"></script>
     <script>
         function login(){
             window.location.href = "{% url 'users:login' %}"; 
         }
     </script>
+    <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
+    <script src="{% static 'dashboard/js/clientes/mapa.js' %}"></script>
+    <script src="{% static 'dashboard/js/clientes/inicio.js' %}"></script>
+    <script src="{% static 'dashboard/js/clientes/recomendaciones.js' %}"></script>
+    <script src="{% static 'dashboard/js/clientes/centroAprendizaje.js' %}"></script>
+    <script
+    src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=marker&callback=initMap"
+    async defer></script> 
 
 </body>
 

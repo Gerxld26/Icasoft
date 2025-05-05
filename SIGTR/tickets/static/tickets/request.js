@@ -411,7 +411,10 @@ document.getElementById("assistance-form").addEventListener("submit", function (
     document.querySelector('button[type="submit"]').disabled = true;
 
     let formData = new FormData(this);
-
+    console.log('Datos enviados:');
+    for (let pair of formData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+    }
     // Validación de ubicación
     if (!document.getElementById("id_latitude").value || !document.getElementById("id_longitude").value) {
         Swal.fire("Error", "Debe seleccionar una ubicación en el mapa.", "error");

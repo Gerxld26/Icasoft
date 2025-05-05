@@ -57,20 +57,19 @@ async function mapaAsistencia() {
     const { Map } = await google.maps.importLibrary("maps");
     const { Marker } = await google.maps.importLibrary("marker");
     mapaAsist = new Map(document.getElementById("mapAsistencia"), {
-        center: defaultLocation,
+        center: ubicacionInicial,
         zoom: 20,
         mapId: "ASIST_MAP_ID",
     });
     markerAsist = new Marker({
         map: mapaAsist,
-        position: defaultLocation,
+        position: ubicacionInicial,
         draggable: true,
     });
 
     markerAsist.addListener('dragend', function () {
         marcadorMovido = true;
         const pos = markerAsist.getPosition();
-        console.log("Marcador movido a:", pos.lat(), pos.lng());
         obtenerDireccion(pos.lat(), pos.lng());
     });
 
@@ -134,15 +133,14 @@ function inputUbi() {
 }
 
 function obtenerDireccion(lat, lng) {
-    console.log("Obteniendo dirección para:", lat, lng);
     const geocoder = new google.maps.Geocoder();
     const latlng = new google.maps.LatLng(lat, lng);
-
+    document.getElementById('id_latitude').value = lat;
+    document.getElementById('id_longitude').value = lng;
     geocoder.geocode({ location: latlng }, function (results, status) {
         if (status === 'OK') {
             if (results[0]) {
-                console.log("Dirección:", results[0].formatted_address);
-                document.getElementById('inputDireccion').value = results[0].formatted_address;
+                document.getElementById('direccion').value = results[0].formatted_address;
             } else {
                 console.error('No se encontraron resultados');
             }

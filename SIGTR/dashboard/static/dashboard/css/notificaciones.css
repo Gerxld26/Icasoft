@@ -11,16 +11,30 @@
     max-width: 470px;
 }
 
-.notification {
+.notification.success {
     background: linear-gradient(90deg, #024b09 0%, rgb(0, 51, 0) 30%, #232631 80%);
     padding: 1em;
     border-radius: 10px;
     color: #898c97;
     width: 100%;
-    animation: fadeOut 400ms ease-out 3s;
     border-bottom: #024b09 5px solid;
 }
-
+.notification.advertencia {
+    background: linear-gradient(90deg, #d79c04 0%, rgb(104, 71, 0) 30%, #321600 80%);
+    padding: 1em;
+    border-radius: 10px;
+    color: #898c97;
+    width: 100%;
+    border-bottom: #d79c04 5px solid;
+}
+.notification.danger {
+    background: linear-gradient(90deg, #9f0202 0%, rgb(58, 0, 0) 30%, #0b0000 80%);
+    padding: 1em;
+    border-radius: 10px;
+    color: #898c97;
+    width: 100%;
+    border-bottom: #9f0202 5px solid;
+}
 .notification,
 .notification>div {
     display: flex;
@@ -46,3 +60,4 @@
     font-size: 20px;
     font-family: "Segoe UI";
 }
+
