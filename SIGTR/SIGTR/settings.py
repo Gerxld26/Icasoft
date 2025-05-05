@@ -52,8 +52,6 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'error',
 }
-# Leer la clave desde el entorno
-OPENAI_API_KEY = config("OPENAI_API_KEY", default=None)
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -82,7 +80,7 @@ LOGGING = {
         'level': 'DEBUG',
     },
 }
-ALLOWED_HOSTS = ['192.168.1.69', 'localhost', '127.0.0.1', '*']
+ALLOWED_HOSTS = []
 
 
 # Application definition

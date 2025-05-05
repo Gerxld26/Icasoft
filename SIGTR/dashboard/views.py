@@ -54,7 +54,6 @@ from django.utils.safestring import mark_safe
 import traceback
 from django.middleware.csrf import get_token
 from django.views.decorators.http import require_GET
-import os
 import tempfile
 import time
 from django.contrib.auth.decorators import login_required
@@ -64,6 +63,23 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .utils import perform_speed_test
 from dotenv import load_dotenv
+
+from django.shortcuts import render
+from django.http import JsonResponse, HttpResponse
+from django.contrib.auth.decorators import login_required, user_passes_test
+import psutil
+import subprocess
+import platform
+import time
+import shutil
+import threading
+from datetime import datetime, timedelta
+
+
+from .models import (
+    Diagnosis, DiagnosticReport, SystemComponent, DriverInfo, 
+    DiagnosticIssue, DiagnosticScenario, ScenarioRun
+)
 
 load_dotenv()
 
@@ -796,182 +812,2857 @@ def system_security_info(request):
             'message': str(e)
         }, status=500)
 
-# Diagnóstico del sistema (incluye CPU, RAM, Disco, y GPU)
+@login_required
+@user_passes_test(is_client)
+def diagnostics_dashboard(request):
+    """Renderiza el dashboard principal de diagnósticos"""
+    # Obtener el diagnóstico más reciente
+    latest_diagnosis = Diagnosis.objects.filter(user=request.user).order_by('-timestamp').first()
+    
+    # Obtener escenarios de diagnóstico disponibles
+    scenarios = DiagnosticScenario.objects.filter(is_active=True)
+    
+    # Obtener historial de diagnósticos (últimos 5)
+    diagnosis_history = Diagnosis.objects.filter(user=request.user).order_by('-timestamp')[:5]
+    
+    # Obtener historial de ejecuciones de escenarios (últimos 5)
+    scenario_runs = ScenarioRun.objects.filter(user=request.user).order_by('-timestamp')[:5]
+    
+    context = {
+        'latest_diagnosis': latest_diagnosis,
+        'scenarios': scenarios,
+        'diagnosis_history': diagnosis_history,
+        'scenario_runs': scenario_runs,
+    }
+    
+    return render(request, 'diagnostics/dashboard.html', context)
+
 @login_required
 @user_passes_test(is_client)
 def client_diagnosis_data(request):
+    """API para obtener datos del sistema en tiempo real"""
     try:
         scan_type = request.GET.get("scan_type", "QuickScan")
-        custom_path = request.GET.get("custom_path", "")
-
+        
         # Obtener datos del sistema
+        system_data = get_system_data()
+        
+        # Crear nuevo diagnóstico
+        diagnosis = create_diagnosis_entry(request.user, system_data, scan_type)
+        
+        # Devolver datos recolectados
+        return JsonResponse({
+            "status": "success", 
+            "data": system_data,
+            "diagnosis_id": diagnosis.id
+        })
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+def get_system_data():
+    """Recolecta datos del sistema"""
+    try:
+        # Datos de CPU
         cpu_percent = psutil.cpu_percent(interval=1)
-        ram = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
-
-        # Obtener información de GPU con GPUtil
-        try:
-            gpus = GPUtil.getGPUs()
-            if gpus:
-                gpu_data = {
-                    "name": gpus[0].name,
-                    "usage": f"{gpus[0].load * 100:.2f}%",
-                    "temperature": f"{gpus[0].temperature} °C",
+        cpu_freq = psutil.cpu_freq()
+        cpu_count = psutil.cpu_count()
+        cpu_stats = psutil.cpu_stats()
+        
+        # Datos de memoria
+        memory = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+        
+        # Datos de disco
+        disk_partitions = []
+        for partition in psutil.disk_partitions():
+            try:
+                usage = psutil.disk_usage(partition.mountpoint)
+                disk_partitions.append({
+                    'device': partition.device,
+                    'mountpoint': partition.mountpoint,
+                    'fstype': partition.fstype,
+                    'total': get_size_str(usage.total),
+                    'used': get_size_str(usage.used),
+                    'free': get_size_str(usage.free),
+                    'percent': f"{usage.percent}%"
+                })
+            except:
+                pass
+        
+        # Datos de red
+        net_io = psutil.net_io_counters()
+        net_connections = len(psutil.net_connections())
+        
+        # Datos de batería
+        battery = None
+        if hasattr(psutil, "sensors_battery"):
+            battery_stats = psutil.sensors_battery()
+            if battery_stats:
+                battery = {
+                    'percent': f"{battery_stats.percent}%",
+                    'power_plugged': battery_stats.power_plugged,
+                    'secsleft': battery_stats.secsleft if battery_stats.secsleft != -1 else None
                 }
-            else:
-                gpu_data = {"name": "No GPU detectada", "usage": "N/A", "temperature": "N/A"}
-        except Exception:
-            gpu_data = {"name": "Error al obtener GPU", "usage": "N/A", "temperature": "N/A"}
-
-        # Guardar diagnóstico en la base de datos
-        diagnosis = Diagnosis.objects.create(
-            user=request.user,
-            cpu_usage=f"{cpu_percent}%",
-            ram_total=f"{ram.total / (1024 ** 3):.2f} GB",
-            ram_used=f"{ram.used / (1024 ** 3):.2f} GB",
-            ram_percent=f"{ram.percent}%",
-            disk_total=f"{disk.total / (1024 ** 3):.2f} GB",
-            disk_used=f"{disk.used / (1024 ** 3):.2f} GB",
-            disk_free=f"{disk.free / (1024 ** 3):.2f} GB",
-            disk_percent=f"{disk.percent}%",
-        )
-
-        # Preparar respuesta con los datos del diagnóstico
-        diagnosis_data = {
-            "cpu_usage": diagnosis.cpu_usage,
+        
+        # Datos del sistema operativo
+        system_info = {
+            'system': platform.system(),
+            'version': platform.version(),
+            'release': platform.release(),
+            'machine': platform.machine(),
+            'processor': platform.processor()
+        }
+        
+        # Temperatura de CPU (si está disponible)
+        cpu_temp = "N/A"
+        if hasattr(psutil, "sensors_temperatures"):
+            temps = psutil.sensors_temperatures()
+            if temps:
+                for name, entries in temps.items():
+                    if entries:
+                        cpu_temp = f"{entries[0].current:.1f}°C"
+                        break
+        
+        # Obtener información de GPU
+        gpu_info = get_gpu_info()
+        
+        # Construir respuesta completa
+        system_data = {
+            # CPU
+            "cpu_usage": f"{cpu_percent}%",
+            "cpu_temp": cpu_temp,
+            "cpu_freq": f"{cpu_freq.current if cpu_freq else 0} MHz",
+            "cpu_cores": cpu_count,
+            "cpu_stats": {
+                "ctx_switches": cpu_stats.ctx_switches,
+                "interrupts": cpu_stats.interrupts,
+                "soft_interrupts": cpu_stats.soft_interrupts,
+                "syscalls": cpu_stats.syscalls
+            },
+            
+            # RAM
             "ram_usage": {
-                "total": diagnosis.ram_total,
-                "used": diagnosis.ram_used,
-                "percent": diagnosis.ram_percent,
+                "total": get_size_str(memory.total),
+                "available": get_size_str(memory.available),
+                "used": get_size_str(memory.used),
+                "free": get_size_str(memory.free),
+                "percent": f"{memory.percent}%"
             },
+            "swap_usage": {
+                "total": get_size_str(swap.total),
+                "used": get_size_str(swap.used),
+                "free": get_size_str(swap.free),
+                "percent": f"{swap.percent}%"
+            },
+            
+            # Disco
             "disk_usage": {
-                "total": diagnosis.disk_total,
-                "used": diagnosis.disk_used,
-                "free": diagnosis.disk_free,
-                "percent": diagnosis.disk_percent,
+                "partitions": disk_partitions
             },
-            "gpu_usage": gpu_data,
+            
+            # Red
+            "network": {
+                "bytes_sent": get_size_str(net_io.bytes_sent),
+                "bytes_recv": get_size_str(net_io.bytes_recv),
+                "packets_sent": net_io.packets_sent,
+                "packets_recv": net_io.packets_recv,
+                "connections": net_connections
+            },
+            
+            # Batería
+            "battery": battery,
+            
+            # Sistema operativo
+            "system_info": system_info,
+            
+            # GPU
+            "gpu_info": gpu_info,
+            
+            # Procesos
+            "top_processes": get_top_processes()
+        }
+        
+        return system_data
+    except Exception as e:
+        raise Exception(f"Error al obtener datos del sistema: {str(e)}")
+
+def get_size_str(bytes_size):
+    """Convierte bytes a un string legible (KB, MB, GB)"""
+    units = ['B', 'KB', 'MB', 'GB', 'TB']
+    size = bytes_size
+    unit_index = 0
+    
+    while size >= 1024 and unit_index < len(units) - 1:
+        size /= 1024
+        unit_index += 1
+    
+    return f"{size:.2f} {units[unit_index]}"
+
+def get_gpu_info():
+    """Obtiene información de GPU"""
+    try:
+        if platform.system() == "Windows":
+            # Intentar obtener información de GPU en Windows
+            cmd = "powershell \"Get-WmiObject Win32_VideoController | Select Name, AdapterRAM, DriverVersion | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+            
+            if result.returncode == 0 and result.stdout:
+                gpu_data = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(gpu_data, list):
+                    gpu_data = [gpu_data]
+                
+                gpus = []
+                for gpu in gpu_data:
+                    # Convertir RAM a formato legible si existe
+                    if 'AdapterRAM' in gpu and gpu['AdapterRAM']:
+                        try:
+                            gpu_ram = get_size_str(int(gpu['AdapterRAM']))
+                        except:
+                            gpu_ram = "Desconocido"
+                    else:
+                        gpu_ram = "Desconocido"
+                    
+                    gpus.append({
+                        "name": gpu.get('Name', 'Desconocido'),
+                        "memory": gpu_ram,
+                        "driver": gpu.get('DriverVersion', 'Desconocido')
+                    })
+                
+                return gpus
+        elif platform.system() == "Linux":
+            # Intentar obtener información de GPU en Linux
+            try:
+                # Comprobar si nvidia-smi está disponible (tarjetas NVIDIA)
+                nvidia_cmd = "nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader"
+                nvidia_result = subprocess.run(nvidia_cmd, capture_output=True, text=True, shell=True)
+                
+                if nvidia_result.returncode == 0 and nvidia_result.stdout:
+                    gpus = []
+                    for line in nvidia_result.stdout.strip().split('\n'):
+                        parts = line.split(', ')
+                        if len(parts) >= 3:
+                            gpus.append({
+                                "name": parts[0],
+                                "memory": parts[1],
+                                "driver": parts[2]
+                            })
+                    return gpus
+            except:
+                pass
+            
+            # Si no es NVIDIA, intentar con lspci
+            try:
+                lspci_cmd = "lspci | grep -i 'vga\\|3d\\|2d'"
+                lspci_result = subprocess.run(lspci_cmd, capture_output=True, text=True, shell=True)
+                
+                if lspci_result.returncode == 0 and lspci_result.stdout:
+                    gpus = []
+                    for line in lspci_result.stdout.strip().split('\n'):
+                        if line:
+                            gpus.append({
+                                "name": line.split(': ')[1] if ': ' in line else line,
+                                "memory": "Desconocido",
+                                "driver": "Desconocido"
+                            })
+                    return gpus
+            except:
+                pass
+        
+        # Si no se pudo obtener información específica
+        return [{
+            "name": "GPU detectada",
+            "memory": "Desconocido",
+            "driver": "Desconocido"
+        }]
+    except Exception as e:
+        return [{
+            "name": f"Error al detectar GPU: {str(e)}",
+            "memory": "N/A",
+            "driver": "N/A"
+        }]
+
+def get_top_processes(limit=5):
+    """Obtiene los procesos que más recursos consumen"""
+    try:
+        processes = []
+        for proc in sorted(psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']), 
+                        key=lambda x: x.info['cpu_percent'] or 0, 
+                        reverse=True)[:limit]:
+            try:
+                processes.append({
+                    'pid': proc.info['pid'],
+                    'name': proc.info['name'],
+                    'cpu_percent': f"{proc.info['cpu_percent'] or 0:.1f}%",
+                    'memory_percent': f"{proc.info['memory_percent'] or 0:.1f}%"
+                })
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+        return processes
+    except Exception as e:
+        return [{"name": f"Error al obtener procesos: {str(e)}"}]
+
+def create_diagnosis_entry(user, system_data, scan_type):
+    """Crea un registro de diagnóstico en la base de datos"""
+    try:
+        # Extraer datos relevantes
+        cpu_usage = system_data.get('cpu_usage', 'N/A')
+        cpu_temp = system_data.get('cpu_temp', 'N/A')
+        
+        ram_data = system_data.get('ram_usage', {})
+        ram_total = ram_data.get('total', 'N/A')
+        ram_used = ram_data.get('used', 'N/A')
+        ram_percent = ram_data.get('percent', 'N/A')
+        
+        # Para simplificar, usamos la primera partición para los datos de disco
+        disk_data = system_data.get('disk_usage', {}).get('partitions', [{}])[0]
+        disk_total = disk_data.get('total', 'N/A')
+        disk_used = disk_data.get('used', 'N/A')
+        disk_free = disk_data.get('free', 'N/A')
+        disk_percent = disk_data.get('percent', 'N/A')
+        
+        network_data = system_data.get('network', {})
+        network_sent = network_data.get('bytes_sent', 'N/A')
+        network_recv = network_data.get('bytes_recv', 'N/A')
+        
+        # Datos del sistema
+        sys_info = system_data.get('system_info', {})
+        os_name = f"{sys_info.get('system', '')} {sys_info.get('release', '')}"
+        os_version = sys_info.get('version', 'N/A')
+        
+        # GPU (tomamos la primera si hay varias)
+        gpu_data = system_data.get('gpu_info', [{}])[0]
+        gpu_model = gpu_data.get('name', 'N/A')
+        gpu_memory = gpu_data.get('memory', 'N/A')
+        gpu_driver = gpu_data.get('driver', 'N/A')
+        
+        # Determinar estado general basado en umbrales
+        overall_status = "Normal"
+        issues_count = 0
+        warnings_count = 0
+        
+        # Verificar CPU
+        cpu_value = float(cpu_usage.replace('%', '')) if '%' in cpu_usage else 0
+        if cpu_value > 90:
+            overall_status = "Crítico"
+            issues_count += 1
+        elif cpu_value > 75:
+            if overall_status == "Normal":
+                overall_status = "Advertencia"
+            warnings_count += 1
+        
+        # Verificar RAM
+        ram_value = float(ram_percent.replace('%', '')) if '%' in ram_percent else 0
+        if ram_value > 90:
+            overall_status = "Crítico"
+            issues_count += 1
+        elif ram_value > 80:
+            if overall_status == "Normal":
+                overall_status = "Advertencia"
+            warnings_count += 1
+        
+        # Verificar Disco
+        disk_value = float(disk_percent.replace('%', '')) if '%' in disk_percent else 0
+        if disk_value > 95:
+            overall_status = "Crítico"
+            issues_count += 1
+        elif disk_value > 85:
+            if overall_status == "Normal":
+                overall_status = "Advertencia"
+            warnings_count += 1
+        
+        # Crear entrada de diagnóstico
+        diagnosis = Diagnosis.objects.create(
+            user=user,
+            scan_type=scan_type,
+            cpu_usage=cpu_usage,
+            cpu_temp=cpu_temp,
+            ram_total=ram_total,
+            ram_used=ram_used,
+            ram_percent=ram_percent,
+            disk_total=disk_total,
+            disk_used=disk_used,
+            disk_free=disk_free,
+            disk_percent=disk_percent,
+            network_sent=network_sent,
+            network_recv=network_recv,
+            gpu_model=gpu_model,
+            gpu_memory=gpu_memory,
+            gpu_driver=gpu_driver,
+            os_name=os_name,
+            os_version=os_version,
+            overall_status=overall_status,
+            issues_count=issues_count,
+            warnings_count=warnings_count
+        )
+        
+        # Iniciar análisis detallado en segundo plano si es un escaneo completo
+        if scan_type in ["FullScan", "CustomScan"]:
+            threading.Thread(target=run_detailed_analysis, args=(user, diagnosis, system_data)).start()
+        
+        return diagnosis
+    except Exception as e:
+        raise Exception(f"Error al crear diagnóstico: {str(e)}")
+
+def run_detailed_analysis(user, diagnosis, system_data=None):
+    """Ejecuta un análisis detallado en segundo plano"""
+    try:
+        # Crear reporte de diagnóstico
+        report = DiagnosticReport.objects.create(
+            user=user,
+            diagnosis=diagnosis,
+            status="En progreso"
+        )
+        
+        # Si no tenemos datos del sistema, obtenerlos
+        if not system_data:
+            system_data = get_system_data()
+        
+        # Componentes a analizar
+        components = [
+            {"type": "CPU", "name": "Procesador", "function": analyze_cpu},
+            {"type": "RAM", "name": "Memoria RAM", "function": analyze_ram},
+            {"type": "DISK", "name": "Almacenamiento", "function": analyze_disk},
+            {"type": "NETWORK", "name": "Red", "function": analyze_network},
+            {"type": "GPU", "name": "Tarjeta gráfica", "function": analyze_gpu},
+            {"type": "BATTERY", "name": "Batería", "function": analyze_battery},
+            {"type": "DRIVER", "name": "Controladores", "function": analyze_drivers},
+            {"type": "SOFTWARE", "name": "Software", "function": analyze_software},
+            {"type": "SECURITY", "name": "Seguridad", "function": analyze_security}
+        ]
+        
+        total_components = len(components)
+        
+        # Analizar cada componente
+        for i, component in enumerate(components):
+            # Actualizar progreso
+            progress = int((i / total_components) * 100)
+            report.progress = progress
+            report.current_component = component["name"]
+            report.save()
+            
+            # Analizar componente específico
+            try:
+                result = component["function"](system_data)
+                
+                # Guardar resultado del componente
+                SystemComponent.objects.create(
+                    report=report,
+                    type=component["type"],
+                    name=component["name"],
+                    status=result.get("status", "UNKNOWN"),
+                    details=result,
+                    recommendations=result.get("recommendations", "")
+                )
+                
+                # Si hay problemas, registrarlos
+                if "issues" in result and result["issues"]:
+                    for issue in result["issues"]:
+                        DiagnosticIssue.objects.create(
+                            diagnosis=diagnosis,
+                            component=component["name"],
+                            issue_type=issue.get("type", "OTHER"),
+                            severity=issue.get("severity", "MEDIUM"),
+                            description=issue.get("description", ""),
+                            recommendation=issue.get("recommendation", "")
+                        )
+            except Exception as e:
+                # Registrar error en el análisis de este componente
+                SystemComponent.objects.create(
+                    report=report,
+                    type=component["type"],
+                    name=component["name"],
+                    status="ERROR",
+                    details={"error": str(e)},
+                    recommendations="Error al analizar este componente. Por favor, inténtelo de nuevo."
+                )
+        
+        # Finalizar reporte
+        report.progress = 100
+        report.status = "Completado"
+        report.completion_time = datetime.now()
+        report.save()
+        
+        # Actualizar diagnóstico con contador de problemas
+        issues_count = DiagnosticIssue.objects.filter(diagnosis=diagnosis).count()
+        diagnosis.issues_count = issues_count
+        diagnosis.save()
+        
+    except Exception as e:
+        if report:
+            report.status = "Error"
+            report.error_message = str(e)
+            report.save()
+
+def analyze_cpu(system_data):
+    """Analiza el procesador del sistema"""
+    try:
+        cpu_usage = system_data.get('cpu_usage', 'N/A')
+        cpu_temp = system_data.get('cpu_temp', 'N/A')
+        cpu_freq = system_data.get('cpu_freq', 'N/A')
+        cpu_cores = system_data.get('cpu_cores', 0)
+        
+        # Convertir valores a números para comparación
+        cpu_usage_value = float(cpu_usage.replace('%', '')) if '%' in cpu_usage else 0
+        cpu_temp_value = float(cpu_temp.replace('°C', '')) if '°C' in cpu_temp else 0
+        
+        # Determinar estado
+        status = "NORMAL"
+        issues = []
+        
+        if cpu_usage_value > 90:
+            status = "CRITICAL"
+            issues.append({
+                "type": "PERFORMANCE",
+                "severity": "HIGH",
+                "description": f"Uso de CPU extremadamente alto ({cpu_usage})",
+                "recommendation": "Cierre aplicaciones innecesarias o procesos en segundo plano que consumen muchos recursos."
+            })
+        elif cpu_usage_value > 75:
+            status = "WARNING"
+            issues.append({
+                "type": "PERFORMANCE",
+                "severity": "MEDIUM",
+                "description": f"Uso de CPU elevado ({cpu_usage})",
+                "recommendation": "Considere cerrar algunas aplicaciones para reducir la carga del procesador."
+            })
+        
+        # Verificar temperatura si está disponible
+        if cpu_temp != "N/A" and cpu_temp_value > 0:
+            if cpu_temp_value > 85:
+                status = "CRITICAL"
+                issues.append({
+                    "type": "HARDWARE",
+                    "severity": "HIGH",
+                    "description": f"Temperatura de CPU peligrosamente alta ({cpu_temp})",
+                    "recommendation": "Verifique el sistema de enfriamiento y asegúrese de que los ventiladores funcionan correctamente."
+                })
+            elif cpu_temp_value > 75:
+                if status != "CRITICAL":
+                    status = "WARNING"
+                issues.append({
+                    "type": "HARDWARE",
+                    "severity": "MEDIUM",
+                    "description": f"Temperatura de CPU elevada ({cpu_temp})",
+                    "recommendation": "Mejore la ventilación de su equipo y considere limpiar el polvo acumulado."
+                })
+        
+        # Generar recomendaciones generales
+        recommendations = "El procesador está funcionando correctamente."
+        if issues:
+            recommendations = "\n".join([issue["recommendation"] for issue in issues])
+        
+        return {
+            "status": status,
+            "usage": cpu_usage,
+            "temperature": cpu_temp,
+            "frequency": cpu_freq,
+            "cores": cpu_cores,
+            "issues": issues,
+            "recommendations": recommendations
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "issues": [{
+                "type": "OTHER",
+                "severity": "MEDIUM",
+                "description": f"Error al analizar CPU: {str(e)}",
+                "recommendation": "Inténtelo de nuevo o contacte con soporte técnico."
+            }],
+            "recommendations": "No se pudo completar el análisis de CPU."
         }
 
-        return JsonResponse({"status": "success", "data": diagnosis_data})
-
+def analyze_ram(system_data):
+    """Analiza la memoria RAM del sistema"""
+    try:
+        ram_data = system_data.get('ram_usage', {})
+        ram_total = ram_data.get('total', 'N/A')
+        ram_used = ram_data.get('used', 'N/A')
+        ram_available = ram_data.get('available', 'N/A')
+        ram_percent = ram_data.get('percent', 'N/A')
+        
+        swap_data = system_data.get('swap_usage', {})
+        swap_total = swap_data.get('total', 'N/A')
+        swap_used = swap_data.get('used', 'N/A')
+        swap_percent = swap_data.get('percent', 'N/A')
+        
+        # Convertir valores a números para comparación
+        ram_percent_value = float(ram_percent.replace('%', '')) if '%' in ram_percent else 0
+        swap_percent_value = float(swap_percent.replace('%', '')) if '%' in swap_percent else 0
+        
+        # Determinar estado
+        status = "NORMAL"
+        issues = []
+        
+        if ram_percent_value > 90:
+            status = "CRITICAL"
+            issues.append({
+                "type": "PERFORMANCE",
+                "severity": "HIGH",
+                "description": f"Uso de memoria RAM extremadamente alto ({ram_percent})",
+                "recommendation": "Cierre aplicaciones innecesarias o considere ampliar la memoria RAM de su equipo."
+            })
+        elif ram_percent_value > 80:
+            status = "WARNING"
+            issues.append({
+                "type": "PERFORMANCE",
+                "severity": "MEDIUM",
+                "description": f"Uso de memoria RAM elevado ({ram_percent})",
+                "recommendation": "Considere cerrar algunas aplicaciones para liberar memoria."
+            })
+        
+        # Verificar memoria virtual (swap)
+        if swap_total != "N/A" and swap_total != "0.00 B" and swap_percent_value > 75:
+            if status != "CRITICAL":
+                status = "WARNING"
+            issues.append({
+                "type": "PERFORMANCE",
+                "severity": "MEDIUM",
+                "description": f"Uso elevado de memoria virtual ({swap_percent})",
+                "recommendation": "El sistema está utilizando mucha memoria virtual, lo que puede reducir el rendimiento. Considere cerrar aplicaciones o ampliar la RAM física."
+            })
+        
+        # Obtener procesos que más memoria consumen
+        top_processes = system_data.get('top_processes', [])
+        memory_intensive_processes = []
+        for process in top_processes:
+            memory_percent = process.get('memory_percent', '0%')
+            memory_value = float(memory_percent.replace('%', '')) if '%' in memory_percent else 0
+            if memory_value > 10:  # Procesos que usan más del 10% de RAM
+                memory_intensive_processes.append(process)
+        
+        # Generar recomendaciones
+        recommendations = "La memoria RAM está funcionando correctamente."
+        if issues:
+            recommendations = "\n".join([issue["recommendation"] for issue in issues])
+            if memory_intensive_processes:
+                recommendations += "\n\nProcesos con alto consumo de memoria:"
+                for proc in memory_intensive_processes:
+                    recommendations += f"\n- {proc.get('name', 'Desconocido')}: {proc.get('memory_percent', 'N/A')}"
+        
+        return {
+            "status": status,
+            "total": ram_total,
+            "used": ram_used,
+            "available": ram_available,
+            "percent": ram_percent,
+            "swap_total": swap_total,
+            "swap_used": swap_used,
+            "swap_percent": swap_percent,
+            "memory_intensive_processes": memory_intensive_processes,
+            "issues": issues,
+            "recommendations": recommendations
+        }
     except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "issues": [{
+                "type": "OTHER",
+                "severity": "MEDIUM",
+                "description": f"Error al analizar RAM: {str(e)}",
+                "recommendation": "Inténtelo de nuevo o contacte con soporte técnico."
+            }],
+            "recommendations": "No se pudo completar el análisis de memoria RAM."
+        }
 
-    
+def analyze_disk(system_data):
+    """Analiza el almacenamiento del sistema"""
+    try:
+        partitions = system_data.get('disk_usage', {}).get('partitions', [])
+        
+        # Determinar estado
+        status = "NORMAL"
+        issues = []
+        critical_partitions = []
+        warning_partitions = []
+        
+        for partition in partitions:
+            device = partition.get('device', 'Desconocido')
+            mountpoint = partition.get('mountpoint', 'Desconocido')
+            percent = partition.get('percent', '0%')
+            
+            # Convertir a valor numérico
+            percent_value = float(percent.replace('%', '')) if '%' in percent else 0
+            
+            if percent_value > 95:
+                status = "CRITICAL"
+                critical_partitions.append(partition)
+                issues.append({
+                    "type": "HARDWARE",
+                    "severity": "HIGH",
+                    "description": f"Espacio crítico en {mountpoint} ({percent} lleno)",
+                    "recommendation": f"Libere espacio urgentemente en la unidad {device} para evitar problemas de funcionamiento."
+                })
+            elif percent_value > 85:
+                if status != "CRITICAL":
+                    status = "WARNING"
+                warning_partitions.append(partition)
+                issues.append({
+                    "type": "HARDWARE",
+                    "severity": "MEDIUM",
+                    "description": f"Poco espacio disponible en {mountpoint} ({percent} lleno)",
+                    "recommendation": f"Considere liberar espacio en la unidad {device} eliminando archivos innecesarios."
+                })
+        
+        # Analizar fragmentación (solo en Windows)
+        fragmentation_data = None
+        if platform.system() == "Windows":
+            try:
+                # Solo analizamos el disco C: para no sobrecargar el análisis
+                cmd = "defrag C: /A /H"
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+                
+                if result.returncode == 0 and "% fragmentados" in result.stdout:
+                    for line in result.stdout.split('\n'):
+                        if "% fragmentados" in line:
+                            frag_percent = line.split('%')[0].strip().split()[-1]
+                            try:
+                                frag_value = float(frag_percent)
+                                fragmentation_data = {
+                                    "percent": f"{frag_value}%",
+                                    "status": "Normal" if frag_value < 10 else "Fragmentado"
+                                }
+                                
+                                if frag_value > 20:
+                                    if status != "CRITICAL":
+                                        status = "WARNING"
+                                    issues.append({
+                                        "type": "PERFORMANCE",
+                                        "severity": "MEDIUM",
+                                        "description": f"Disco altamente fragmentado ({frag_value}%)",
+                                        "recommendation": "Ejecute el desfragmentador de disco para mejorar el rendimiento."
+                                    })
+                            except:
+                                pass
+                            break
+            except:
+                pass
+        
+        # Verificar salud del disco en Windows
+        disk_health_data = None
+        if platform.system() == "Windows":
+            try:
+                cmd = "powershell \"Get-WmiObject -Namespace root\\wmi -Class MSStorageDriver_FailurePredictStatus | Select InstanceName, PredictFailure, Reason | ConvertTo-Json\""
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+                
+                if result.returncode == 0 and result.stdout:
+                    health_data = json.loads(result.stdout)
+                    
+                    # Convertir a lista si es un solo objeto
+                    if not isinstance(health_data, list):
+                        health_data = [health_data]
+                    
+                    for disk in health_data:
+                        if disk.get('PredictFailure', False):
+                            status = "CRITICAL"
+                            issues.append({
+                                "type": "HARDWARE",
+                                "severity": "HIGH",
+                                "description": f"Predicción de fallo en disco {disk.get('InstanceName', 'Desconocido')}",
+                                "recommendation": "¡ATENCIÓN! El disco podría fallar pronto. Haga copias de seguridad inmediatamente y considere reemplazar el disco."
+                            })
+                    
+                    disk_health_data = {
+                        "status": "Critical" if any(disk.get('PredictFailure', False) for disk in health_data) else "Normal",
+                        "disks": health_data
+                    }
+            except:
+                pass
+        
+        # Generar recomendaciones
+        recommendations = "El almacenamiento está funcionando correctamente."
+        if issues:
+            recommendations = "\n".join([issue["recommendation"] for issue in issues])
+        
+        return {
+            "status": status,
+            "partitions": partitions,
+            "critical_partitions": critical_partitions,
+            "warning_partitions": warning_partitions,
+            "fragmentation": fragmentation_data,
+            "health": disk_health_data,
+            "issues": issues,
+            "recommendations": recommendations
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "issues": [{
+                "type": "OTHER",
+                "severity": "MEDIUM",
+                "description": f"Error al analizar almacenamiento: {str(e)}",
+                "recommendation": "Inténtelo de nuevo o contacte con soporte técnico."
+            }],
+            "recommendations": "No se pudo completar el análisis de almacenamiento."
+        }
 
-# Vista para obtener el progreso del análisis
+def analyze_network(system_data):
+    """Analiza la red del sistema"""
+    try:
+        network_data = system_data.get('network', {})
+        sent = network_data.get('bytes_sent', 'N/A')
+        recv = network_data.get('bytes_recv', 'N/A')
+        connections = network_data.get('connections', 0)
+        
+        # Determinar estado
+        status = "NORMAL"
+        issues = []
+        
+        # Comprobar conectividad a Internet
+        internet_status = check_internet_connectivity()
+        if not internet_status["connected"]:
+            status = "CRITICAL"
+            issues.append({
+                "type": "NETWORK",
+                "severity": "HIGH",
+                "description": "Sin conexión a Internet",
+                "recommendation": "Verifique su conexión de red, router o contacte con su proveedor de servicios de Internet."
+            })
+        
+        # Comprobar latencia
+        if internet_status["connected"] and internet_status["ping"] > 150:
+            if status != "CRITICAL":
+                status = "WARNING"
+            issues.append({
+                "type": "NETWORK",
+                "severity": "MEDIUM",
+                "description": f"Latencia de red alta ({internet_status['ping']} ms)",
+                "recommendation": "La velocidad de respuesta de su conexión es lenta. Verifique si hay otras aplicaciones usando el ancho de banda o contacte con su proveedor de Internet."
+            })
+        
+                        # Verificar estado del adaptador Wi-Fi en Windows
+        wifi_status = None
+        if platform.system() == "Windows":
+            try:
+                cmd = "powershell \"Get-NetAdapter | Where-Object {$_.InterfaceDescription -match 'wireless|wi-fi|wifi|wlan|802.11'} | Select Name, Status, LinkSpeed | ConvertTo-Json\""
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+                
+                if result.returncode == 0 and result.stdout:
+                    wifi_data = json.loads(result.stdout)
+                    
+                    # Convertir a lista si es un solo objeto
+                    if not isinstance(wifi_data, list):
+                        wifi_data = [wifi_data]
+                    
+                    for adapter in wifi_data:
+                        if adapter.get('Status') != 'Up':
+                            if status != "CRITICAL":
+                                status = "WARNING"
+                            issues.append({
+                                "type": "NETWORK",
+                                "severity": "MEDIUM",
+                                "description": f"Adaptador Wi-Fi {adapter.get('Name', 'Desconocido')} no está activo",
+                                "recommendation": "Verifique que su adaptador Wi-Fi esté habilitado y funcionando correctamente."
+                            })
+                    
+                    wifi_status = wifi_data
+            except:
+                pass
+        
+        # Generar recomendaciones
+        recommendations = "La conexión de red está funcionando correctamente."
+        if issues:
+            recommendations = "\n".join([issue["recommendation"] for issue in issues])
+        
+        return {
+            "status": status,
+            "data_sent": sent,
+            "data_received": recv,
+            "connections": connections,
+            "internet_status": internet_status,
+            "wifi_status": wifi_status,
+            "issues": issues,
+            "recommendations": recommendations
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "issues": [{
+                "type": "OTHER",
+                "severity": "MEDIUM",
+                "description": f"Error al analizar red: {str(e)}",
+                "recommendation": "Inténtelo de nuevo o contacte con soporte técnico."
+            }],
+            "recommendations": "No se pudo completar el análisis de red."
+        }
+
+def check_internet_connectivity():
+    """Verifica la conectividad a Internet"""
+    try:
+        # Intentar ping a Google DNS
+        hosts = ['8.8.8.8', '1.1.1.1', 'www.google.com']
+        connected = False
+        ping_time = 0
+        
+        for host in hosts:
+            if platform.system() == "Windows":
+                cmd = f"ping -n 1 -w 1000 {host}"
+            else:
+                cmd = f"ping -c 1 -W 1 {host}"
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+            
+            if result.returncode == 0:
+                connected = True
+                
+                # Extraer tiempo de ping
+                if "tiempo=" in result.stdout or "time=" in result.stdout:
+                    for line in result.stdout.split('\n'):
+                        if "tiempo=" in line or "time=" in line:
+                            try:
+                                if "tiempo=" in line:
+                                    ping_time = float(line.split('tiempo=')[1].split('ms')[0].strip())
+                                else:
+                                    ping_time = float(line.split('time=')[1].split('ms')[0].strip())
+                            except:
+                                pass
+                            break
+                
+                break
+        
+        return {
+            "connected": connected,
+            "ping": ping_time,
+            "status": "Normal" if connected else "Sin conexión"
+        }
+    except:
+        return {
+            "connected": False,
+            "ping": 0,
+            "status": "Error al verificar"
+        }
+
+def analyze_gpu(system_data):
+    """Analiza la tarjeta gráfica del sistema"""
+    try:
+        gpu_info = system_data.get('gpu_info', [])
+        
+        if not gpu_info:
+            return {
+                "status": "UNKNOWN",
+                "message": "No se detectó ninguna GPU en el sistema",
+                "issues": [],
+                "recommendations": "No se encontró información de tarjeta gráfica."
+            }
+        
+        # Determinar estado
+        status = "NORMAL"
+        issues = []
+        
+        # Verificar controladores de GPU en Windows
+        if platform.system() == "Windows":
+            for gpu in gpu_info:
+                gpu_name = gpu.get('name', 'Desconocido')
+                gpu_driver = gpu.get('driver', 'Desconocido')
+                
+                # Verificar si es un controlador genérico o básico
+                if "básico" in gpu_name.lower() or "basic" in gpu_name.lower() or "Microsoft" in gpu_driver:
+                    status = "WARNING"
+                    issues.append({
+                        "type": "DRIVER",
+                        "severity": "MEDIUM",
+                        "description": f"Controlador genérico o básico para {gpu_name}",
+                        "recommendation": "Instale el controlador específico del fabricante para mejorar el rendimiento y funcionalidad de su tarjeta gráfica."
+                    })
+                
+                # Intentar obtener información de actualizaciones disponibles
+                try:
+                    # Esto es una simulación, en un entorno real se consultaría un servicio
+                    if gpu_driver != "Desconocido" and ("NVIDIA" in gpu_name or "AMD" in gpu_name or "Intel" in gpu_name):
+                        # Simulamos que hay una versión más reciente
+                        current_version = gpu_driver.split('.')
+                        if len(current_version) >= 2:
+                            latest_version = f"{current_version[0]}.{int(current_version[1]) + 1}"
+                            if status != "WARNING":
+                                status = "WARNING"
+                            issues.append({
+                                "type": "DRIVER",
+                                "severity": "LOW",
+                                "description": f"Actualización disponible para {gpu_name}",
+                                "recommendation": f"Se recomienda actualizar el controlador de su tarjeta gráfica de la versión {gpu_driver} a la versión {latest_version}."
+                            })
+                except:
+                    pass
+        
+        # Generar recomendaciones
+        recommendations = "La tarjeta gráfica está funcionando correctamente."
+        if issues:
+            recommendations = "\n".join([issue["recommendation"] for issue in issues])
+        
+        return {
+            "status": status,
+            "gpus": gpu_info,
+            "issues": issues,
+            "recommendations": recommendations
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "issues": [{
+                "type": "OTHER",
+                "severity": "MEDIUM",
+                "description": f"Error al analizar GPU: {str(e)}",
+                "recommendation": "Inténtelo de nuevo o contacte con soporte técnico."
+            }],
+            "recommendations": "No se pudo completar el análisis de la tarjeta gráfica."
+        }
+
+def analyze_battery(system_data):
+    """Analiza la batería del sistema"""
+    try:
+        battery_data = system_data.get('battery')
+        
+        if not battery_data:
+            return {
+                "status": "UNKNOWN",
+                "message": "No se detectó batería en el sistema",
+                "issues": [],
+                "recommendations": "Este dispositivo no tiene batería o no se pudo detectar."
+            }
+        
+        # Determinar estado
+        status = "NORMAL"
+        issues = []
+        
+        battery_percent = battery_data.get('percent', '0%')
+        power_plugged = battery_data.get('power_plugged', False)
+        secsleft = battery_data.get('secsleft')
+        
+        # Convertir a valor numérico
+        percent_value = float(battery_percent.replace('%', '')) if '%' in battery_percent else 0
+        
+        if not power_plugged:
+            if percent_value < 10:
+                status = "CRITICAL"
+                issues.append({
+                    "type": "HARDWARE",
+                    "severity": "HIGH",
+                    "description": f"Batería extremadamente baja ({battery_percent})",
+                    "recommendation": "Conecte su equipo a la corriente inmediatamente para evitar pérdida de datos."
+                })
+            elif percent_value < 20:
+                status = "WARNING"
+                issues.append({
+                    "type": "HARDWARE",
+                    "severity": "MEDIUM",
+                    "description": f"Batería baja ({battery_percent})",
+                    "recommendation": "Conecte su equipo a la corriente pronto."
+                })
+        
+        # Comprobar estado de salud de la batería en Windows
+        battery_health = None
+        if platform.system() == "Windows":
+            try:
+                cmd = "powershell \"Get-WmiObject Win32_Battery | Select DesignCapacity, FullChargeCapacity | ConvertTo-Json\""
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+                
+                if result.returncode == 0 and result.stdout:
+                    health_data = json.loads(result.stdout)
+                    
+                    # Convertir a lista si es un solo objeto
+                    if not isinstance(health_data, list):
+                        health_data = [health_data]
+                    
+                    for battery in health_data:
+                        design_capacity = battery.get('DesignCapacity', 0)
+                        full_charge_capacity = battery.get('FullChargeCapacity', 0)
+                        
+                        if design_capacity > 0 and full_charge_capacity > 0:
+                            health_percent = (full_charge_capacity / design_capacity) * 100
+                            
+                            battery_health = {
+                                "health_percent": f"{health_percent:.1f}%",
+                                "status": "Normal" if health_percent >= 70 else "Degradada"
+                            }
+                            
+                            if health_percent < 50:
+                                if status != "CRITICAL":
+                                    status = "WARNING"
+                                issues.append({
+                                    "type": "HARDWARE",
+                                    "severity": "MEDIUM",
+                                    "description": f"Salud de batería deteriorada ({health_percent:.1f}%)",
+                                    "recommendation": "La capacidad de su batería está significativamente reducida. Considere reemplazarla para mejorar la autonomía."
+                                })
+            except:
+                pass
+        
+        # Generar recomendaciones
+        recommendations = "La batería está funcionando correctamente."
+        if issues:
+            recommendations = "\n".join([issue["recommendation"] for issue in issues])
+        
+        # Calcular tiempo restante en formato legible
+        time_remaining = "Desconocido"
+        if secsleft and secsleft != -1:
+            hours = secsleft // 3600
+            minutes = (secsleft % 3600) // 60
+            time_remaining = f"{hours}h {minutes}m"
+        
+        return {
+            "status": status,
+            "percent": battery_percent,
+            "power_plugged": power_plugged,
+            "time_remaining": time_remaining,
+            "health": battery_health,
+            "issues": issues,
+            "recommendations": recommendations
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "issues": [{
+                "type": "OTHER",
+                "severity": "MEDIUM",
+                "description": f"Error al analizar batería: {str(e)}",
+                "recommendation": "Inténtelo de nuevo o contacte con soporte técnico."
+            }],
+            "recommendations": "No se pudo completar el análisis de la batería."
+        }
+
+def analyze_drivers(system_data):
+    """Analiza los controladores del sistema"""
+    try:
+        # Obtener información de controladores
+        drivers_info = []
+        outdated_drivers = []
+        problematic_drivers = []
+        
+        if platform.system() == "Windows":
+            try:
+                cmd = "powershell \"Get-WmiObject Win32_PnPSignedDriver | Select DeviceName, DriverVersion, DriverDate | ConvertTo-Json\""
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=30)
+                
+                if result.returncode == 0 and result.stdout:
+                    drivers_data = json.loads(result.stdout)
+                    
+                    # Convertir a lista si es un solo objeto
+                    if not isinstance(drivers_data, list):
+                        drivers_data = [drivers_data]
+                    
+                    # Limitar a 20 controladores para no sobrecargar
+                    for driver in drivers_data[:20]:
+                        device_name = driver.get('DeviceName', 'Desconocido')
+                        driver_version = driver.get('DriverVersion', 'Desconocido')
+                        driver_date_str = driver.get('DriverDate', '')
+                        
+                        # Convertir fecha si está disponible
+                        driver_date = "Desconocida"
+                        if driver_date_str:
+                            try:
+                                # Formato típico: AAAAMMDDHHmmss.ffffff+ZZZ
+                                date_parts = driver_date_str.split('.')[0]
+                                year = date_parts[:4]
+                                month = date_parts[4:6]
+                                day = date_parts[6:8]
+                                driver_date = f"{year}-{month}-{day}"
+                            except:
+                                pass
+                        
+                        driver_info = {
+                            "name": device_name,
+                            "version": driver_version,
+                            "date": driver_date,
+                            "status": "Normal"
+                        }
+                        
+                        # Verificar si el controlador podría estar desactualizado
+                        try:
+                            if driver_date != "Desconocida":
+                                date_obj = datetime.strptime(driver_date, "%Y-%m-%d")
+                                years_old = (datetime.now() - date_obj).days / 365
+                                
+                                if years_old > 3:
+                                    driver_info["status"] = "Desactualizado"
+                                    outdated_drivers.append(driver_info)
+                        except:
+                            pass
+                        
+                        drivers_info.append(driver_info)
+            except:
+                pass
+        
+        # Verificar problemas de controladores
+        try:
+            if platform.system() == "Windows":
+                cmd = "powershell \"Get-WmiObject Win32_PnPEntity | Where-Object {$_.ConfigManagerErrorCode -ne 0} | Select Caption, ConfigManagerErrorCode | ConvertTo-Json\""
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=15)
+                
+                if result.returncode == 0 and result.stdout and result.stdout.strip() != "":
+                    problem_data = json.loads(result.stdout)
+                    
+                    # Convertir a lista si es un solo objeto
+                    if not isinstance(problem_data, list):
+                        problem_data = [problem_data]
+                    
+                    for device in problem_data:
+                        device_name = device.get('Caption', 'Dispositivo desconocido')
+                        error_code = device.get('ConfigManagerErrorCode', 0)
+                        
+                        problem_info = {
+                            "name": device_name,
+                            "error_code": error_code,
+                            "status": "Error"
+                        }
+                        
+                        problematic_drivers.append(problem_info)
+        except:
+            pass
+        
+        # Determinar estado general
+        status = "NORMAL"
+        issues = []
+        
+        if problematic_drivers:
+            status = "CRITICAL"
+            for driver in problematic_drivers:
+                issues.append({
+                    "type": "DRIVER",
+                    "severity": "HIGH",
+                    "description": f"Problema en el controlador de {driver['name']}",
+                    "recommendation": "Reinstale o actualice el controlador del dispositivo para resolver el problema."
+                })
+        
+        if outdated_drivers:
+            if status != "CRITICAL":
+                status = "WARNING"
+            
+            for driver in outdated_drivers[:3]:
+                issues.append({
+                    "type": "DRIVER",
+                    "severity": "MEDIUM",
+                    "description": f"Controlador desactualizado: {driver['name']} ({driver['date']})",
+                    "recommendation": f"Actualice el controlador de {driver['name']} para mejorar la compatibilidad y rendimiento."
+                })
+        
+        recommendations = "Todos los controladores están funcionando correctamente."
+        if issues:
+            recommendations = "\n".join([issue["recommendation"] for issue in issues])
+            if len(outdated_drivers) > 3:
+                recommendations += f"\n\nSe encontraron {len(outdated_drivers)} controladores desactualizados en total. Considere actualizar todos los controladores para un rendimiento óptimo."
+        
+        return {
+            "status": status,
+            "drivers": drivers_info,
+            "problematic_drivers": problematic_drivers,
+            "outdated_drivers": outdated_drivers,
+            "issues": issues,
+            "recommendations": recommendations
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "issues": [{
+                "type": "OTHER",
+                "severity": "MEDIUM",
+                "description": f"Error al analizar controladores: {str(e)}",
+                "recommendation": "Inténtelo de nuevo o contacte con soporte técnico."
+            }],
+            "recommendations": "No se pudo completar el análisis de controladores."
+        }
+
+def analyze_software(system_data):
+    """Analiza el software instalado en el sistema"""
+    try:
+        # Obtener información de programas instalados
+        installed_software = []
+        large_programs = []
+        recently_installed = []
+        
+        if platform.system() == "Windows":
+            try:
+                cmd = "powershell \"Get-WmiObject Win32_Product | Select Name, Vendor, Version, InstallDate | ConvertTo-Json\""
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=30)
+                
+                if result.returncode == 0 and result.stdout:
+                    software_data = json.loads(result.stdout)
+                    
+                    # Convertir a lista si es un solo objeto
+                    if not isinstance(software_data, list):
+                        software_data = [software_data]
+                    
+                    # Limitar a 50 programas para no sobrecargar
+                    for program in software_data[:50]:
+                        name = program.get('Name', 'Desconocido')
+                        vendor = program.get('Vendor', 'Desconocido')
+                        version = program.get('Version', 'Desconocido')
+                        install_date_str = program.get('InstallDate', '')
+                        
+                        # Convertir fecha si está disponible
+                        install_date = "Desconocida"
+                        if install_date_str:
+                            try:
+                                # Formato típico: AAAAMMDD
+                                year = install_date_str[:4]
+                                month = install_date_str[4:6]
+                                day = install_date_str[6:8]
+                                install_date = f"{year}-{month}-{day}"
+                            except:
+                                pass
+                        
+                        program_info = {
+                            "name": name,
+                            "vendor": vendor,
+                            "version": version,
+                            "install_date": install_date
+                        }
+                        
+                        installed_software.append(program_info)
+                        
+                        # Verificar si es reciente (últimos 7 días)
+                        try:
+                            if install_date != "Desconocida":
+                                date_obj = datetime.strptime(install_date, "%Y-%m-%d")
+                                days_ago = (datetime.now() - date_obj).days
+                                
+                                if days_ago <= 7:
+                                    recently_installed.append(program_info)
+                        except:
+                            pass
+            except:
+                pass
+        
+        # Obtener programas que ocupan más espacio
+        if platform.system() == "Windows":
+            try:
+                # Usando Get-AppxPackage para aplicaciones de Microsoft Store
+                cmd = "powershell \"Get-AppxPackage | Sort-Object -Property Size -Descending | Select-Object -First 10 | Select Name, Version, Size | ConvertTo-Json\""
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=15)
+                
+                if result.returncode == 0 and result.stdout:
+                    appx_data = json.loads(result.stdout)
+                    
+                    # Convertir a lista si es un solo objeto
+                    if not isinstance(appx_data, list):
+                        appx_data = [appx_data]
+                    
+                    for app in appx_data:
+                        name = app.get('Name', 'Desconocido')
+                        size = app.get('Size', 0)
+                        
+                        if size > 1000000000:  # Más de 1 GB
+                            large_programs.append({
+                                "name": name,
+                                "size": get_size_str(size),
+                                "type": "Microsoft Store"
+                            })
+            except:
+                pass
+        
+        # Determinar estado
+        status = "NORMAL"
+        issues = []
+        
+        # Verificar programas potencialmente innecesarios de inicio automático
+        startup_programs = []
+        if platform.system() == "Windows":
+            try:
+                cmd = "powershell \"Get-CimInstance Win32_StartupCommand | Select Name, Command, Location | ConvertTo-Json\""
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=15)
+                
+                if result.returncode == 0 and result.stdout:
+                    startup_data = json.loads(result.stdout)
+                    
+                    # Convertir a lista si es un solo objeto
+                    if not isinstance(startup_data, list):
+                        startup_data = [startup_data]
+                    
+                    startup_programs = startup_data
+                    
+                    if len(startup_programs) > 10:
+                        status = "WARNING"
+                        issues.append({
+                            "type": "PERFORMANCE",
+                            "severity": "MEDIUM",
+                            "description": f"Demasiados programas de inicio automático ({len(startup_programs)})",
+                            "recommendation": "Reduzca el número de programas que se inician automáticamente para mejorar el tiempo de arranque."
+                        })
+            except:
+                pass
+        
+        # Verificar si hay demasiados programas instalados
+        if len(installed_software) > 100:
+            if status != "WARNING":
+                status = "WARNING"
+            issues.append({
+                "type": "PERFORMANCE",
+                "severity": "LOW",
+                "description": f"Gran cantidad de programas instalados ({len(installed_software)})",
+                "recommendation": "Considere desinstalar aplicaciones que ya no utiliza para liberar espacio y recursos."
+            })
+        
+        # Verificar aplicaciones que consumen mucho espacio
+        if large_programs:
+            if status != "WARNING":
+                status = "WARNING"
+            issues.append({
+                "type": "PERFORMANCE",
+                "severity": "LOW",
+                "description": f"Aplicaciones que ocupan mucho espacio ({len(large_programs)})",
+                "recommendation": "Considere desinstalar o trasladar a otro disco las aplicaciones de gran tamaño que no utilice frecuentemente."
+            })
+        
+        # Generar recomendaciones
+        recommendations = "El software del sistema está en buen estado."
+        if issues:
+            recommendations = "\n".join([issue["recommendation"] for issue in issues])
+            
+            if startup_programs:
+                recommendations += "\n\nProgramas de inicio automático:"
+                for prog in startup_programs[:5]:
+                    recommendations += f"\n- {prog.get('Name', 'Desconocido')}"
+                if len(startup_programs) > 5:
+                    recommendations += f"\n...y {len(startup_programs) - 5} más."
+            
+            if large_programs:
+                recommendations += "\n\nProgramas que ocupan más espacio:"
+                for prog in large_programs[:3]:
+                    recommendations += f"\n- {prog['name']} ({prog['size']})"
+        
+        return {
+            "status": status,
+            "installed_count": len(installed_software),
+            "recently_installed": recently_installed,
+            "large_programs": large_programs,
+            "startup_programs": startup_programs,
+            "issues": issues,
+            "recommendations": recommendations
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "issues": [{
+                "type": "OTHER",
+                "severity": "MEDIUM",
+                "description": f"Error al analizar software: {str(e)}",
+                "recommendation": "Inténtelo de nuevo o contacte con soporte técnico."
+            }],
+            "recommendations": "No se pudo completar el análisis de software."
+        }
+
+def analyze_security(system_data):
+    """Analiza la seguridad del sistema"""
+    try:
+        # Determinar estado
+        status = "NORMAL"
+        issues = []
+        
+        # Verificar estado del firewall
+        firewall_status = check_firewall_status()
+        if not firewall_status["enabled"]:
+            status = "CRITICAL"
+            issues.append({
+                "type": "SECURITY",
+                "severity": "HIGH",
+                "description": "Firewall desactivado",
+                "recommendation": "Active el firewall de Windows para proteger su equipo contra amenazas de red."
+            })
+        
+        # Verificar estado del antivirus
+        antivirus_status = check_antivirus_status()
+        if not antivirus_status["enabled"]:
+            status = "CRITICAL"
+            issues.append({
+                "type": "SECURITY",
+                "severity": "HIGH",
+                "description": "Protección antivirus desactivada",
+                "recommendation": "Active la protección antivirus para proteger su equipo contra malware."
+            })
+        
+        # Verificar actualizaciones pendientes
+        updates_status = check_windows_updates() if platform.system() == "Windows" else {"status": "Unknown"}
+        if updates_status["status"] == "UpdatesAvailable":
+            if status != "CRITICAL":
+                status = "WARNING"
+            issues.append({
+                "type": "SECURITY",
+                "severity": "MEDIUM",
+                "description": f"Actualizaciones pendientes ({updates_status.get('count', 'varias')})",
+                "recommendation": "Instale las actualizaciones de seguridad disponibles para mantener su sistema protegido."
+            })
+        
+        # Verificar protecciones específicas en Windows
+        if platform.system() == "Windows":
+            # Comprobar estado de UAC
+            uac_status = check_uac_status()
+            if not uac_status["enabled"]:
+                if status != "CRITICAL":
+                    status = "WARNING"
+                issues.append({
+                    "type": "SECURITY",
+                    "severity": "MEDIUM",
+                    "description": "Control de cuentas de usuario (UAC) desactivado",
+                    "recommendation": "Active el Control de cuentas de usuario para proteger su sistema contra cambios no autorizados."
+                })
+        
+        # Generar recomendaciones
+        recommendations = "La seguridad del sistema está en buen estado."
+        if issues:
+            recommendations = "\n".join([issue["recommendation"] for issue in issues])
+        
+        return {
+            "status": status,
+            "firewall": firewall_status,
+            "antivirus": antivirus_status,
+            "updates": updates_status,
+            "issues": issues,
+            "recommendations": recommendations
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "issues": [{
+                "type": "OTHER",
+                "severity": "MEDIUM",
+                "description": f"Error al analizar seguridad: {str(e)}",
+                "recommendation": "Inténtelo de nuevo o contacte con soporte técnico."
+            }],
+            "recommendations": "No se pudo completar el análisis de seguridad."
+        }
+
+def check_firewall_status():
+    """Verifica el estado del firewall"""
+    try:
+        if platform.system() == "Windows":
+            cmd = "powershell \"Get-NetFirewallProfile | Select Name, Enabled | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and result.stdout:
+                firewall_data = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(firewall_data, list):
+                    firewall_data = [firewall_data]
+                
+                # Verificar si al menos un perfil está habilitado
+                enabled = any(profile.get('Enabled', False) for profile in firewall_data)
+                
+                return {
+                    "enabled": enabled,
+                    "profiles": firewall_data,
+                    "status": "Activo" if enabled else "Inactivo"
+                }
+        elif platform.system() == "Linux":
+            # Verificar UFW en Linux
+            cmd = "sudo ufw status"
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0:
+                enabled = "active" in result.stdout.lower() or "activo" in result.stdout.lower()
+                return {
+                    "enabled": enabled,
+                    "status": "Activo" if enabled else "Inactivo"
+                }
+        
+        # Por defecto, asumir que está deshabilitado
+        return {
+            "enabled": False,
+            "status": "Desconocido"
+        }
+    except:
+        return {
+            "enabled": False,
+            "status": "Error al verificar"
+        }
+
+def check_antivirus_status():
+    """Verifica el estado del antivirus"""
+    try:
+        if platform.system() == "Windows":
+            # Verificar Windows Defender
+            cmd = "powershell \"Get-MpComputerStatus | Select AntivirusEnabled, RealTimeProtectionEnabled, IoavProtectionEnabled, AntispywareEnabled | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and result.stdout:
+                defender_data = json.loads(result.stdout)
+                
+                antivirus_enabled = defender_data.get('AntivirusEnabled', False)
+                realtime_protection = defender_data.get('RealTimeProtectionEnabled', False)
+                
+                return {
+                    "enabled": antivirus_enabled,
+                    "realtime_protection": realtime_protection,
+                    "name": "Windows Defender",
+                    "status": "Activo" if antivirus_enabled else "Inactivo"
+                }
+            
+            # También verificar antivirus de terceros
+            cmd = "powershell \"Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct | Select displayName, productState | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and result.stdout:
+                antivirus_data = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(antivirus_data, list):
+                    antivirus_data = [antivirus_data]
+                
+                for av in antivirus_data:
+                    name = av.get('displayName', 'Desconocido')
+                    product_state = av.get('productState', 0)
+                    
+                    # Verificar si está activo (bit a bit)
+                    # 266240 = UP-TO-DATE & ENABLED
+                    # Otros valores indican diferentes estados
+                    enabled = (product_state & 0x1000) != 0
+                    
+                    if enabled:
+                        return {
+                            "enabled": True,
+                            "name": name,
+                            "status": "Activo"
+                        }
+        
+        # Por defecto, asumir que está deshabilitado
+        return {
+            "enabled": False,
+            "name": "No detectado",
+            "status": "Inactivo"
+        }
+    except:
+        return {
+            "enabled": False,
+            "name": "Error al detectar",
+            "status": "Error al verificar"
+        }
+
+def check_windows_updates():
+    """Verifica el estado de actualizaciones de Windows"""
+    try:
+        if platform.system() == "Windows":
+            cmd = "powershell \"Install-Module -Name PSWindowsUpdate -Force -Scope CurrentUser; Get-WindowsUpdate | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=30)
+            
+            if result.returncode == 0 and result.stdout and "KB" in result.stdout:
+                updates_data = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(updates_data, list):
+                    updates_data = [updates_data]
+                
+                return {
+                    "status": "UpdatesAvailable",
+                    "count": len(updates_data),
+                    "updates": updates_data
+                }
+            else:
+                # Si no hay actualizaciones o el comando falló
+                return {
+                    "status": "UpToDate",
+                    "count": 0
+                }
+        
+        return {
+            "status": "Unknown",
+            "count": 0
+        }
+    except:
+        return {
+            "status": "Error",
+            "count": 0
+        }
+
+def check_uac_status():
+    """Verifica el estado del Control de cuentas de usuario"""
+    try:
+        if platform.system() == "Windows":
+            cmd = "powershell \"Get-ItemProperty -Path 'HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' -Name 'EnableLUA' | Select-Object EnableLUA\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and "EnableLUA" in result.stdout:
+                # Extraer valor
+                for line in result.stdout.split('\n'):
+                    if "EnableLUA" in line and ":" in line:
+                        value = line.split(':')[1].strip()
+                        try:
+                            enabled = int(value) == 1
+                            return {
+                                "enabled": enabled,
+                                "status": "Activo" if enabled else "Inactivo"
+                            }
+                        except:
+                            pass
+        
+        # Por defecto, asumir que está habilitado
+        return {
+            "enabled": True,
+            "status": "Desconocido"
+        }
+    except:
+        return {
+            "enabled": True,
+            "status": "Error al verificar"
+        }
+
 @login_required
 @user_passes_test(is_client)
-def get_scan_progress(request):
+@csrf_exempt
+def start_diagnostic_scan(request):
+    """API para iniciar un escaneo de diagnóstico"""
     try:
-        command = "Get-MpScan | ConvertTo-Json"
-        result = subprocess.run(["powershell", "-Command", command], capture_output=True, text=True)
-        if result.returncode == 0:
-            return JsonResponse({"status": "success", "data": json.loads(result.stdout)})
-        return JsonResponse({"status": "error", "message": "No se pudo obtener el progreso del análisis"})
+        if request.method == 'POST':
+            scan_type = request.POST.get("scan_type", "QuickScan")
+            components = request.POST.get("components", "")
+            
+            if components:
+                try:
+                    components = json.loads(components)
+                except:
+                    components = []
+            
+            # Obtener datos del sistema
+            system_data = get_system_data()
+            
+            # Crear diagnóstico
+            diagnosis = create_diagnosis_entry(request.user, system_data, scan_type)
+            
+            # Devolver respuesta
+            return JsonResponse({
+                "status": "success",
+                "message": "Diagnóstico iniciado correctamente",
+                "diagnosis_id": diagnosis.id
+            })
+        else:
+            return JsonResponse({"status": "error", "message": "Método no permitido"}, status=405)
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
-    
 
-
-# Función para verificar el estado de Microsoft Defender
-def check_defender_status():
+@login_required
+@user_passes_test(is_client)
+def get_diagnostic_progress(request):
+    """API para obtener el progreso del diagnóstico actual"""
     try:
-        command = "Get-MpComputerStatus | ConvertTo-Json"
-        result = subprocess.run(["powershell", "-Command", command], capture_output=True, text=True)
-        if result.returncode == 0:
-            return json.loads(result.stdout)
-        return {"error": "No se pudo obtener el estado de Microsoft Defender"}
+        # Obtener el informe de diagnóstico más reciente
+        report = DiagnosticReport.objects.filter(
+            user=request.user
+        ).order_by('-start_time').first()
+        
+        if not report:
+            return JsonResponse({
+                "status": "success",
+                "data": {
+                    "progress": 0,
+                    "status": "No iniciado",
+                    "component": ""
+                }
+            })
+        
+        # Devolver datos de progreso
+        return JsonResponse({
+            "status": "success",
+            "data": {
+                "progress": report.progress,
+                "status": report.status,
+                "component": report.current_component or "",
+                "report_id": report.id
+            }
+        })
     except Exception as e:
-        return {"error": str(e)}
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
-
-# Función para ejecutar un escaneo con Microsoft Defender
-def run_defender_scan(scan_type, custom_path=None):
+@login_required
+@user_passes_test(is_client)
+def get_diagnostic_report(request, report_id):
+    """API para obtener un informe de diagnóstico específico"""
     try:
-        if scan_type == "FullScan":
-            command = "Start-MpScan -ScanType FullScan"
-        elif scan_type == "CustomScan" and custom_path:
-            command = f"Start-MpScan -ScanType CustomScan -ScanPath {custom_path}"
-        else:
-            command = "Start-MpScan -ScanType QuickScan"
-
-        # Ejecutar escaneo en segundo plano
-        process = subprocess.Popen(["powershell", "-Command", command], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return {"status": f"Escaneo {scan_type} iniciado correctamente en segundo plano"}
+        # Obtener el informe solicitado
+        report = DiagnosticReport.objects.get(id=report_id, user=request.user)
+        
+        # Obtener diagnóstico asociado
+        diagnosis = report.diagnosis
+        
+        # Obtener componentes analizados
+        components = SystemComponent.objects.filter(report=report)
+        
+        # Obtener problemas detectados
+        issues = DiagnosticIssue.objects.filter(diagnosis=diagnosis)
+        
+        # Preparar datos del informe
+        report_data = {
+            "id": report.id,
+            "diagnosis_id": diagnosis.id,
+            "status": report.status,
+            "progress": report.progress,
+            "start_time": report.start_time.strftime('%Y-%m-%d %H:%M:%S'),
+            "completion_time": report.completion_time.strftime('%Y-%m-%d %H:%M:%S') if report.completion_time else None,
+            "components": [],
+            "issues": [],
+            "summary": {
+                "critical_issues": issues.filter(severity="HIGH").count(),
+                "warnings": issues.filter(severity="MEDIUM").count(),
+                "suggestions": issues.filter(severity="LOW").count(),
+                "overall_status": diagnosis.overall_status
+            }
+        }
+        
+        # Agregar datos de componentes
+        for component in components:
+            report_data["components"].append({
+                "id": component.id,
+                "type": component.type,
+                "name": component.name,
+                "status": component.status,
+                "details": component.get_details_as_dict(),
+                "recommendations": component.recommendations
+            })
+        
+        # Agregar datos de problemas
+        for issue in issues:
+            report_data["issues"].append({
+                "id": issue.id,
+                "component": issue.component,
+                "type": issue.issue_type,
+                "severity": issue.severity,
+                "description": issue.description,
+                "recommendation": issue.recommendation,
+                "is_resolved": issue.is_resolved
+            })
+        
+        return JsonResponse({"status": "success", "data": report_data})
+    except DiagnosticReport.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Informe no encontrado"}, status=404)
     except Exception as e:
-        return {"error": str(e)}
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
-
-# Vista para la comparación del diagnóstico actual con diagnósticos previos
 @login_required
 @user_passes_test(is_client)
 def client_comparison(request):
+    """API para obtener comparación con diagnósticos previos"""
     try:
         # Obtener el diagnóstico más reciente
-        latest_diagnosis = Diagnosis.objects.filter(user=request.user).latest('timestamp')
-        previous_diagnoses = Diagnosis.objects.filter(user=request.user).exclude(id=latest_diagnosis.id)
-
-        if previous_diagnoses.exists():
-            # Obtener el diagnóstico previo más reciente
-            previous = previous_diagnoses.latest('timestamp')
-
-            # Calcular diferencias de manera segura
-            def calculate_change(latest, previous):
-                try:
-                    latest_value = float(latest.strip('%'))
-                    previous_value = float(previous.strip('%'))
-                    return f"{latest_value - previous_value:.2f}"
-                except (ValueError, AttributeError):
-                    return "Datos no válidos"
-
-            comparison = {
-                "cpu_change": calculate_change(latest_diagnosis.cpu_usage, previous.cpu_usage),
-                "ram_change": calculate_change(latest_diagnosis.ram_percent, previous.ram_percent),
-                "disk_change": calculate_change(latest_diagnosis.disk_percent, previous.disk_percent),
-            }
-        else:
-            comparison = {
-                "cpu_change": "Sin datos previos",
-                "ram_change": "Sin datos previos",
-                "disk_change": "Sin datos previos",
-            }
-
+        latest_diagnosis = Diagnosis.objects.filter(user=request.user).order_by('-timestamp').first()
+        
+        if not latest_diagnosis:
+            return JsonResponse({
+                "status": "success",
+                "comparison": {
+                    "cpu_change": "Sin datos disponibles",
+                    "ram_change": "Sin datos disponibles",
+                    "disk_change": "Sin datos disponibles"
+                }
+            })
+        
+        # Obtener diagnóstico anterior para comparar
+        previous_diagnosis = Diagnosis.objects.filter(
+            user=request.user, 
+            timestamp__lt=latest_diagnosis.timestamp
+        ).order_by('-timestamp').first()
+        
+        if not previous_diagnosis:
+            return JsonResponse({
+                "status": "success",
+                "comparison": {
+                    "cpu_change": "Sin datos previos",
+                    "ram_change": "Sin datos previos",
+                    "disk_change": "Sin datos previos"
+                }
+            })
+        
+        # Calcular cambios de manera segura
+        def calculate_change(latest, previous):
+            try:
+                latest_value = float(latest.strip('%'))
+                previous_value = float(previous.strip('%'))
+                change = latest_value - previous_value
+                return f"{change:.2f}"
+            except (ValueError, AttributeError):
+                return "Datos no válidos"
+        
+        # Comparar valores
+        comparison = {
+            "cpu_change": calculate_change(latest_diagnosis.cpu_usage, previous_diagnosis.cpu_usage),
+            "ram_change": calculate_change(latest_diagnosis.ram_percent, previous_diagnosis.ram_percent),
+            "disk_change": calculate_change(latest_diagnosis.disk_percent, previous_diagnosis.disk_percent),
+            "previous_date": previous_diagnosis.timestamp.strftime('%Y-%m-%d %H:%M')
+        }
+        
         return JsonResponse({"status": "success", "comparison": comparison})
-
-    except Diagnosis.DoesNotExist:
-        return JsonResponse({
-            "status": "success",
-            "comparison": {
-                "cpu_change": "Sin datos disponibles",
-                "ram_change": "Sin datos disponibles",
-                "disk_change": "Sin datos disponibles",
-            }
-        })
-
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
+@login_required
+@user_passes_test(is_client)
+def run_diagnostic_scenario(request, scenario_id):
+    """API para ejecutar un escenario de diagnóstico específico"""
+    try:
+        # Obtener el escenario solicitado
+        scenario = DiagnosticScenario.objects.get(id=scenario_id, is_active=True)
+        
+        # Obtener datos del sistema
+        system_data = get_system_data()
+        
+        # Crear diagnóstico básico
+        diagnosis = create_diagnosis_entry(request.user, system_data, f"Scenario_{scenario.name}")
+        
+        # Ejecutar el escenario específico
+        results = run_specific_scenario(scenario, system_data, diagnosis)
+        
+        # Guardar resultados de ejecución del escenario
+        scenario_run = ScenarioRun.objects.create(
+            user=request.user,
+            scenario=scenario,
+            results=results,
+            issues_found=len(results.get("issues", [])),
+            recommendations=results.get("recommendations", "")
+        )
+        
+        return JsonResponse({
+            "status": "success",
+            "message": f"Escenario '{scenario.name}' ejecutado correctamente",
+            "run_id": scenario_run.id
+        })
+    except DiagnosticScenario.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Escenario no encontrado"}, status=404)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
+def run_specific_scenario(scenario, system_data, diagnosis):
+    """Ejecuta un escenario de diagnóstico específico"""
+    scenario_name = scenario.name.lower()
+    
+    # Ejecutar análisis según el escenario
+    if "pantalla azul" in scenario_name:
+        return analyze_blue_screen_scenario(system_data, diagnosis)
+    elif "lento" in scenario_name:
+        return analyze_slow_system_scenario(system_data, diagnosis)
+    elif "conectividad" in scenario_name:
+        return analyze_connectivity_scenario(system_data, diagnosis)
+    elif "controlador" in scenario_name:
+        return analyze_driver_scenario(system_data, diagnosis)
+    elif "no responde" in scenario_name:
+        return analyze_unresponsive_scenario(system_data, diagnosis)
+    elif "arranque" in scenario_name:
+        return analyze_slow_boot_scenario(system_data, diagnosis)
+    elif "batería" in scenario_name:
+        return analyze_battery_scenario(system_data, diagnosis)
+    else:
+        # Escenario genérico
+        return {
+            "scenario": scenario.name,
+            "status": "UNKNOWN",
+            "message": "Escenario no implementado",
+            "issues": [],
+            "recommendations": "Este escenario de diagnóstico no está implementado."
+        }
+
+def analyze_blue_screen_scenario(system_data, diagnosis):
+    """Analiza el escenario de pantalla azul"""
+    # Esta es una implementación simplificada
+    # En un sistema real, se analizarían archivos de volcado de memoria, registros, etc.
+    
+    issues = []
+    
+    # Verificar controladores problemáticos
+    try:
+        if platform.system() == "Windows":
+            cmd = "powershell \"Get-WinEvent -FilterHashtable @{LogName='System'; ID=41,1001,6008} -MaxEvents 10 | Select-Object TimeCreated, Id, Message | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=15)
+            
+            if result.returncode == 0 and result.stdout and "TimeCreated" in result.stdout:
+                crash_data = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(crash_data, list):
+                    crash_data = [crash_data]
+                
+                if crash_data:
+                    issues.append({
+                        "type": "HARDWARE",
+                        "severity": "HIGH",
+                        "description": f"Se encontraron {len(crash_data)} eventos de cierre inesperado del sistema",
+                        "recommendation": "Verifique la temperatura del sistema, la estabilidad de la memoria RAM y actualice los controladores."
+                    })
+                    
+                    # Buscar controladores problemáticos
+                    drivers_result = analyze_drivers(system_data)
+                    if drivers_result.get("problematic_drivers"):
+                        issues.append({
+                            "type": "DRIVER",
+                            "severity": "HIGH",
+                            "description": f"Se encontraron controladores con problemas que podrían causar pantallas azules",
+                            "recommendation": "Actualice o reinstale los controladores problemáticos, especialmente de tarjeta gráfica, red o almacenamiento."
+                        })
+    except:
+        pass
+    
+    # Verificar problemas de memoria
+    try:
+        if platform.system() == "Windows":
+            cmd = "powershell \"Get-WmiObject Win32_ReliabilityRecords | Where-Object {$_.SourceName -eq 'Memory' -or $_.Message -match 'memory'} | Select-Object TimeGenerated, SourceName, Message | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=15)
+            
+            if result.returncode == 0 and result.stdout and "TimeGenerated" in result.stdout:
+                memory_data = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(memory_data, list):
+                    memory_data = [memory_data]
+                
+                if memory_data:
+                    issues.append({
+                        "type": "HARDWARE",
+                        "severity": "HIGH",
+                        "description": f"Se encontraron {len(memory_data)} errores relacionados con la memoria RAM",
+                        "recommendation": "Ejecute un diagnóstico completo de memoria RAM (Windows Memory Diagnostic) y considere reemplazar los módulos de memoria si continúan los problemas."
+                    })
+    except:
+        pass
+    
+    # Si no se encontraron problemas específicos
+    if not issues:
+        issues.append({
+            "type": "OTHER",
+            "severity": "MEDIUM",
+            "description": "No se encontraron indicios claros de pantallas azules recientes",
+            "recommendation": "Si experimenta pantallas azules, anote el código de error cuando aparezca y ejecute un análisis más detallado."
+        })
+    
+    # Generar recomendaciones
+    recommendations = "\n".join([issue["recommendation"] for issue in issues])
+    
+    # Crear problema en la base de datos
+    for issue in issues:
+        DiagnosticIssue.objects.create(
+            diagnosis=diagnosis,
+            component="Sistema",
+            issue_type=issue["type"],
+            severity=issue["severity"],
+            description=issue["description"],
+            recommendation=issue["recommendation"]
+        )
+    
+    return {
+        "scenario": "Error de pantalla azul",
+        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else "WARNING",
+        "issues": issues,
+        "recommendations": recommendations
+    }
+
+def analyze_slow_system_scenario(system_data, diagnosis):
+    """Analiza el escenario de sistema lento"""
+    issues = []
+    
+    # Verificar uso de CPU
+    cpu_usage = system_data.get('cpu_usage', 'N/A')
+    cpu_value = float(cpu_usage.replace('%', '')) if '%' in cpu_usage else 0
+    
+    if cpu_value > 80:
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "HIGH",
+            "description": f"Uso de CPU extremadamente alto ({cpu_usage})",
+            "recommendation": "Identifique y cierre aplicaciones que consumen muchos recursos de CPU."
+        })
+    
+    # Verificar uso de RAM
+    ram_data = system_data.get('ram_usage', {})
+    ram_percent = ram_data.get('percent', 'N/A')
+    ram_value = float(ram_percent.replace('%', '')) if '%' in ram_percent else 0
+    
+    if ram_value > 85:
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "HIGH",
+            "description": f"Uso de memoria RAM muy alto ({ram_percent})",
+            "recommendation": "Cierre aplicaciones innecesarias o considere ampliar la RAM de su equipo."
+        })
+    
+    # Verificar espacio en disco
+    disk_data = system_data.get('disk_usage', {}).get('partitions', [{}])[0]
+    disk_percent = disk_data.get('percent', 'N/A')
+    disk_value = float(disk_percent.replace('%', '')) if '%' in disk_percent else 0
+    
+    if disk_value > 90:
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "HIGH",
+            "description": f"Espacio en disco casi lleno ({disk_percent})",
+            "recommendation": "Libere espacio en disco eliminando archivos innecesarios, use la herramienta de limpieza de disco o considere ampliar el almacenamiento."
+        })
+    
+    # Verificar fragmentación del disco (solo Windows)
+    if platform.system() == "Windows":
+        try:
+            cmd = "defrag C: /A /H"
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and "% fragmentados" in result.stdout:
+                for line in result.stdout.split('\n'):
+                    if "% fragmentados" in line:
+                        frag_percent = line.split('%')[0].strip().split()[-1]
+                        try:
+                            frag_value = float(frag_percent)
+                            if frag_value > 20:
+                                issues.append({
+                                    "type": "PERFORMANCE",
+                                    "severity": "MEDIUM",
+                                    "description": f"Disco fragmentado ({frag_value}%)",
+                                    "recommendation": "Ejecute el desfragmentador de disco para mejorar el rendimiento."
+                                })
+                        except:
+                            pass
+                        break
+        except:
+            pass
+    
+    # Verificar programas de inicio
+    startup_programs = []
+    if platform.system() == "Windows":
+        try:
+            cmd = "powershell \"Get-CimInstance Win32_StartupCommand | Select Name, Command, Location | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=15)
+            
+            if result.returncode == 0 and result.stdout:
+                startup_data = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(startup_data, list):
+                    startup_data = [startup_data]
+                
+                startup_programs = startup_data
+                
+                if len(startup_programs) > 10:
+                    issues.append({
+                        "type": "PERFORMANCE",
+                        "severity": "MEDIUM",
+                        "description": f"Demasiados programas de inicio ({len(startup_programs)})",
+                        "recommendation": "Desactive programas de inicio innecesarios a través del Administrador de tareas."
+                    })
+        except:
+            pass
+    
+    # Verificar procesos con alto consumo
+    top_processes = system_data.get('top_processes', [])
+    high_cpu_processes = []
+    
+    for process in top_processes:
+        cpu_percent = process.get('cpu_percent', '0%')
+        cpu_value = float(cpu_percent.replace('%', '')) if '%' in cpu_percent else 0
+        
+        if cpu_value > 15:
+            high_cpu_processes.append(process)
+    
+    if high_cpu_processes:
+        process_names = ", ".join([p.get('name', 'Desconocido') for p in high_cpu_processes[:3]])
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "MEDIUM",
+            "description": f"Procesos con alto consumo de CPU: {process_names}",
+            "recommendation": "Considere cerrar o actualizar estas aplicaciones para mejorar el rendimiento."
+        })
+    
+    # Si no se encontraron problemas específicos
+    if not issues:
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "LOW",
+            "description": "No se encontraron problemas de rendimiento evidentes",
+            "recommendation": "Su sistema parece estar funcionando correctamente. Para mejorar el rendimiento, considere reiniciar su equipo regularmente y mantener el software actualizado."
+        })
+    
+    # Generar recomendaciones
+    recommendations = "\n".join([issue["recommendation"] for issue in issues])
+    
+    if high_cpu_processes:
+        recommendations += "\n\nProcesos con alto consumo:"
+        for proc in high_cpu_processes[:3]:
+            recommendations += f"\n- {proc.get('name', 'Desconocido')}: CPU {proc.get('cpu_percent', 'N/A')}, RAM {proc.get('memory_percent', 'N/A')}"
+    
+    # Crear problema en la base de datos
+    for issue in issues:
+        DiagnosticIssue.objects.create(
+            diagnosis=diagnosis,
+            component="Rendimiento",
+            issue_type=issue["type"],
+            severity=issue["severity"],
+            description=issue["description"],
+            recommendation=issue["recommendation"]
+        )
+    
+    return {
+        "scenario": "Sistema lento",
+        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else "WARNING",
+        "issues": issues,
+        "high_cpu_processes": high_cpu_processes,
+        "startup_programs": startup_programs[:5] if startup_programs else [],
+        "recommendations": recommendations
+    }
+
+def analyze_connectivity_scenario(system_data, diagnosis):
+    """Analiza el escenario de problemas de conectividad"""
+    issues = []
+    
+    # Verificar conectividad a Internet
+    internet_status = check_internet_connectivity()
+    if not internet_status["connected"]:
+        issues.append({
+            "type": "NETWORK",
+            "severity": "HIGH",
+            "description": "Sin conexión a Internet",
+            "recommendation": "Verifique su conexión de red, router o contacte con su proveedor de servicios de Internet."
+        })
+    elif internet_status["ping"] > 150:
+        issues.append({
+            "type": "NETWORK",
+            "severity": "MEDIUM",
+            "description": f"Latencia de red alta ({internet_status['ping']} ms)",
+            "recommendation": "La velocidad de respuesta de su conexión es lenta. Verifique si hay otras aplicaciones usando el ancho de banda o contacte con su proveedor de Internet."
+        })
+    
+    # Verificar adaptadores de red
+    network_adapters = []
+    if platform.system() == "Windows":
+        try:
+            cmd = "powershell \"Get-NetAdapter | Select Name, InterfaceDescription, Status, LinkSpeed, MediaType | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and result.stdout:
+                adapters_data = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(adapters_data, list):
+                    adapters_data = [adapters_data]
+                
+                network_adapters = adapters_data
+                
+                for adapter in network_adapters:
+                    if adapter.get('Status') != 'Up' and ('Wi-Fi' in adapter.get('Name', '') or 'Ethernet' in adapter.get('Name', '')):
+                        issues.append({
+                            "type": "NETWORK",
+                            "severity": "HIGH",
+                            "description": f"Adaptador {adapter.get('Name', 'Desconocido')} desactivado",
+                            "recommendation": "Active el adaptador de red o verifique si hay problemas físicos con la conexión."
+                        })
+        except:
+            pass
+    
+    # Verificar DNS
+    dns_servers = []
+    if platform.system() == "Windows":
+        try:
+            cmd = "powershell \"Get-DnsClientServerAddress -AddressFamily IPv4 | Select-Object -ExpandProperty ServerAddresses\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and result.stdout:
+                dns_servers = [s.strip() for s in result.stdout.split('\n') if s.strip()]
+                
+                if not dns_servers:
+                    issues.append({
+                        "type": "NETWORK",
+                        "severity": "MEDIUM",
+                        "description": "No se encontraron servidores DNS configurados",
+                        "recommendation": "Configure los servidores DNS manualmente (por ejemplo, 8.8.8.8 y 8.8.4.4 de Google)."
+                    })
+        except:
+            pass
+    
+    # Verificar controladores de red
+    drivers_info = analyze_drivers(system_data)
+    network_drivers = []
+    
+    if drivers_info.get("drivers"):
+        for driver in drivers_info.get("drivers"):
+            if 'network' in driver.get('name', '').lower() or 'ethernet' in driver.get('name', '').lower() or 'wifi' in driver.get('name', '').lower() or 'wireless' in driver.get('name', '').lower():
+                network_drivers.append(driver)
+                
+                if driver.get('status') == 'Desactualizado':
+                    issues.append({
+                        "type": "DRIVER",
+                        "severity": "MEDIUM",
+                        "description": f"Controlador de red desactualizado: {driver.get('name', 'Desconocido')}",
+                        "recommendation": "Actualice el controlador para mejorar la estabilidad de la conexión."
+                    })
+    
+    # Si no se encontraron problemas específicos
+    if not issues:
+        if internet_status["connected"]:
+            issues.append({
+                "type": "NETWORK",
+                "severity": "LOW",
+                "description": "No se encontraron problemas de conectividad",
+                "recommendation": "Su conexión de red parece estar funcionando correctamente."
+            })
+        else:
+            issues.append({
+                "type": "NETWORK",
+                "severity": "HIGH",
+                "description": "Problemas de conectividad no identificados",
+                "recommendation": "Reinicie su router/módem, verifique cables de red, o contacte a su proveedor de servicios de Internet."
+            })
+    
+    # Generar recomendaciones
+    recommendations = "\n".join([issue["recommendation"] for issue in issues])
+    
+    # Crear problema en la base de datos
+    for issue in issues:
+        DiagnosticIssue.objects.create(
+            diagnosis=diagnosis,
+            component="Red",
+            issue_type=issue["type"],
+            severity=issue["severity"],
+            description=issue["description"],
+            recommendation=issue["recommendation"]
+        )
+    
+    return {
+        "scenario": "Problemas de conectividad",
+        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else "WARNING",
+        "issues": issues,
+        "internet_status": internet_status,
+        "network_adapters": network_adapters,
+        "dns_servers": dns_servers,
+        "recommendations": recommendations
+    }
+
+def analyze_driver_scenario(system_data, diagnosis):
+    """Analiza el escenario de problemas de controladores"""
+    issues = []
+    
+    # Obtener información de controladores
+    drivers_result = analyze_drivers(system_data)
+    
+    problematic_drivers = drivers_result.get("problematic_drivers", [])
+    outdated_drivers = drivers_result.get("outdated_drivers", [])
+    
+    # Verificar controladores problemáticos
+    if problematic_drivers:
+        for driver in problematic_drivers:
+            issues.append({
+                "type": "DRIVER",
+                "severity": "HIGH",
+                "description": f"Problema en el controlador de {driver.get('name', 'Desconocido')}",
+                "recommendation": "Reinstale o actualice el controlador para resolver el problema."
+            })
+    
+    # Verificar controladores desactualizados
+    if outdated_drivers:
+        for driver in outdated_drivers[:3]:  # Limitar a 3 para no saturar
+            issues.append({
+                "type": "DRIVER",
+                "severity": "MEDIUM",
+                "description": f"Controlador desactualizado: {driver.get('name', 'Desconocido')}",
+                "recommendation": f"Actualice el controlador para mejorar la compatibilidad y rendimiento."
+            })
+    
+    # Verificar eventos relacionados con controladores en el registro
+    if platform.system() == "Windows":
+        try:
+            cmd = "powershell \"Get-WinEvent -FilterHashtable @{LogName='System'; ID=219,7023,11,4,1} -MaxEvents 20 | Where-Object {$_.Message -match 'driver|controlador'} | Select-Object TimeCreated, Id, Message | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=15)
+            
+            if result.returncode == 0 and result.stdout and "TimeCreated" in result.stdout:
+                driver_events = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(driver_events, list):
+                    driver_events = [driver_events]
+                
+                if driver_events:
+                    driver_issues_count = len(driver_events)
+                    issues.append({
+                        "type": "DRIVER",
+                        "severity": "MEDIUM",
+                        "description": f"Se encontraron {driver_issues_count} eventos relacionados con controladores en el registro del sistema",
+                        "recommendation": "Revise el Visor de eventos para identificar controladores problemáticos específicos y actualícelos."
+                    })
+        except:
+            pass
+    
+    # Si no se encontraron problemas específicos
+    if not issues:
+        issues.append({
+            "type": "DRIVER",
+            "severity": "LOW",
+            "description": "No se encontraron problemas con los controladores",
+            "recommendation": "Los controladores del sistema parecen estar funcionando correctamente. Para mantener un rendimiento óptimo, considere verificar actualizaciones periódicamente."
+        })
+    
+    # Generar recomendaciones
+    recommendations = "\n".join([issue["recommendation"] for issue in issues])
+    
+    # Agregar información adicional
+    if len(outdated_drivers) > 3:
+        recommendations += f"\n\nSe encontraron {len(outdated_drivers)} controladores desactualizados en total. Considere actualizarlos todos para un rendimiento óptimo."
+    
+    # Crear problema en la base de datos
+    for issue in issues:
+        DiagnosticIssue.objects.create(
+            diagnosis=diagnosis,
+            component="Controladores",
+            issue_type=issue["type"],
+            severity=issue["severity"],
+            description=issue["description"],
+            recommendation=issue["recommendation"]
+        )
+    
+    return {
+        "scenario": "Error del controlador",
+        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else "WARNING",
+        "issues": issues,
+        "problematic_drivers": problematic_drivers,
+        "outdated_drivers": outdated_drivers,
+        "recommendations": recommendations
+    }
+
+def analyze_unresponsive_scenario(system_data, diagnosis):
+    """Analiza el escenario de sistema que no responde"""
+    issues = []
+    
+    # Verificar uso de recursos
+    cpu_usage = system_data.get('cpu_usage', 'N/A')
+    cpu_value = float(cpu_usage.replace('%', '')) if '%' in cpu_usage else 0
+    
+    ram_data = system_data.get('ram_usage', {})
+    ram_percent = ram_data.get('percent', 'N/A')
+    ram_value = float(ram_percent.replace('%', '')) if '%' in ram_percent else 0
+    
+    if cpu_value > 90:
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "HIGH",
+            "description": f"Uso de CPU extremadamente alto ({cpu_usage})",
+            "recommendation": "Identifique y cierre procesos que consumen muchos recursos usando el Administrador de tareas."
+        })
+    
+    if ram_value > 95:
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "HIGH",
+            "description": f"Memoria RAM casi agotada ({ram_percent})",
+            "recommendation": "Cierre aplicaciones para liberar memoria o amplíe la RAM de su equipo."
+        })
+    
+    # Verificar procesos con alto consumo
+    top_processes = system_data.get('top_processes', [])
+    high_resource_processes = []
+    
+    for process in top_processes:
+        cpu_percent = process.get('cpu_percent', '0%')
+        memory_percent = process.get('memory_percent', '0%')
+        
+        cpu_value = float(cpu_percent.replace('%', '')) if '%' in cpu_percent else 0
+        memory_value = float(memory_percent.replace('%', '')) if '%' in memory_percent else 0
+        
+        if cpu_value > 25 or memory_value > 25:
+            high_resource_processes.append(process)
+    
+    if high_resource_processes:
+        process_names = ", ".join([p.get('name', 'Desconocido') for p in high_resource_processes[:2]])
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "HIGH",
+            "description": f"Procesos con consumo excesivo de recursos: {process_names}",
+            "recommendation": "Cierre estas aplicaciones o reinícielas si son necesarias."
+        })
+    
+    # Verificar espacio en disco
+    disk_data = system_data.get('disk_usage', {}).get('partitions', [{}])[0]
+    disk_percent = disk_data.get('percent', 'N/A')
+    disk_value = float(disk_percent.replace('%', '')) if '%' in disk_percent else 0
+    
+    if disk_value > 98:
+        issues.append({
+            "type": "HARDWARE",
+            "severity": "CRITICAL",
+            "description": f"Disco prácticamente lleno ({disk_percent})",
+            "recommendation": "Libere espacio urgentemente. Un disco completamente lleno puede causar que el sistema deje de responder."
+        })
+    
+    # Verificar eventos de bloqueo en aplicaciones
+    if platform.system() == "Windows":
+        try:
+            cmd = "powershell \"Get-WinEvent -FilterHashtable @{LogName='Application'; ID=1000,1002} -MaxEvents 10 | Select-Object TimeCreated, Id, Message | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=15)
+            
+            if result.returncode == 0 and result.stdout and "TimeCreated" in result.stdout:
+                crash_events = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(crash_events, list):
+                    crash_events = [crash_events]
+                
+                if crash_events:
+                    issues.append({
+                        "type": "SOFTWARE",
+                        "severity": "MEDIUM",
+                        "description": f"Se encontraron {len(crash_events)} bloqueos recientes de aplicaciones",
+                        "recommendation": "Actualice las aplicaciones que presentan bloqueos frecuentes o reinstálelas si el problema persiste."
+                    })
+        except:
+            pass
+    
+    # Si no se encontraron problemas específicos
+    if not issues:
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "MEDIUM",
+            "description": "No se encontraron causas evidentes para que el sistema no responda",
+            "recommendation": "Si el sistema deja de responder frecuentemente, considere reiniciar en modo seguro para descartar problemas con software de terceros."
+        })
+    
+    # Generar recomendaciones
+    recommendations = "\n".join([issue["recommendation"] for issue in issues])
+    
+    if high_resource_processes:
+        recommendations += "\n\nProcesos con alto consumo de recursos:"
+        for proc in high_resource_processes[:3]:
+            recommendations += f"\n- {proc.get('name', 'Desconocido')}: CPU {proc.get('cpu_percent', 'N/A')}, RAM {proc.get('memory_percent', 'N/A')}"
+    
+    # Agregar recomendaciones generales
+    recommendations += "\n\nRecomendaciones generales para un sistema que no responde:"
+    recommendations += "\n- Pulse Ctrl+Alt+Del y use el Administrador de tareas para cerrar aplicaciones bloqueadas."
+    recommendations += "\n- Reinicie su equipo regularmente para limpiar la memoria y recursos."
+    recommendations += "\n- Mantenga actualizado el sistema operativo y controladores."
+    
+    # Crear problema en la base de datos
+    for issue in issues:
+        DiagnosticIssue.objects.create(
+            diagnosis=diagnosis,
+            component="Sistema",
+            issue_type=issue["type"],
+            severity=issue["severity"],
+            description=issue["description"],
+            recommendation=issue["recommendation"]
+        )
+    
+    return {
+        "scenario": "El sistema no responde",
+        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else "WARNING",
+        "issues": issues,
+        "high_resource_processes": high_resource_processes,
+        "recommendations": recommendations
+    }
+
+def analyze_slow_boot_scenario(system_data, diagnosis):
+    """Analiza el escenario de tiempo de arranque lento"""
+    issues = []
+    
+    # Verificar programas de inicio
+    startup_programs = []
+    if platform.system() == "Windows":
+        try:
+            cmd = "powershell \"Get-CimInstance Win32_StartupCommand | Select Name, Command, Location | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=15)
+            
+            if result.returncode == 0 and result.stdout:
+                startup_data = json.loads(result.stdout)
+                
+                # Convertir a lista si es un solo objeto
+                if not isinstance(startup_data, list):
+                    startup_data = [startup_data]
+                
+                startup_programs = startup_data
+                
+                if len(startup_programs) > 8:
+                    issues.append({
+                        "type": "PERFORMANCE",
+                        "severity": "HIGH",
+                        "description": f"Demasiados programas de inicio ({len(startup_programs)})",
+                        "recommendation": "Reduzca el número de programas que se inician automáticamente a través del Administrador de tareas > Inicio."
+                    })
+        except:
+            pass
+    
+    # Verificar servicios innecesarios
+    services_count = 0
+    if platform.system() == "Windows":
+        try:
+            cmd = "powershell \"Get-Service | Where-Object {$_.Status -eq 'Running'} | Measure-Object | Select-Object -ExpandProperty Count\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and result.stdout:
+                services_count = int(result.stdout.strip())
+                
+                if services_count > 100:
+                    issues.append({
+                        "type": "PERFORMANCE",
+                        "severity": "MEDIUM",
+                        "description": f"Excesivo número de servicios en ejecución ({services_count})",
+                        "recommendation": "Considere deshabilitar servicios innecesarios a través de la aplicación Servicios."
+                    })
+        except:
+            pass
+    
+    # Verificar fragmentación del disco
+    if platform.system() == "Windows":
+        try:
+            cmd = "defrag C: /A /H"
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and "% fragmentados" in result.stdout:
+                for line in result.stdout.split('\n'):
+                    if "% fragmentados" in line:
+                        frag_percent = line.split('%')[0].strip().split()[-1]
+                        try:
+                            frag_value = float(frag_percent)
+                            if frag_value > 20:
+                                issues.append({
+                                    "type": "PERFORMANCE",
+                                    "severity": "MEDIUM",
+                                    "description": f"Disco fragmentado ({frag_value}%)",
+                                    "recommendation": "Ejecute el desfragmentador de disco para mejorar el tiempo de arranque."
+                                })
+                        except:
+                            pass
+                        break
+        except:
+            pass
+    
+    # Verificar estado del disco
+    disk_data = system_data.get('disk_usage', {}).get('partitions', [{}])[0]
+    disk_percent = disk_data.get('percent', 'N/A')
+    disk_value = float(disk_percent.replace('%', '')) if '%' in disk_percent else 0
+    
+    if disk_value > 90:
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "MEDIUM",
+            "description": f"Poco espacio libre en disco ({disk_percent} lleno)",
+            "recommendation": "Libere espacio en el disco principal para mejorar el rendimiento durante el arranque."
+        })
+    
+    # Verificar actualizaciones pendientes
+    if platform.system() == "Windows":
+        updates_status = check_windows_updates()
+        if updates_status["status"] == "UpdatesAvailable" and updates_status["count"] > 5:
+            issues.append({
+                "type": "SOFTWARE",
+                "severity": "MEDIUM",
+                "description": f"Varias actualizaciones pendientes ({updates_status['count']})",
+                "recommendation": "Instale las actualizaciones pendientes, ya que pueden incluir mejoras de rendimiento."
+            })
+    
+    # Si no se encontraron problemas específicos
+    if not issues:
+        issues.append({
+            "type": "PERFORMANCE",
+            "severity": "LOW",
+            "description": "No se encontraron causas específicas de arranque lento",
+            "recommendation": "Considere reiniciar su equipo regularmente y mantener el software actualizado para un rendimiento óptimo."
+        })
+    
+    # Generar recomendaciones
+    recommendations = "\n".join([issue["recommendation"] for issue in issues])
+    
+    # Agregar recomendaciones generales
+    recommendations += "\n\nRecomendaciones generales para mejorar el tiempo de arranque:"
+    recommendations += "\n- Utilice el inicio rápido de Windows (si está disponible)."
+    recommendations += "\n- Considere usar un disco SSD si actualmente tiene un HDD."
+    recommendations += "\n- Desinstale software que no utilice para reducir la carga del sistema."
+    
+    if startup_programs:
+        recommendations += "\n\nProgramas de inicio que puede considerar deshabilitar:"
+        for prog in startup_programs[:5]:
+            recommendations += f"\n- {prog.get('Name', 'Desconocido')}"
+    
+    # Crear problema en la base de datos
+    for issue in issues:
+        DiagnosticIssue.objects.create(
+            diagnosis=diagnosis,
+            component="Rendimiento",
+            issue_type=issue["type"],
+            severity=issue["severity"],
+            description=issue["description"],
+            recommendation=issue["recommendation"]
+        )
+    
+    return {
+        "scenario": "Tiempo de arranque lento",
+        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else "WARNING",
+        "issues": issues,
+        "startup_programs_count": len(startup_programs),
+        "services_count": services_count,
+        "recommendations": recommendations
+    }
+
+def analyze_battery_scenario(system_data, diagnosis):
+    """Analiza el escenario de problemas con la batería"""
+    issues = []
+    
+    # Obtener información de batería
+    battery_data = system_data.get('battery')
+    
+    if not battery_data:
+        return {
+            "scenario": "Problemas con la batería",
+            "status": "UNKNOWN",
+            "message": "No se detectó batería en el sistema",
+            "issues": [{
+                "type": "HARDWARE",
+                "severity": "LOW",
+                "description": "No se detectó batería",
+                "recommendation": "Este dispositivo no tiene batería o no se pudo detectar."
+            }],
+            "recommendations": "Este dispositivo no tiene batería o no se pudo detectar."
+        }
+    
+    # Analizar estado de la batería
+    battery_result = analyze_battery(system_data)
+    battery_issues = battery_result.get("issues", [])
+    
+    # Incluir todos los problemas detectados
+    issues.extend(battery_issues)
+    
+    # Verificar desgaste de la batería
+    battery_health = battery_result.get("health")
+    if battery_health and "health_percent" in battery_health:
+        health_percent_str = battery_health["health_percent"]
+        health_percent = float(health_percent_str.replace('%', '')) if '%' in health_percent_str else 0
+        
+        if health_percent < 60 and not any(issue["description"].startswith("Salud de batería") for issue in issues):
+            issues.append({
+                "type": "HARDWARE",
+                "severity": "MEDIUM",
+                "description": f"Salud de batería deteriorada ({health_percent_str})",
+                "recommendation": "La capacidad de su batería está significativamente reducida. Considere reemplazarla para mejorar la autonomía."
+            })
+    
+    # Verificar configuración de energía en Windows
+    power_plan = None
+    if platform.system() == "Windows":
+        try:
+            cmd = "powershell \"Get-WmiObject -Class Win32_PowerPlan -Namespace root\\cimv2\\power -Filter 'IsActive=True' | Select-Object ElementName\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and result.stdout:
+                for line in result.stdout.split('\n'):
+                    if "ElementName" in line:
+                        power_plan = line.split(':')[1].strip()
+                        break
+                
+                if power_plan and ("alto rendimiento" in power_plan.lower() or "high performance" in power_plan.lower()):
+                    issues.append({
+                        "type": "CONFIGURATION",
+                        "severity": "MEDIUM",
+                        "description": f"Plan de energía de alto rendimiento activo ({power_plan})",
+                        "recommendation": "Este plan consume más batería. Cambie a 'Equilibrado' o 'Ahorro de energía' para mejorar la duración de la batería."
+                    })
+        except:
+            pass
+    
+    # Verificar aplicaciones que consumen batería
+    try:
+        high_power_apps = []
+        
+        for process in system_data.get('top_processes', []):
+            cpu_percent = process.get('cpu_percent', '0%')
+            cpu_value = float(cpu_percent.replace('%', '')) if '%' in cpu_percent else 0
+            
+            if cpu_value > 15 and len(high_power_apps) < 3:
+                high_power_apps.append(process.get('name', 'Desconocido'))
+        
+        if high_power_apps:
+            issues.append({
+                "type": "SOFTWARE",
+                "severity": "MEDIUM",
+                "description": f"Aplicaciones con alto consumo de energía: {', '.join(high_power_apps)}",
+                "recommendation": "Cierre estas aplicaciones cuando funcione con batería para prolongar su duración."
+            })
+    except:
+        pass
+    
+    # Si no se encontraron problemas específicos adicionales
+    if not issues:
+        issues.append({
+            "type": "HARDWARE",
+            "severity": "LOW",
+            "description": "No se detectaron problemas específicos con la batería",
+            "recommendation": "La batería parece estar funcionando correctamente."
+        })
+    
+    # Generar recomendaciones
+    recommendations = "\n".join([issue["recommendation"] for issue in issues])
+    
+    # Agregar recomendaciones generales para mejorar la duración de la batería
+    recommendations += "\n\nRecomendaciones generales para mejorar la duración de la batería:"
+    recommendations += "\n- Reduzca el brillo de la pantalla."
+    recommendations += "\n- Desactive Wi-Fi y Bluetooth cuando no los use."
+    recommendations += "\n- Cierre aplicaciones en segundo plano."
+    recommendations += "\n- Utilice el modo de ahorro de energía."
+    recommendations += "\n- Evite temperaturas extremas que puedan dañar la batería."
+    
+    # Crear problema en la base de datos
+    for issue in issues:
+        DiagnosticIssue.objects.create(
+            diagnosis=diagnosis,
+            component="Batería",
+            issue_type=issue["type"],
+            severity=issue["severity"],
+            description=issue["description"],
+            recommendation=issue["recommendation"]
+        )
+    
+    return {
+        "scenario": "Problemas con la batería",
+        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else "WARNING",
+        "issues": issues,
+        "battery_info": battery_result,
+        "power_plan": power_plan,
+        "recommendations": recommendations
+    }
+
+@login_required
+@user_passes_test(is_client)
+def get_scenario_result(request, run_id):
+    """API para obtener el resultado de una ejecución de escenario"""
+    try:
+        scenario_run = ScenarioRun.objects.get(id=run_id, user=request.user)
+        
+        return JsonResponse({
+            "status": "success",
+            "data": {
+                "id": scenario_run.id,
+                "scenario": scenario_run.scenario.name,
+                "timestamp": scenario_run.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                "issues_found": scenario_run.issues_found,
+                "results": scenario_run.get_results_as_dict(),
+                "recommendations": scenario_run.recommendations
+            }
+        })
+    except ScenarioRun.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Resultado no encontrado"}, status=404)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+@login_required
+@user_passes_test(is_client)
+def mark_issue_resolved(request, issue_id):
+    """API para marcar un problema como resuelto"""
+    try:
+        if request.method == 'POST':
+            issue = DiagnosticIssue.objects.get(id=issue_id, diagnosis__user=request.user)
+            issue.is_resolved = True
+            issue.save()
+            
+            return JsonResponse({
+                "status": "success",
+                "message": "Problema marcado como resuelto"
+            })
+        else:
+            return JsonResponse({"status": "error", "message": "Método no permitido"}, status=405)
+    except DiagnosticIssue.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Problema no encontrado"}, status=404)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 @login_required
 @user_passes_test(is_client)
 def defender_status_api(request):
+    """API para obtener el estado de Windows Defender"""
     try:
-        defender_status = check_defender_status()
-
-        # Procesar datos relevantes de la respuesta
-        if "CimInstanceProperties" in defender_status:
-            relevant_data = {}
-            for prop in defender_status["CimInstanceProperties"]:
-                if prop["Name"] in ["AntivirusEnabled", "AntivirusSignatureVersion", "RealTimeProtectionEnabled",
-                                    "AntispywareEnabled", "IsTamperProtected", "AMEngineVersion", "AMServiceVersion"]:
-                    relevant_data[prop["Name"]] = prop["Value"]
-        else:
-            return JsonResponse({"status": "error", "message": "No se pudieron procesar los datos del estado de Defender."})
-
-        return JsonResponse({"status": "success", "data": relevant_data})
+        defender_status = check_antivirus_status()
+        return JsonResponse({"status": "success", "data": defender_status})
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
     

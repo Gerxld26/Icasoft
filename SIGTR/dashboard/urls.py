@@ -72,7 +72,17 @@ from .views import (
     tech_cases,
     tech_reports,
     change_connection_status,
-    chatIA
+    chatIA,
+    #news
+    client_diagnosis_data,
+    start_diagnostic_scan,
+    get_diagnostic_progress,
+    get_diagnostic_report,
+    run_diagnostic_scenario,
+    get_scenario_result,
+    mark_issue_resolved,
+    
+        
 )
 
 urlpatterns = [
@@ -150,5 +160,20 @@ urlpatterns = [
     path('tech/profile/', tech_profile, name='tech_profile'),
     path('tech/cases/', tech_cases, name='tech_cases'),
     path('tech/reports/', tech_reports, name='tech_reports'),
-    path('tech/change_connection_status/', change_connection_status, name='change_connection_status')
+    path('tech/change_connection_status/', change_connection_status, name='change_connection_status'),
+    
+    #news
+    # APIs para el sistema de diagnóstico
+    path('api/diagnosis-data/', client_diagnosis_data, name='client_diagnosis_data'),
+    path('api/diagnosis/start/', start_diagnostic_scan, name='start_diagnostic_scan'),
+    path('api/diagnosis/progress/', get_diagnostic_progress, name='get_diagnostic_progress'),
+    path('api/diagnosis/report/<int:report_id>/', get_diagnostic_report, name='get_diagnostic_report'),
+    path('api/diagnosis/comparison/', client_comparison, name='client_comparison'),
+    path('api/diagnosis/defender/status/', defender_status_api, name='defender_status_api'),
+    path('api/diagnosis/scenario/<int:scenario_id>/', run_diagnostic_scenario, name='run_diagnostic_scenario'),
+    path('api/diagnosis/scenario/result/<int:run_id>/', get_scenario_result, name='get_scenario_result'),
+    
+    # Marcar problemas como resueltos
+    path('api/diagnosis/issue/<int:issue_id>/resolve/', mark_issue_resolved, name='mark_issue_resolved'),
+    
 ]
