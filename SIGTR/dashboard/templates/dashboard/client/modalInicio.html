@@ -71,102 +71,299 @@
     </div>
 </div>
 
-<!--MODAL DIAGNOSTICO-->
+<!-- MODAL DIAGNOSTICO MEJORADO -->
 <div id="modalDiagnostico" class="modal">
     <div class="modal-content">
         <div class="headerModal">
+            <h2 class="modal-title">Diagnósticos del sistema</h2>
             <span id="closeModalDiagn" class="close">&times;</span>
         </div>
+        
         <div class="contentData">
-            <!-- Tipo de análisis -->
-            <div class="tipoAnalisis">
-                <div class="textHW">DIAGNÓSTICO DEL SISTEMA</div>
-                <div class="cardComparacionHW">
-                    <div class="componentesHW" id="scaners">
-                        <div class="selectTipoDiagnostico">
-                            <select id="scan-type" class="selectDiagnostico">
-                                <option value="QuickScan" selected>Escaneo Rápido</option>
-                                <option value="FullScan">Escaneo Completo</option>
-                                <option value="CustomScan">Escaneo Personalizado</option>
-                            </select>
+            <!-- Tabs de navegación -->
+            <div class="diagnosis-tabs">
+                <button class="tab-btn active" data-tab="fast-diagnosis">Herramienta de diagnóstico</button>
+                <button class="tab-btn" data-tab="diagnosis-history">Historial de diagnóstico</button>
+            </div>
+            
+            <!-- Contenido de los tabs -->
+            <div class="tab-content">
+                <!-- Tab de Diagnóstico Rápido -->
+                <div id="fast-diagnosis" class="tab-pane active">
+                    <div class="diagnosis-section">
+                        <div class="diagnosis-header">
+                            <h3>Diagnóstico con un clic</h3>
+                            <p class="diagnosis-desc">Si no está seguro de qué componente está causando el problema, esta es su mejor solución. Ejecute una prueba completa para obtener un informe de diagnóstico detallado.</p>
                         </div>
-                        <div class="custom-scan-options" id="custom-scan-options" style="display: none;">
-                            <input type="text" id="custom-scan-path" class="inputRuta" placeholder="C:\Carpeta">
+                        
+                        <div class="progress-container">
+                            <div class="progress-bar" id="quick-scan-progress">
+                                <span data-width="0%" style="width: 0%">0%</span>
+                            </div>
+                            <button id="start-quick-scan" class="action-button">Iniciar diagnóstico</button>
                         </div>
                     </div>
-                    <div class="componentesHW">
-                        <button id="iniciar-diagnostico" class="botonIniciar">
-                            <i class="fa-solid fa-play"></i> INICIAR DIAGNÓSTICO
-                        </button>
+                    
+                    <div class="diagnosis-section">
+                        <div class="diagnosis-header">
+                            <h3>Diagnóstico personalizado</h3>
+                            <p class="diagnosis-desc">Para poder conocer por completo la salud actual de su computadora, se recomienda que use el rango completo para obtener el estatus de su computadora.</p>
+                        </div>
+                        
+                        <div class="last-check">
+                            <p>Última comprobación:</p>
+                            <p id="last-check-date">2025-04-29 17:14</p>
+                        </div>
+                        
+                        <div class="components-selection">
+                            <div class="component-check">
+                                <input type="checkbox" id="check-all" checked>
+                                <label for="check-all">Todos</label>
+                            </div>
+                            
+                            <div class="components-grid">
+                                <div class="component-check">
+                                    <input type="checkbox" id="check-adapter" class="component-checkbox">
+                                    <label for="check-adapter">Adaptador</label>
+                                </div>
+                                <div class="component-check">
+                                    <input type="checkbox" id="check-memory" class="component-checkbox">
+                                    <label for="check-memory">Memoria</label>
+                                </div>
+                                <div class="component-check">
+                                    <input type="checkbox" id="check-wifi" class="component-checkbox">
+                                    <label for="check-wifi">Wi-Fi</label>
+                                </div>
+                                <div class="component-check">
+                                    <input type="checkbox" id="check-bluetooth" class="component-checkbox">
+                                    <label for="check-bluetooth">Bluetooth</label>
+                                </div>
+                                <div class="component-check">
+                                    <input type="checkbox" id="check-disk" class="component-checkbox">
+                                    <label for="check-disk">Disco duro</label>
+                                </div>
+                                <div class="component-check">
+                                    <input type="checkbox" id="check-battery" class="component-checkbox">
+                                    <label for="check-battery">Batería</label>
+                                </div>
+                                <div class="component-check">
+                                    <input type="checkbox" id="check-fan" class="component-checkbox">
+                                    <label for="check-fan">Ventilador</label>
+                                </div>
+                                <div class="component-check">
+                                    <input type="checkbox" id="check-sectors" class="component-checkbox">
+                                    <label for="check-sectors">Comprobación de sectores</label>
+                                </div>
+                            </div>
+                            
+                            <button id="start-custom-scan" class="action-button secondary">Iniciar revisión</button>
+                        </div>
+                    </div>
+                    
+                    <div class="diagnosis-section">
+                        <div class="diagnosis-header">
+                            <h3>Diagnóstico por escenario</h3>
+                        </div>
+                        
+                        <div class="scenarios-grid">
+                            <div class="scenario-card">
+                                <div class="scenario-icon">
+                                    <i class="fa-solid fa-laptop-code"></i>
+                                </div>
+                                <div class="scenario-info">
+                                    <h4>Error de pantalla azul</h4>
+                                    <button class="scenario-button">Revisión</button>
+                                </div>
+                            </div>
+                            
+                            <div class="scenario-card">
+                                <div class="scenario-icon">
+                                    <i class="fa-solid fa-tachometer-alt"></i>
+                                </div>
+                                <div class="scenario-info">
+                                    <h4>Sistema lento</h4>
+                                    <button class="scenario-button">Revisión</button>
+                                </div>
+                            </div>
+                            
+                            <div class="scenario-card">
+                                <div class="scenario-icon">
+                                    <i class="fa-solid fa-wifi"></i>
+                                </div>
+                                <div class="scenario-info">
+                                    <h4>Problemas de conectividad</h4>
+                                    <button class="scenario-button">Revisión</button>
+                                </div>
+                            </div>
+                            
+                            <div class="scenario-card">
+                                <div class="scenario-icon">
+                                    <i class="fa-solid fa-microchip"></i>
+                                </div>
+                                <div class="scenario-info">
+                                    <h4>Error del controlador</h4>
+                                    <span class="date-label">2025-04-29 17:14</span>
+                                    <button class="scenario-button">Revisión</button>
+                                </div>
+                            </div>
+                            
+                            <div class="scenario-card">
+                                <div class="scenario-icon">
+                                    <i class="fa-solid fa-power-off"></i>
+                                </div>
+                                <div class="scenario-info">
+                                    <h4>El sistema no responde</h4>
+                                    <button class="scenario-button">Revisión</button>
+                                </div>
+                            </div>
+                            
+                            <div class="scenario-card">
+                                <div class="scenario-icon">
+                                    <i class="fa-solid fa-hourglass-half"></i>
+                                </div>
+                                <div class="scenario-info">
+                                    <h4>Tiempo de arranque lento</h4>
+                                    <button class="scenario-button">Revisión</button>
+                                </div>
+                            </div>
+                            
+                            <div class="scenario-card">
+                                <div class="scenario-icon">
+                                    <i class="fa-solid fa-battery-half"></i>
+                                </div>
+                                <div class="scenario-info">
+                                    <h4>Problemas con la batería</h4>
+                                    <button class="scenario-button">Revisión</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab de Historial de Diagnóstico -->
+                <div id="diagnosis-history" class="tab-pane">
+                    <div class="diagnosis-results-container">
+                        <h3 class="diagnosis-results-title">Resultados de los diagnósticos</h3>
+                        
+                        <div class="diagnosis-note">
+                            <p>Nota: A continuación, únicamente se mostrará el último resultado de cada elemento de prueba.</p>
+                        </div>
+                        
+                        <div class="diagnosis-summary">
+                            <div class="diagnosis-summary-icon">
+                                <i class="fa-solid fa-laptop-medical"></i>
+                            </div>
+                            <div class="diagnosis-summary-info">
+                                <p class="diagnosis-type">Diagnóstico con un clic | <span class="diagnosis-problems">0 Problemas</span>, <span class="diagnosis-suggestions">3 Sugerencias</span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="components-list">
+                            <div class="component-item">
+                                <div class="component-status success">
+                                    <i class="fa-solid fa-check-circle"></i>
+                                </div>
+                                <div class="component-name">Adaptador</div>
+                                <div class="component-details-toggle">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="component-item">
+                                <div class="component-status success">
+                                    <i class="fa-solid fa-check-circle"></i>
+                                </div>
+                                <div class="component-name">Memoria</div>
+                                <div class="component-details-toggle">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="component-item">
+                                <div class="component-status warning">
+                                    <i class="fa-solid fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="component-name">Wi-Fi</div>
+                                <div class="component-details-toggle">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="component-item">
+                                <div class="component-status success">
+                                    <i class="fa-solid fa-check-circle"></i>
+                                </div>
+                                <div class="component-name">Bluetooth</div>
+                                <div class="component-details-toggle">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="component-item">
+                                <div class="component-status success">
+                                    <i class="fa-solid fa-check-circle"></i>
+                                </div>
+                                <div class="component-name">Disco duro de estado sólido</div>
+                                <div class="component-details-toggle">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="diagnosis-actions">
+                            <p class="diagnosis-recommendation">Si no están convencido de los resultados de la prueba, le recomendamos que la repita.</p>
+                            <div class="diagnosis-buttons">
+                                <button id="retry-diagnosis" class="action-button secondary">Probar de nuevo</button>
+                                <button id="complete-diagnosis" class="action-button primary">Completado</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Progreso del análisis -->
-            <div class="progresoAnalisis" style="display: none;">
-                <div class="textHW">PROGRESO DEL DIAGNÓSTICO</div>
-                <div class="cardComparacionHW">
-                    <div class="componentesHW">
-                        <div class="textComponente">Estado:</div>
-                        <div class="resultComponente" id="estado-diagnostico">Analizando sistema...</div>
-                    </div>
-                    <div class="componentesHW">
-                        <div class="progress-bar-content-diag" id="progress-bar-diagnostico">
-                            <span data-width="0%" style="width: 0%">0%</span>
-                        </div>
-                    </div>
-                </div>
+        </div>
+        
+        <!-- Contenedor para mostrar resultados detallados -->
+        <div id="detailed-results" class="detailed-results-container" style="display: none;">
+            <div class="detailed-results-header">
+                <button id="back-to-diagnosis" class="back-button">
+                    <i class="fa-solid fa-arrow-left"></i> Volver
+                </button>
+                <h3>Resultados detallados</h3>
             </div>
-
-            <!-- Comparación con diagnósticos previos -->
-            <div class="comparacionHW" id="diagnosticosPrevios">
-                <div class="textHW">COMPARACIÓN CON DIAGNÓSTICOS PREVIOS</div>
-                <div class="cardComparacionHW">
-                    <div class="componentesHW">
-                        <div class="textComponente">USO DE CPU:</div>
-                        <div class="resultComponente">Cargando datos...</div>
-                    </div>
-                    <div class="componentesHW">
-                        <div class="textComponente">USO DE RAM:</div>
-                        <div class="resultComponente">Cargando datos...</div>
-                    </div>
-                    <div class="componentesHW">
-                        <div class="textComponente">USO DEL DISCO:</div>
-                        <div class="resultComponente">Cargando datos...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Análisis detallado por IA -->
-            <div class="analisisIA" id="analisisisIAContent">
-                <div class="textHW">ANÁLISIS DETALLADO POR IA
-                    <button class="btnAnalisis" id="btnVerAnalisisIA">
-                        <i class="fa-solid fa-eye-slash verAnalisis"></i>
-                        <!-- <i class="fa-solid fa-eye verAnalisis"></i> -->
-                    </button>
-                </div>
-                <div class="cardComparacionHW" id="resultadoAnalisisIA" style="display: none;">
-                    <div class="componentesHW">
-                        <div class="textComponente">Análisis CPU:</div>
-                        <div class="resultComponente">Esperando diagnóstico completo...</div>
-                    </div>
-                    <div class="componentesHW">
-                        <div class="textComponente">Análisis RAM:</div>
-                        <div class="resultComponente">Esperando diagnóstico completo...</div>
-                    </div>
-                    <div class="componentesHW">
-                        <div class="textComponente">Análisis Disco:</div>
-                        <div class="resultComponente">Esperando diagnóstico completo...</div>
-                    </div>
-                    <div class="componentesHW">
-                        <div class="textComponente">Análisis Seguridad:</div>
-                        <div class="resultComponente">Esperando diagnóstico completo...</div>
-                    </div>
-                </div>
+            
+            <div id="detailed-results-content" class="detailed-results-content">
+                <!-- Aquí se cargarán los resultados detallados -->
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal para mostrar progreso de escaneo en tiempo real -->
+<div id="scanProgressModal" class="modal">
+    <div class="modal-content scan-progress-content">
+        <div class="headerModal">
+            <h3>Diagnóstico en progreso</h3>
+        </div>
+        
+        <div class="scan-progress-container">
+            <div class="scan-status">
+                <p id="current-component-scan">Analizando sistema...</p>
+                <p id="scan-percentage">0%</p>
+            </div>
+            
+            <div class="progress-bar" id="scan-progress-bar">
+                <span data-width="0%" style="width: 0%">0%</span>
+            </div>
+            
+            <div class="scan-details">
+                <p id="scan-details-text">Por favor, espere mientras se completa el análisis...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contenedor de notificaciones -->
+<div id="notificaciones" class="notificaciones-container"></div>
 
 <!--MODAL ANTIVIRUS-->
 <div id="modalAntivirus" class="modal antivirus-modal">
