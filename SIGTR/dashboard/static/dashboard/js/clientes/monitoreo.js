@@ -302,7 +302,7 @@ async function fetchCpuData() {
         });
         if (discosCriticos.length > 0) {
             setTimeout(() => {
-                notificacionDetalle("Los siguientes discos tienen un uso elevado:<br><strong>[ " + discosCriticos.join(' ] [ ') + " ]</strong>");
+                notificacionDetalle("Las siguientes discos están llegando al límite de su capacidad:<br><strong>[ " + discosCriticos.join(' ] [ ') + " ]</strong>");
             }, 2000);
         }
         // GRÁFICO DINÁMICO:

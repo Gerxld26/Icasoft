@@ -80,7 +80,7 @@ async function obtenerHistorial() {
         }
 
         const data = await response.json();
-
+        console.log('historial: ', data);
         if (data.status === 'success') {
             contenidoHistorialElement.innerHTML = '';
 

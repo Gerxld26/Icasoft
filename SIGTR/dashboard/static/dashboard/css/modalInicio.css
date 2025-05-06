@@ -1841,6 +1841,12 @@ a.btnAsistencia {
     text-decoration: none;
     justify-content: center;
 }
+.btnAsistencia .iconWstp{
+    color: white;
+}
+.btnAsistencia .iconWstp:hover{
+    color: #00ffaa;
+}
 #contentDireccion .inputDescrip {
     width: 100%;
     height: 40px;

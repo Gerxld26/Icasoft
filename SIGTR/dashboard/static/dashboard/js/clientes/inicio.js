@@ -144,7 +144,7 @@ async function fetchCpuUse() {
 
 $(document).ready(function () {
     fetchCpuUse();
-    // getCache();
+    getCache();
     const btnLiberarEspacio = document.getElementById('liberarEspacio');
     if (btnLiberarEspacio) {
         btnLiberarEspacio.addEventListener('click', clearTempSpace);
