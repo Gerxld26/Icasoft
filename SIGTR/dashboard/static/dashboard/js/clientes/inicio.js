@@ -90,66 +90,121 @@ function animarProgreso(span, porcentajeFinal, callback, typeNotification) {
     }, 30);
 }
 
-async function fetchTemp() {
-    try {
-        const responseTemp = await fetch('/dashboard/client/get-temp-size/');
-
-        if (!responseTemp.ok) {
-            throw new Error(`HTTP error! status: ${responseTemp.status}`);
-        }
-
-        const dataTemp = await responseTemp.json();
-        const archTemp = document.getElementById('archTemp');
-
-        if (dataTemp.status === 'success') {
-            archTemp.innerHTML = `
-                <div class="temp-info">
-                    <div class="temp-size">Archivos Temporales: ${dataTemp.total_temp_size || '0 MB'}</div>
-                    <div class="temp-files-count">
-                        
-                        <small style="display:block; font-size:0.7em; color:#888;">
-                            ${dataTemp.files_in_use_count} archivos en uso 
-                        </small>
+const TempFileMonitor = {
+    lastSize: null,
+    lastCheck: 0,
+    minCheckInterval: 5000, // 5 segundos mínimo entre verificaciones
+    warningThreshold: 500, // MB
+    isMonitoring: false,
+    
+    async checkTempFiles() {
+        const now = Date.now();
+        if (now - this.lastCheck < this.minCheckInterval) return;
+        
+        try {
+            const response = await fetch('/dashboard/client/get-temp-size/');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            const data = await response.json();
+            if (data.status !== 'success') throw new Error(data.message || 'Error desconocido');
+            
+            const currentSize = parseFloat(data.total_temp_size);
+            const archTemp = document.getElementById('archTemp');
+            
+            // Actualizar solo si hay cambios significativos (más de 1MB de diferencia)
+            if (this.lastSize === null || Math.abs(currentSize - this.lastSize) > 1) {
+                this.lastSize = currentSize;
+                
+                archTemp.innerHTML = `
+                    <div class="temp-info">
+                        <div class="temp-size">
+                            <i class="fas ${this.getStatusIcon(currentSize)}"></i>
+                            Archivos Temporales: ${data.total_temp_size || '0 MB'}
+                        </div>
+                        <div class="temp-files-count">
+                            <small style="display:block; font-size:0.7em; color:#888;">
+                                ${data.files_in_use_count} archivos en uso 
+                            </small>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
 
-            const tempIndicator = document.querySelector('.temp-indicator');
-            if (tempIndicator) {
-                const sizeInMB = parseFloat(dataTemp.total_temp_size);
-                let indicatorClass = 'low';
-
-                if (sizeInMB >= 500) {
-                    indicatorClass = 'high';
-                } else if (sizeInMB >= 100) {
-                    indicatorClass = 'medium';
+                // Actualizar indicador visual
+                const tempIndicator = document.querySelector('.temp-indicator');
+                if (tempIndicator) {
+                    tempIndicator.className = `temp-indicator ${this.getStatusClass(currentSize)}`;
                 }
 
-                tempIndicator.className = `temp-indicator ${indicatorClass}`;
+                // Mostrar advertencia si es necesario
+                if (currentSize >= this.warningThreshold) {
+                    mostrarNotificacion('advertencia', 
+                        `Los archivos temporales están ocupando ${data.total_temp_size}.\nConsidere liberar espacio.`);
+                }
             }
-        } else {
+            
+        } catch (error) {
+            console.error('Error al verificar archivos temporales:', error);
+            const archTemp = document.getElementById('archTemp');
             archTemp.innerHTML = `
                 <div class="temp-error">
-                    Error al obtener información de archivos temporales
-                    <small style="display:block; font-size:0.7em; color:#d55;">
-                        ${dataTemp.message || 'Error desconocido'}
-                    </small>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Error al conectar con el servidor
+                    <button onclick="TempFileMonitor.checkTempFiles()" class="retry-button">
+                        Reintentar
+                    </button>
                 </div>
             `;
+        } finally {
+            this.lastCheck = now;
         }
-    } catch (error) {
-        const archTemp = document.getElementById('archTemp');
-        archTemp.innerHTML = `
-            <div class="temp-error">
-                Error al conectar con el servidor
-                <small style="display:block; font-size:0.7em; color:#d55;">
-                    Intente nuevamente más tarde
-                </small>
-            </div>
-        `;
-        console.error('Error detallado:', error);
+    },
+
+    getStatusIcon(size) {
+        if (size >= this.warningThreshold) return 'fa-exclamation-triangle text-warning';
+        if (size >= 100) return 'fa-info-circle text-info';
+        return 'fa-check-circle text-success';
+    },
+
+    getStatusClass(size) {
+        if (size >= this.warningThreshold) return 'high';
+        if (size >= 100) return 'medium';
+        return 'low';
+    },
+
+    startMonitoring() {
+        if (this.isMonitoring) return;
+        this.isMonitoring = true;
+        this.checkTempFiles();
+
+        // Eventos que disparan verificación
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                this.checkTempFiles();
+            }
+        });
+
+        // Verificar después de acciones de limpieza
+        const cleanupEvents = ['tempCleanup', 'fileDelete', 'maintenance'];
+        cleanupEvents.forEach(event => {
+            document.addEventListener(event, () => this.checkTempFiles());
+        });
     }
-}
+};
+
+// Reemplazar la llamada existente a fetchTemp() con:
+$(document).ready(function() {
+    TempFileMonitor.startMonitoring();
+    
+    // ... resto del código existente ...
+    
+    // Actualizar los eventos de limpieza para disparar la verificación
+    if (btnLiberarEspacio) {
+        btnLiberarEspacio.addEventListener('click', async function() {
+            await clearTempSpace();
+            document.dispatchEvent(new Event('tempCleanup'));
+        });
+    }
+});
 
 function getCookie(name) {
     let cookieValue = null;
