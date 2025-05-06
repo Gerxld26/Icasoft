@@ -1,6 +1,6 @@
 $(document).ready(function() {
     const $textInput = $('#textIAID');
-    const $sendButton = $('.btnChat');
+    const $sendButton = $('#sendChat');
     const $bodyChat = $('#body-chat');
     const $asistenteSoporte = $('#asistenteSoporte');
 
@@ -47,13 +47,8 @@ $(document).ready(function() {
         $textInput.val('');
         $asistenteSoporte.addClass('modo-chat-activo');
     }
-
-    $textInput.on('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
+    const sendChat = document.getElementById('sendChat');
+    const audioSend = document.getElementById('audioSend');
 
     $sendButton.on('click', sendMessage);
 
@@ -62,8 +57,18 @@ $(document).ready(function() {
         
         if (mensaje === "") {
             $asistenteSoporte.removeClass('modo-chat-activo');
+            sendChat.style.display='none';
+            audioSend.style.display='inline';
         } else {
             $asistenteSoporte.addClass('modo-chat-activo');
+            sendChat.style.display='grid';
+            audioSend.style.display='none';
+        }
+    });
+    $textInput.on('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendMessage();
         }
     });
 });

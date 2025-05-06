@@ -5,7 +5,6 @@ from django.contrib.auth import authenticate, login
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 import heapq
-import re
 from django.db.models import Count, F, Func, Value
 from django.db.models.functions import TruncMonth
 from users.models import User, UserProfile
@@ -46,6 +45,7 @@ from .forms import TicketStatusForm
 from django.core.exceptions import PermissionDenied
 from virustotal_python import Virustotal
 from django.utils.dateparse import parse_date
+from django.conf import settings
 from .models import LearningVideo
 from .forms import LearningVideoForm
 from django.db.models import Q
@@ -642,9 +642,14 @@ def gpu_monitoring_data(request):
     except Exception as e:
         logger.error(f"Error en gpu_monitoring_data: {e}")
         return JsonResponse({"error": str(e)}, status=500)
-    
-#ANTIVIRUS
 
+def google_maps(request):
+     return {
+        'google_api_key': settings.GOOGLE_API_KEY
+    }
+
+
+#ANTIVIRUS
 @login_required
 @require_http_methods(["GET", "POST"])
 def system_virus_scan(request):
@@ -3788,18 +3793,21 @@ def client_clear_space(request):
         old_files_hours = 24 
         min_file_size = 1024 
         old_files_threshold = time.time() - (old_files_hours * 60 * 60)
-        
+
         temp_directories = get_temp_directories()
         temp_directories = [d for d in temp_directories if d and os.path.exists(d) and os.path.isdir(d)]
-        
+
         total_deleted = 0
         total_failed = 0
         total_bytes_deleted = 0
+        total_scanned_files = 0
+        total_bytes_scanned = 0
+        skipped_files = 0
+
         failed_files = []
         deleted_files = []
         files_in_use_details = []
-        skipped_files = 0
-        
+
         for temp_dir in temp_directories:
             try:
                 logger.info(f"Procesando directorio temporal: {temp_dir}")
@@ -3809,18 +3817,21 @@ def client_clear_space(request):
                         try:
                             if not os.path.isfile(file_path) or not os.path.exists(file_path):
                                 continue
-                                
+
                             try:
                                 file_size = os.path.getsize(file_path)
                                 file_mod_time = os.path.getmtime(file_path)
                             except (OSError, PermissionError):
                                 total_failed += 1
                                 continue
-                                
+
                             if file_size < min_file_size:
                                 skipped_files += 1
                                 continue
-                                
+
+                            total_scanned_files += 1
+                            total_bytes_scanned += file_size
+
                             if is_file_in_use(file_path):
                                 files_in_use_details.append({
                                     'path': file_path,
@@ -3828,7 +3839,7 @@ def client_clear_space(request):
                                 })
                                 total_failed += 1
                                 continue
-                                
+
                             if file_mod_time < old_files_threshold:
                                 try:
                                     os.remove(file_path)
@@ -3853,9 +3864,10 @@ def client_clear_space(request):
             except Exception as e:
                 logger.error(f"Error al procesar directorio {temp_dir}: {str(e)}")
                 continue
-        
+
         tamano_liberado = formatear_tamano(total_bytes_deleted)
-        
+        tamano_total_escaneado = formatear_tamano(total_bytes_scanned)
+
         total_failed_size = 0
         for file in files_in_use_details:
             try:
@@ -3863,31 +3875,56 @@ def client_clear_space(request):
                     total_failed_size += os.path.getsize(file['path'])
             except Exception:
                 continue
-        
-        message = f"Archivos eliminados: {total_deleted}.<br>Tamaño liberado: {tamano_liberado}.<br>Archivos en uso no eliminados: {len(files_in_use_details)}."
-        
-        logger.info(f"Limpieza completada: {message}")
-        
-        return JsonResponse({
-            "status": "success",
-            "message": message,
+
+        porcentaje_eliminados = (
+            f"{(total_deleted / total_scanned_files * 100):.1f}%"
+            if total_scanned_files > 0 else "0%"
+        )
+
+        messageSuccess = (
+            f"🧹 <strong>Eliminados:</strong> {total_deleted} de {total_scanned_files} archivos temporales.<br>"
+            f"💾 <strong>Tamaño liberado:</strong> {tamano_liberado} de {tamano_total_escaneado} totales ({porcentaje_eliminados}).<br>"
+            f"📁 <strong>Archivos en uso no eliminados:</strong> {len(files_in_use_details)}."
+        )
+        messageInfo = (
+            f" No hay archivos para eliminar porque están en uso. <br>"
+            f"🧹 <strong>Eliminados:</strong> {total_deleted} de {total_scanned_files} archivos temporales.<br>"
+            f"💾 <strong>Tamaño liberado:</strong> {tamano_liberado} de {tamano_total_escaneado} totales.<br>"
+            f"📁 <strong>Archivos en uso no eliminados:</strong> {len(files_in_use_details)}."
+        )
+
+        response_data = {
             "total_deleted": total_deleted,
             "space_freed": tamano_liberado,
+            "total_scanned": total_scanned_files,
+            "total_scanned_size": tamano_total_escaneado,
             "files_in_use": len(files_in_use_details),
             "total_failed_size": formatear_tamano(total_failed_size),
             "details": {
                 "directories_checked": len(temp_directories),
                 "skipped_files": skipped_files,
-                "oldest_file_age_hours": old_files_hours
+                "oldest_file_age_hours": old_files_hours,
+                "percent_deleted": porcentaje_eliminados
             }
-        })
+        }
+
+        # Adicionar el tipo de status y message:
+        if total_deleted == 0 and total_bytes_deleted == 0:
+            response_data["status"] = "info"
+            response_data["message"] = messageInfo
+        else:
+            response_data["status"] = "success"
+            response_data["message"] = messageSuccess
+
+        return JsonResponse(response_data)
+
     except Exception as e:
         logger.error(f"Error en client_clear_space: {str(e)}")
         return JsonResponse({
             "status": "error",
             "message": f"Error inesperado: {str(e)}"
         }, status=500)
-
+    
 @login_required
 @require_GET
 @user_passes_test(is_client)
@@ -4295,8 +4332,7 @@ def client_defragment_disk(request):
             "message": f"Error inesperado: {str(e)}"
         }, status=500)
         
-@login_required
-@user_passes_test(is_client)
+
 def client_learning_center(request):
     """
     Muestra los videos disponibles en el Centro de Aprendizaje con búsqueda y paginación.
@@ -4327,10 +4363,6 @@ def client_learning_center(request):
     ]
 
     return JsonResponse({'videos': video_list})
-    # return render(request, "dashboard/client/inicio.html", {
-    #     "videos": videos,
-    #     # "query": query  
-    # })
 
 # Admin dashboard
 @login_required

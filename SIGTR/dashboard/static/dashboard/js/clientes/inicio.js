@@ -1,10 +1,11 @@
-let btnPressAnalisis = false;
+window.btnPressAnalisis = false;
 let audio = document.getElementById('audioRobot');
 let video = document.getElementById('robotGIF');
 let videOjos = document.getElementById('robotGIFOjos');
 audio.muted = true;
 
-const notificacionesContainer = document.querySelector('.notificaciones');
+const notificacionesContainer = document.getElementById('notificaciones');
+const notificationDevice = document.getElementById('notificacionesDevice');
 const advertencia = document.createElement('div');
 const success = document.createElement('div');
 const danger = document.createElement('div');
@@ -22,7 +23,6 @@ let contador = 0;
 
 function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', index) {
     const mensajeFormateado = mensaje.replace(/<br>/g, '\n');
-
     let elemento;
     if (tipo === 'success') {
         success.innerHTML = `
@@ -35,6 +35,7 @@ function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', 
             <span class="closeSucess" id="closeNotification"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
         </div>`;
         elemento = success;
+        success.style.animation = 'fadeOut 400ms ease-out 3s';
     } else if (tipo === 'advertencia') {
         advertencia.innerHTML = `
         <div id="advertencia-${index}">
@@ -46,6 +47,7 @@ function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', 
             <span class="closeAdvert" id="closeNotification"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
         </div>`;
         elemento = advertencia;
+        advertencia.style.animation = 'fadeOut 400ms ease-out 3s';
     } else if (tipo === 'danger') {
         danger.innerHTML = `
         <div id="danger-${index}">
@@ -57,18 +59,39 @@ function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', 
             <span class="closeDanger" id="closeNotification"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
         </div>`;
         elemento = danger;
+        danger.style.animation = 'fadeOut 400ms ease-out 3s';
     }
 
     notificacionesContainer.appendChild(elemento);
     notificacionesContainer.style.display = 'flex';
     setTimeout(() => {
         notificacionesContainer.style.display = 'none';
-    }, 3000);
+    }, 2000);
     $("#closeNotification").on("click", function () {
         notificacionesContainer.style.display = 'none';
     });
 }
+function notificacionDetalle(mensaje = 'Mensaje por defecto') {
+    const mensajeFormateado = mensaje.replace(/<br>/g, '\n');
+    let elemento;
 
+    danger.innerHTML = `
+        <div id="dangerDev">
+            <span><i class="fa-solid fa-circle-xmark iconNotification"></i></span>
+            <div>
+                <h3>ALERTA</h3>
+                <p style="white-space: pre-line;">${mensajeFormateado}</p>
+            </div>
+            <span class="closeDanger"  id="closeNotificationDev"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
+        </div>`;
+    elemento = danger;
+
+    notificationDevice.appendChild(elemento);
+    notificationDevice.style.display = 'flex';
+    $("#closeNotificationDev").on("click", function () {
+        notificationDevice.style.display = 'none';
+    });
+}
 function animarProgreso(span, porcentajeFinal, callback, typeNotification) {
     let actual = 0;
     const intervalo = setInterval(() => {
@@ -221,247 +244,6 @@ function getCookie(name) {
     return cookieValue;
 }
 
-async function clearTempSpace() {
-    try {
-        const cleaningStatus = document.getElementById('cleaningStatus') || createCleaningStatus();
-        cleaningStatus.style.display = 'block';
-        cleaningStatus.innerHTML = `
-            <div class="progress">
-                <div class="progress-bar" role="progressbar" style="width: 0%;">
-                    <span>0%</span>
-                </div>
-            </div>
-            <div class="status-text">Iniciando limpieza...</div>
-        `;
-
-        const progressBar = cleaningStatus.querySelector('.progress-bar');
-        const statusText = cleaningStatus.querySelector('.status-text');
-
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 5;
-            if (progress > 90) {
-                clearInterval(progressInterval);
-                return;
-            }
-            progressBar.style.width = `${progress}%`;
-            progressBar.querySelector('span').textContent = `${progress}%`;
-
-            if (progress < 30) {
-                statusText.textContent = "Escaneando archivos temporales...";
-            } else if (progress < 60) {
-                statusText.textContent = "Verificando archivos a eliminar...";
-            } else {
-                statusText.textContent = "Limpiando archivos temporales...";
-            }
-        }, 200);
-
-        const response = await fetch('/dashboard/client/clear-space/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-                'Content-Type': 'application/json'
-            }
-        });
-
-        clearInterval(progressInterval);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        progressBar.style.width = '100%';
-        progressBar.querySelector('span').textContent = '100%';
-
-        if (data.status === 'success') {
-            statusText.textContent = "¡Limpieza completada con éxito!";
-
-            mostrarNotificacion('success', data.message);
-
-            const resultadoLimpieza = document.getElementById('resultadoLimpieza') || createResultElement();
-            resultadoLimpieza.style.display = 'block';
-            resultadoLimpieza.innerHTML = `
-                <div class="cleaning-result success">
-                    <div class="result-icon">✓</div>
-                    <div class="result-details">
-                        <h4>ESPACIO LIBERADO EXITOSAMENTE</h4>
-                        <p>Archivos eliminados: ${data.total_deleted}.</p>
-                        <p>Tamaño liberado: ${data.space_freed}.</p>
-                        <p>Archivos en uso no eliminados: ${data.files_in_use}.</p>
-                    </div>
-                    <button class="close-result">×</button>
-                </div>
-            `;
-
-            const closeButton = resultadoLimpieza.querySelector('.close-result');
-            if (closeButton) {
-                closeButton.addEventListener('click', () => {
-                    resultadoLimpieza.style.display = 'none';
-                });
-            }
-
-            fetchTemp();
-        } else {
-            statusText.textContent = "Error durante la limpieza";
-            mostrarNotificacion('danger', data.message);
-        }
-    } catch (error) {
-        console.error('Error al limpiar espacio:', error);
-        mostrarNotificacion('danger', 'Error al limpiar archivos temporales');
-
-        const cleaningStatus = document.getElementById('cleaningStatus');
-        if (cleaningStatus) {
-            const progressBar = cleaningStatus.querySelector('.progress-bar');
-            const statusText = cleaningStatus.querySelector('.status-text');
-
-            progressBar.style.width = '100%';
-            progressBar.style.backgroundColor = '#dc3545';
-            progressBar.querySelector('span').textContent = 'Error';
-            statusText.textContent = "Error al limpiar archivos temporales";
-        }
-    }
-}
-
-function createCleaningStatus() {
-    const element = document.createElement('div');
-    element.id = 'cleaningStatus';
-    element.className = 'cleaning-status';
-
-    const container = document.querySelector('.modal-body') || document.body;
-    container.appendChild(element);
-
-    return element;
-}
-
-function createResultElement() {
-    const element = document.createElement('div');
-    element.id = 'resultadoLimpieza';
-    element.className = 'cleaning-result-container';
-
-    const container = document.querySelector('.modal-body') || document.body;
-    container.appendChild(element);
-
-    return element;
-}
-
-async function mostrarArchivosMasGrandes() {
-    try {
-        const response = await fetch('/dashboard/client/get-largest-temp-files/');
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.status === 'success' && data.large_files && data.large_files.length > 0) {
-            const largeFilesContainer = document.getElementById('largeFilesContainer') || createLargeFilesContainer();
-
-            let tableHtml = `
-                <h4>Archivos temporales más grandes</h4>
-                <table class="large-files-table">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Tamaño</th>
-                            <th>Ubicación</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            data.large_files.forEach(file => {
-                const fileName = file.path.split('/').pop();
-                const location = file.path.replace(fileName, '');
-
-                tableHtml += `
-                    <tr data-path="${file.path}">
-                        <td>${fileName}</td>
-                        <td>${file.size}</td>
-                        <td title="${location}">${truncateText(location, 30)}</td>
-                        <td>
-                            <button class="delete-file-btn" data-path="${file.path}">Eliminar</button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            tableHtml += `
-                    </tbody>
-                </table>
-            `;
-
-            largeFilesContainer.innerHTML = tableHtml;
-            largeFilesContainer.style.display = 'block';
-
-            const deleteButtons = largeFilesContainer.querySelectorAll('.delete-file-btn');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', async (event) => {
-                    const filePath = event.target.dataset.path;
-                    await eliminarArchivoEspecifico(filePath);
-
-                    mostrarArchivosMasGrandes();
-                    fetchTemp();
-                });
-            });
-        }
-    } catch (error) {
-        console.error('Error al obtener archivos grandes:', error);
-    }
-}
-
-function truncateText(text, maxLength) {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength - 3) + '...';
-}
-
-function createLargeFilesContainer() {
-    const element = document.createElement('div');
-    element.id = 'largeFilesContainer';
-    element.className = 'large-files-container';
-
-    const container = document.querySelector('.modal-body') || document.body;
-    container.appendChild(element);
-
-    return element;
-}
-
-async function eliminarArchivoEspecifico(filePath) {
-    try {
-        const response = await fetch('/dashboard/client/clear-specific-temp/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                file_paths: [filePath]
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            mostrarNotificacion('success', `Archivo eliminado: ${data.deleted} (${data.space_freed})`);
-        } else {
-            mostrarNotificacion('danger', data.message);
-        }
-
-        return data;
-    } catch (error) {
-        console.error('Error al eliminar archivo específico:', error);
-        mostrarNotificacion('danger', 'Error al eliminar archivo');
-        throw error;
-    }
-}
-
 async function fetchCpuUse() {
     try {
 
@@ -475,9 +257,10 @@ async function fetchCpuUse() {
 
     }
 }
+
 $(document).ready(function () {
-    fetchTemp();
     fetchCpuUse();
+    // getCache();
     const btnLiberarEspacio = document.getElementById('liberarEspacio');
     if (btnLiberarEspacio) {
         btnLiberarEspacio.addEventListener('click', clearTempSpace);
@@ -488,7 +271,6 @@ $(document).ready(function () {
         btnMostrarGrandes.addEventListener('click', mostrarArchivosMasGrandes);
     }
 
-    initMapAsistencia();
     const robotImg = document.getElementById("robotimg");
     const videoRobot = document.getElementById("video-container");
     const videoRobotInput = document.getElementById("video-container2");
@@ -542,7 +324,7 @@ $(document).ready(function () {
         }, 20);
     }
     btnAnalisis.addEventListener('click', function () {
-        btnPressAnalisis = true;
+        window.btnPressAnalisis = true;
         const allImgs = document.querySelectorAll('.imgDetDiag');
         const allTextsTitulo = document.getElementById('textMonitoreo');
         const imgGraficoMon = document.getElementById('imgGraficoMonitoreo');
@@ -560,9 +342,6 @@ $(document).ready(function () {
                 completados++;
                 if (completados === totalSpans) {
                     mostrarNotificacion('success', 'Análisis completo del sistema', 0);
-                    btnOptimizarAntivirus.click();
-                    btnMantFunction.click();
-                    btnHistFunction.click();
                 }
             });
         });
@@ -586,6 +365,6 @@ $(document).ready(function () {
             progress.style.display = 'flex';
         });
     });
-    
+
 });
 

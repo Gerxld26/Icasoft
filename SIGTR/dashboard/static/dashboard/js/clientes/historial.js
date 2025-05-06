@@ -7,7 +7,6 @@ const imgHist = document.getElementById('imgHistDet');
 const spanHistorial = progressBarHistorial.querySelector('span');
 modalHistorial.classList.add('modal-hidden');
 
-
 function HistorialFunction() {
     openModalHistorial.style.pointerEvents = 'none';
     spanHistorial.style.width = '0%';
@@ -25,6 +24,8 @@ function HistorialFunction() {
 }
 openModalHistorial.style.cursor = 'pointer';
 openModalHistorial.addEventListener('click', function () {
+    deshabilitarBotones('historial');
+    modalOpen = true;
     const contenedorHis = document.querySelector(".ultHist");
     contenedorHis.classList.add("borde-animado");
     obtenerHistorial(); 
@@ -40,11 +41,15 @@ openModalHistorial.addEventListener('click', function () {
 
 closeModalHistorial.addEventListener('click', function () {
     modalHistorial.style.display = 'none';
+    modalOpen = false;
+    habilitarBotones('historial');
 });
 
 window.addEventListener('click', function (event) {
     if (event.target == modalHistorial) {
         modalHistorial.style.display = 'none';
+        modalOpen = false;
+        habilitarBotones('historial');
     }
 });
 
@@ -95,20 +100,22 @@ async function obtenerHistorial() {
             tablaHistorial.innerHTML = encabezados;
 
             const tbody = document.createElement('tbody');
-            data.historial.forEach(item => {
+            data.historial.forEach((item, index) => {
                 const fila = document.createElement('tr');
+                fila.id = `hist-${index + 1}`;
+                if (index === 0) {
+                    fila.style.background = '#00ff034d';
+                }
                 fila.innerHTML = `
-                        <td>${formatearFecha(item.timestamp)}</td>
-                        <td>${item.cpu_usage}</td>
-                        <td>${item.ram_percent}</td>
-                        <td>${item.disk_percent}</td>
-                    `;
+                    <td>${formatearFecha(item.timestamp)}</td>
+                    <td>${item.cpu_usage}</td>
+                    <td>${item.ram_percent}</td>
+                    <td>${item.disk_percent}</td>
+                `;
                 tbody.appendChild(fila);
             });
-
             tablaHistorial.appendChild(tbody);
             contenidoHistorialElement.appendChild(tablaHistorial);
-
         } else {
             if (typeof window.mostrarNotificacion === 'function') {
                 window.mostrarNotificacion('error', 'No se pudo obtener el historial', 3);

@@ -4,10 +4,9 @@ from tickets.models import Ticket
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ["title", "description"]
+        fields = ["description"]
         widgets = {
-            "title": forms.TextInput(attrs={"class": "form-control"}),
-            "description": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "description": forms.TextInput(attrs={"class": "form-control", "rows": 4}),
         }
 
 class TicketRequestForm(forms.ModelForm):
@@ -21,12 +20,12 @@ class TicketRequestForm(forms.ModelForm):
     )
     latitude = forms.DecimalField(
         required=True,
-        max_digits=12, decimal_places=8,  # 🔥 Ajustamos la precisión para evitar errores
+        max_digits=12, decimal_places=8, 
         widget=forms.HiddenInput()
     )
     longitude = forms.DecimalField(
         required=True,
-        max_digits=12, decimal_places=8,  # 🔥 Ajustamos la precisión para evitar errores
+        max_digits=12, decimal_places=8, 
         widget=forms.HiddenInput()
     )
 
@@ -37,3 +36,4 @@ class TicketRequestForm(forms.ModelForm):
             "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Título del problema"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Describe tu problema"}),
         }
+

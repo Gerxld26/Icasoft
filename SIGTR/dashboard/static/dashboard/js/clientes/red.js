@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (btnRed) {
         btnRed.addEventListener('click', (e) => {
+            deshabilitarBotones('red');
             const contenedorRed = document.querySelector(".red");
             contenedorRed.classList.add("borde-animado");
             e.preventDefault();
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function abrirModalRed() {
         if (modalComprobacionRed) {
+            modalOpen = true;
             modalComprobacionRed.style.display = 'flex';
             modalComprobacionRed.offsetWidth;
             
@@ -52,13 +54,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     closeModalComprobacionRed.addEventListener('click', function () {
+        habilitarBotones('red');
         modalComprobacionRed.style.display = 'none';
         cancelarPrueba();
+        modalOpen = false;
     });
     
     window.addEventListener('click', function(event) {
         if (event.target === modalComprobacionRed) {
             modalComprobacionRed.style.display = 'none';
+            modalOpen = false;
+            habilitarBotones('red');
+            cancelarPrueba();
         }
     });
 
@@ -105,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
             intervalId = null;
         }
         testEnProgreso = false;
+        modalOpen = false;
     }
     
     function iniciarTestVelocidad() {
@@ -175,8 +183,11 @@ document.addEventListener('DOMContentLoaded', function() {
             intervalId = null;
             
             actualizarBarraProgreso(100);
-            const iconCheck = '<i id="btnResultadosWifi" class="fa-solid fa-eye-slash" style= "color: white; font-size: 20px;"></i>';
-            if (mensajeProgreso) mensajeProgreso.innerHTML = `Análisis completado ${iconCheck}`;
+            const btnDetalleRed = '<button id="btnResultadosWifi">Ver detalle</button>';
+            if (mensajeProgreso) mensajeProgreso.innerHTML = `
+                <div>Análisis completado</div>
+                <div id= 'btnRedContent'>${btnDetalleRed}</div>
+            `;
             
             const velocidadDescarga = data.data.download_speed;
             actualizarVelocimetro(velocidadDescarga);
@@ -229,35 +240,18 @@ document.addEventListener('DOMContentLoaded', function() {
             angulo = -90;
         } else if (velocidad < 10) {
             angulo = -90 + (velocidad / 10 * 15);
-            agujas.forEach(aguja => {
-                aguja.style.boxShadow = "7px 0px 19px 9px rgba(0, 217, 255, 0.7)";
-            });
         
         } else if (velocidad < 50) {
             angulo = -75 + ((velocidad - 10) / 40 * 15);
-            agujas.forEach(aguja => {
-                aguja.style.boxShadow = "7px 0px 19px 9px rgba(186, 7, 79, 0.7)";
-            });
+
         } else if (velocidad < 100) {
             angulo = -60 + ((velocidad - 50) / 50 * 15);
-            agujas.forEach(aguja => {
-                aguja.style.boxShadow = "7px 0px 19px 9px rgba(244, 0, 98, 0.7)";
-            });
         } else if (velocidad < 250) {
             angulo = -45 + ((velocidad - 100) / 150 * 30);
-            agujas.forEach(aguja => {
-                aguja.style.boxShadow = "7px 0px 19px 9px rgba(255, 153, 0, 0.7)";
-            });
         } else if (velocidad < 500) {
             angulo = -15 + ((velocidad - 250) / 250 * 45);
-            agujas.forEach(aguja => {
-                aguja.style.boxShadow = "7px 0px 19px 9px rgba(0, 247, 255, 0.7)";
-            });
         } else if (velocidad <= 1000) {
             angulo = 30 + ((velocidad - 500) / 500 * 60);
-            agujas.forEach(aguja => {
-                aguja.style.boxShadow = "7px 0px 19px 9px rgba(51, 255, 0, 0.7)";
-            });
         } else {
             angulo = 90;
         }

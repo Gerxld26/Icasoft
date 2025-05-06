@@ -1,7 +1,8 @@
 let chartGlobal;
 let modalOpen = false;
+let notiMostrada = false;
 let intervalId;
-let discosCriticos = [];
+let discosNotificados = new Set();
 /*MONITOREO*/
 const modalMonitoreo = document.getElementById('modalMonitoreo');
 const openModalMonitoreo = document.getElementById('btnMonitoreo');
@@ -21,47 +22,160 @@ function MonitoreoFunction() {
         setTimeout(() => {
             modalMonitoreo.style.display = 'flex';
             openModalMonitoreo.style.pointerEvents = 'auto';
-        }, 3000);
+            fetchCpuData();
+        }, 4000);
     }, typeNotification);
 }
+function habilitarBotones(type) {
+    switch (type) {
+        case 'monitoreo':
+            openModalDiagnostico.disabled = false;
+            openModalMantenimiento.disabled = false;
+            openModalAntivirus.disabled = false;
+            openModalHistorial.disabled = false;
+            btnRed.disabled = false;
+            break;
+        case 'diagnostico':
+            openModalMonitoreo.disabled = false;
+            openModalMantenimiento.disabled = false;
+            openModalAntivirus.disabled = false;
+            openModalHistorial.disabled = false;
+            btnRed.disabled = false;
+            break;
+        case 'mantenimiento':
+            openModalMonitoreo.disabled = false;
+            openModalDiagnostico.disabled = false;
+            openModalAntivirus.disabled = false;
+            openModalHistorial.disabled = false;
+            btnRed.disabled = false;
+            break;
+        case 'antivirus':
+            openModalMonitoreo.disabled = false;
+            openModalMantenimiento.disabled = false;
+            openModalDiagnostico.disabled = false;
+            openModalHistorial.disabled = false;
+            btnRed.disabled = false;
+            break;
+        case 'historial':
+            openModalMonitoreo.disabled = false;
+            openModalMantenimiento.disabled = false;
+            openModalAntivirus.disabled = false;
+            openModalDiagnostico.disabled = false;
+            btnRed.disabled = false;
+            break;
+        case 'red':
+            openModalMonitoreo.disabled = false;
+            openModalMantenimiento.disabled = false;
+            openModalDiagnostico.disabled = false;
+            openModalAntivirus.disabled = false;
+            openModalHistorial.disabled = false;
+            break;
+        default:
 
+            break;
+    }
+}
+function deshabilitarBotones(type) {
+    switch (type) {
+        case 'monitoreo':
+            openModalDiagnostico.disabled = true;
+            openModalMantenimiento.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalHistorial.disabled = true;
+            btnRed.disabled = true;
+            break;
+        case 'diagnostico':
+            openModalMonitoreo.disabled = true;
+            openModalMantenimiento.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalHistorial.disabled = true;
+            btnRed.disabled = true;
+            break;
+        case 'mantenimiento':
+            openModalMonitoreo.disabled = true;
+            openModalDiagnostico.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalHistorial.disabled = true;
+            btnRed.disabled = true;
+            break;
+        case 'antivirus':
+            openModalMonitoreo.disabled = true;
+            openModalMantenimiento.disabled = true;
+            openModalDiagnostico.disabled = true;
+            openModalHistorial.disabled = true;
+            btnRed.disabled = true;
+            break;
+        case 'historial':
+            openModalMonitoreo.disabled = true;
+            openModalMantenimiento.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalDiagnostico.disabled = true;
+            btnRed.disabled = true;
+            break;
+        case 'red':
+            openModalMonitoreo.disabled = true;
+            openModalMantenimiento.disabled = true;
+            openModalDiagnostico.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalHistorial.disabled = true;
+            break;
+        default:
+            openModalDiagnostico.disabled = true;
+            openModalMantenimiento.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalHistorial.disabled = true;
+            btnRed.disabled = true;
+            break;
+    }
+}
 /*MODAL MONITOREO*/
 openModalMonitoreo.style.cursor = 'pointer';
-
 openModalMonitoreo.addEventListener('click', function () {
-    modalOpen = true;
+    deshabilitarBotones('monitoreo');
     const contenedorMon = document.querySelector(".monitoreo");
     contenedorMon.classList.add("borde-animado");
     const textDivMonitoreo = document.getElementById('textMonitoreo');
+    modalOpen = true;
+    notiMostrada = true;
+    if (btnPressAnalisis) { //si el btnPressAnalisis es true.
+        fetchCpuData();
+        modalMonitoreo.style.display = 'flex';
+    } else {
+        MonitoreoFunction();
+    }
     imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
     progressBar.style.display = 'flex';
     imgGrafico.style.height = '80px';
     textDivMonitoreo.style.padding = '0';
     intervalId = setInterval(fetchCpuData, 5000);
-    if (btnPressAnalisis) { //si el btnPressAnalisis es true.
-        modalMonitoreo.style.display = 'flex';
-    } else {
-        MonitoreoFunction();
-    }
-}); 
+});
 
 
 closeModalbtn.addEventListener('click', function () {
+    habilitarBotones('monitoreo');
     modalMonitoreo.style.display = 'none';
     modalOpen = false;
-    btnPressAnalisis = false;
+    notiMostrada = false;
     imgGrafico.style.animation = "none";
     clearInterval(intervalId);
-    imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
+    notificationDevice.style.display = 'none';
+    discosNotificados.clear();
+    // imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
+
 });
+
 // Cerrar el modal si se hace clic fuera del contenido del modal 
 window.addEventListener('click', function (event) {
     if (event.target == modalMonitoreo) {
+        habilitarBotones('monitoreo');
         modalMonitoreo.style.display = 'none';
         modalOpen = false;
-        btnPressAnalisis = false;
-        imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
+        notiMostrada = false;
+        imgGrafico.style.animation = "none";
+        // imgGrafico.style.animation = "rotarImg 1.5s linear infinite";
         clearInterval(intervalId);
+        notificationDevice.style.display = 'none';
+        discosNotificados.clear();
     }
 });
 // Función que obtiene los datos de RAM y actualiza el progreso
@@ -71,7 +185,7 @@ async function fetchCpuData() {
         const responseCPU = await fetch('/dashboard/client/monitoring/cpu/data/');
         const responseRAM = await fetch('/dashboard/client/monitoring/ram/data/'); //la ruta se definió en el views  client_monitoring_ram_data
         const responseDISK = await fetch('/dashboard/client/monitoring/disk/data');
-
+        let discosCriticos = [];
         const dataCPU = await responseCPU.json();
         const dataRAM = await responseRAM.json();
         const dataDisk = await responseDISK.json();
@@ -113,7 +227,7 @@ async function fetchCpuData() {
             spanCPU.style.width = dataCPU.usage + '%';
             spanCPU.innerHTML = dataCPU.usage + '%';
             spanCPU.style.backgroundColor = "red";
-            mostrarNotificacion('danger', 'El uso del CPU es peligroso', 0);
+
         }
         //RAM
         if (parseInt(dataRAM.percent) >= 0 && parseInt(dataRAM.percent) <= 50) {
@@ -129,22 +243,30 @@ async function fetchCpuData() {
             spanRAM.style.width = dataRAM.percent + '%';
             spanRAM.innerHTML = dataRAM.percent + '%';
             spanRAM.style.backgroundColor = "red"; // Rojo
-            mostrarNotificacion('danger', 'El uso de la Memoria es alta', 1);
+            notificacionDetalle("La memoria ram está saturada");
         }
 
         //DISCOS
         var textDisk = '';
         const datosDiscos = dataDisk.disks;
-
         datosDiscos.forEach((diskDetails, index) => {
-            textDisk += '<div class="textContentHW disco-nombre">' + diskDetails.device + ' - En uso: ' + diskDetails.used + '</div>';
+            textDisk += '<div class="device">';
+            textDisk += '<div class="textContentHW disco-nombre" style="width:100%;">'
+            textDisk += '<div>( ' + diskDetails.device + ' )</div>';
+            textDisk += '<div style = "color: rgb(255 255 255 / 60%); font-family: "Gill Sans Extrabold", Helvetica, sans-serif; width:100%">' + diskDetails.used + ' en uso de ' + diskDetails.total + '</div>';
+            textDisk += '</div>';
             textDisk += '<div class="progress-bar-Monitoreo">';
             textDisk += '<span class="disco-bar" id="disco-bar-' + index + '" data-width="0%"></span>';
             textDisk += '<div class="progress-text" id="disk-progress-text' + index + '">0%</div>';
             textDisk += '</div>';
+            textDisk += '</div>';
         });
         $("#contentDisco").html(textDisk);
-
+        if (datosDiscos.length > 3) {
+            modalMonitoreo.classList.add('two-columns');
+        } else {
+            modalMonitoreo.classList.remove('two-columns');
+        }
         datosDiscos.forEach((diskDetails, index) => {
             const diskBar = document.getElementById('disco-bar-' + index);
             const diskUsage = parseFloat(diskDetails.percent);
@@ -172,13 +294,17 @@ async function fetchCpuData() {
                 diskBar.style.width = diskUsage + '%';
                 diskBar.innerHTML = diskUsage + '%';
                 diskBar.style.backgroundColor = "red";
-                if (!discosCriticos.includes(diskDetails.device)) {
+                if (!discosNotificados.has(diskDetails.device)) {
+                    discosNotificados.add(diskDetails.device);
                     discosCriticos.push(diskDetails.device);
                 }
-                // mostrarNotificacion('danger', 'El uso del disco es alto en la partición ' + diskDetails.device, 2);
             }
         });
-
+        if (discosCriticos.length > 0) {
+            setTimeout(() => {
+                notificacionDetalle("Los siguientes discos tienen un uso elevado:<br><strong>[ " + discosCriticos.join(' ] [ ') + " ]</strong>");
+            }, 2000);
+        }
         // GRÁFICO DINÁMICO:
         const cpuValue = parseFloat(dataCPU.usage);
         const ramValue = parseFloat(dataRAM.percent);
@@ -199,7 +325,7 @@ async function fetchCpuData() {
         }
 
     } catch (error) {
-        console.log('Error al cargar datos de la RAM: ', error);
+        console.log('Error al cargar datos de Monitoreo: ', error);
     }
 }
 
@@ -244,6 +370,6 @@ chartGlobal = new Chart(ctxDoughnut, {
     }
 });
 $(document).ready(function () {
-    fetchCpuData();
+
 });
 

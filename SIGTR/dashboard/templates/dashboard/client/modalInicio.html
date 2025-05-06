@@ -6,53 +6,6 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.anychart.com/releases/v8/js/anychart-bundle.min.js"></script>
 
-<!--MODDAL ASISTENCIA TÉCNICA-->
-<div id="modalAsistencia" class="modal">
-    <div class="modal-content">
-        <div class="headerModal">
-            <span id="closeModalAsis" class="close">&times;</span>
-            <div class="textHW">¿Necesitas asistencia técnica?</div>
-        </div>
-        <div class="contentData">
-            <div class="asistencia1" id="problemaDescript">
-                <div class="textDescrip">Describe el problema</div>
-                <div class="inputDescrip">
-                    <input type="text" class="textAsistencia">
-                </div>
-            </div>
-            <div class="asistencia1" id="contentDireccion">
-                <div class="textDescrip">Dirección para la asistencia</div>
-                <div class="inputDescrip">
-                    <input type="text" class="textAsistencia" id="inputDireccion">
-                    <button class="btnUbiCliente">
-                        <div><i class="fa-solid fa-location-dot"></i></div>
-                        <div>Mi ubicación</div>
-                    </button>
-                </div>
-            </div>
-            <div class="asistencia2">
-                <div class="textDescrip">Técnicos cerca a tu dirección:</div>
-                <div class="inputDescrip">
-                    <!-- <select name="" id="" class="selectTecnico">
-                        <option value="">Selecciona un técnico</option>
-                        <option value="">Juan</option>
-                    </select> -->
-                </div>
-            </div>
-            <div class="asistencia4">
-                <div>
-                    <div id="mapAsistencia"></div>
-                </div>
-
-                <div style="font-style: italic; color: beige;">* Deslice la localización a la dirección que desee la
-                    asistencia *</div>
-            </div>
-            <div class="asistencia5">
-                <button class="btnAsistencia">SOLICITAR</button>
-            </div>
-        </div>
-    </div>
-</div>
 <!--MODAL MONITOREO:-->
 <div id="modalMonitoreo" class="modal">
     <div class="modal-content" id="contentMonitoreo">
@@ -448,8 +401,11 @@
                     <div class="titulo-archivos-escaneados">Archivos escaneados:</div>
                     <div id="archivos-escaneados-lista" class="lista-archivos-escaneados"></div>
                 </div>
-                <div class="contenedor-logs-animados">
+                <div class="contenedor-logs-animados" id="contenedor-logs-animados">
                     <div id="antivirus-log-container" class="log-actual"></div>
+                </div>
+                <div class="verAntivirus" id="verAntivirus" style="display: none;">
+                    <button id="verMasAnt">Ver más</button>
                 </div>
             </div>
  
@@ -482,6 +438,9 @@
                         <div class="titulo">Recomendaciones</div>
                         <div id="recomendacionesSeguridad" class="contenido">-</div>
                     </div>
+                </div>
+                <div id="volverAnt">
+                    <button>Volver a escanear</button>
                 </div>
             </div>
         </div>
@@ -544,18 +503,6 @@
                             <i class="fa-solid fa-screwdriver-wrench"></i> Reparar
                         </button>
                     </div>
-                </div>
-            </div>
-
-            <!-- Sección de resultados -->
-            <div id="mantenimientoResultado" class="resultado-success" style="display: none;">
-                <!-- <i class="fas fa-check-circle" style="font-size: 24px; margin-right: 10px;"></i> -->
-                <div class="contentResultado">
-                    <div id="iconResult"><i id="iconoType"></i></div>
-                    <div id="resultadoMensaje">
-                        <!-- Aquí va el mensaje del resultado -->
-                    </div>
-                    <span class="closeSucessMant" id="close"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
                 </div>
             </div>
         </div>
@@ -705,12 +652,6 @@
                         <div class="red-velocimetro-valor">0.00</div>
                         <div class="red-velocimetro-unidad">Mbps</div>
                     </div>
-                    <!-- Botón de iniciar integrado en el modal -->
-                    <!-- <div class="red-iniciar-seccion">
-                        <button id="red-btn-iniciar-test" class="red-btn-test">
-                            <i class="fa-solid fa-gauge-high"></i> INICIAR PRUEBA DE VELOCIDAD
-                        </button>
-                    </div> -->
                 </div>
             </div>
 

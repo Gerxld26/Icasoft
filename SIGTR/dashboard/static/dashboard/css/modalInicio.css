@@ -78,6 +78,11 @@
         "headerModal"
         "contentDataMonitoreo";
     gap: 10px;
+    width: 100%;
+    height: 80%;
+    max-width: 900px;
+    max-height: 500px;
+    grid-template-rows: 10% auto;
 }
 
 .contentDataMonitoreo {
@@ -86,6 +91,7 @@
         "contentMonitoreoGrafico componentes";
     justify-items: center;
     grid-auto-columns: 50% auto;
+    padding-right: 15px;
 }
 
 .contentMonitoreoGrafico {
@@ -167,7 +173,7 @@
     justify-content: center;
 }
 
-.contentCompHW {
+#modalMonitoreo .contentCompHW {
     display: grid;
     grid-template-areas:
         "textCompMonitoreo"
@@ -192,12 +198,10 @@
     height: 100%;
 }
 
-.contentHW {
+#modalMonitoreo .contentHW {
     display: grid;
-    flex-direction: column;
-    justify-items: center;
     width: 100%;
-    gap: 10px;
+    gap: 5px;
 }
 
 .textContentHW {
@@ -206,6 +210,16 @@
     display: grid;
     width: 80%;
     justify-items: start;
+}
+
+div#sistemaOperativotext {
+    display: grid;
+    align-items: center;
+}
+
+div#cpu-name {
+    display: grid;
+    align-items: center;
 }
 
 .progress-text {
@@ -226,7 +240,7 @@
 .progress-bar-Monitoreo {
     position: relative;
     height: 25px;
-    width: 80%;
+    width: 100%;
     border-radius: 30px;
     background-color: white;
     box-shadow: 5px 5px 10px rgb(3, 101, 140);
@@ -244,6 +258,21 @@
     border-radius: 30px;
     background: white;
     transition: width .5s linear;
+}
+
+#modalMonitoreo.two-columns #contentDisco {
+    grid-template-areas: 'device device';
+    column-gap: 10px;
+}
+
+#modalMonitoreo.two-columns .modal-content {
+    height: 100%;
+    max-height: 600px;
+}
+
+.Disco {
+    padding-bottom: 10px;
+    padding-top: 10px;
 }
 
 /* MODAL DIAGNÓSTICO  */
@@ -1509,10 +1538,16 @@
 }
 
 .antivirus-modal-content {
+}
+
+.antivirus-modal-content {
     background-color: #1e2837;
     border-radius: 10px;
     max-width: 500px;
     width: 100%;
+}
+
+.antivirus-header {
 }
 
 .antivirus-header {
@@ -1521,6 +1556,9 @@
     padding: 15px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
+}
+
+.antivirus-content {
 }
 
 .antivirus-content {
@@ -1535,12 +1573,19 @@
 
 .antivirus-info,
 .analisis-componente {
+}
+
+.antivirus-info,
+.analisis-componente {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
     padding: 10px;
     background-color: #2c3e50;
     border-radius: 5px;
+}
+
+.analisis-componente .titulo {
 }
 
 .analisis-componente .titulo {
@@ -1568,6 +1613,9 @@
     list-style-type: disc;
     padding-left: 20px;
     margin: 0;
+}
+
+.antivirus-analisis .analisis-componente .contenido {
 }
 
 .antivirus-analisis .analisis-componente .contenido {
@@ -1789,17 +1837,7 @@
 }
 
 .red-modal-content {
-    position: relative;
-    width: 90%;
     max-width: 550px;
-    margin: auto;
-    background-color: #1a1a2e;
-    border-radius: 8px;
-    border: 1px solid #0099ff;
-    box-shadow: 0 0 20px rgba(0, 153, 255, 0.3);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
 }
 
 .red-content-data {
@@ -1914,13 +1952,16 @@
     transform: scale(1.1);
     transition: transform 0.3s ease;
 }
-.companyWifi{
+
+.companyWifi {
     display: flex;
     flex-direction: row;
 }
-#analisisRed{
+
+#analisisRed {
     width: 500px;
 }
+
 /* Barra de progreso con animación */
 .red-progreso-container {
     width: 100%;
@@ -1979,6 +2020,8 @@
     font-family: Verdana;
     opacity: 1;
     transition: opacity 0.3s ease;
+    display: grid;
+    gap: 10px;
 }
 
 /* Resultados */
@@ -2194,6 +2237,17 @@
     display: none;
 }
 
+#btnResultadosWifi {
+    padding: 5px;
+    width: 40%;
+    border-radius: 30px;
+    color: white;
+    background: #01aded;
+    font-style: normal;
+    box-shadow: inset 0px 0px 11px 1px #263080;
+    cursor: pointer;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .red-modal-content {
@@ -2222,7 +2276,7 @@
     gap: 10px;
 }
 
-#modalAsistencia .contentData {
+#modalAsistencia .contentData #formAsistencia {
     display: grid;
     grid-template-areas: "asistencia1" "asistencia1" "asistencia2" "asistencia4" "asistencia5";
     gap: 15px;
@@ -2243,7 +2297,23 @@
 .asistencia2 .inputDescrip {
     width: 100%;
 }
-
+.asistencia5{
+    display: grid;
+    grid-template-areas: 'botones botones';
+    grid-template-columns: 50%;
+    gap: 10px;
+}
+.asistencia5 #contactRef {
+    display: grid;
+    width: 100%;
+    justify-items: center;
+}
+a.btnAsistencia {
+    display: flex;
+    gap: 10px;
+    text-decoration: none;
+    justify-content: center;
+}
 #contentDireccion .inputDescrip {
     width: 100%;
     height: 40px;
@@ -2257,6 +2327,11 @@
 #contentDireccion .textAsistencia {
     border-top-left-radius: 30px;
     border-bottom-left-radius: 30px;
+    padding-left: 10px;
+}
+input#descripcion {
+    height: 40px;
+    padding-left: 10px;
 }
 
 .btnUbiCliente {
