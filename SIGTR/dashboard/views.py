@@ -665,7 +665,7 @@ def system_virus_scan(request):
             'total_files_scanned': 0,
             'potentially_malicious': [],
             'clean_files': 0,
-            'scan_logs': []  # Nuevo campo para logs detallados
+            'scan_logs': []
         }
 
         scan_paths = [
@@ -674,7 +674,7 @@ def system_virus_scan(request):
             os.path.join(os.path.expanduser('~'), 'Documents'),
         ]
 
-        def get_files_to_scan(directory, max_files=10):
+        def get_files_to_scan(directory):
             files_to_scan = []
             try:
                 for root, _, files in os.walk(directory):
@@ -682,76 +682,84 @@ def system_virus_scan(request):
                         file_path = os.path.join(root, file)
                         if os.path.getsize(file_path) < 32 * 1024 * 1024:
                             files_to_scan.append(file_path)
-                            if len(files_to_scan) >= max_files:
-                                break
-                    if len(files_to_scan) >= max_files:
-                        break
             except Exception as e:
                 logger.warning(f"Error escaneando directorio {directory}: {str(e)}")
             return files_to_scan
 
+        max_total_files = 30
+        all_files = []
+
         for path in scan_paths:
             if os.path.exists(path):
-                files_to_scan = get_files_to_scan(path)
-                
-                for file_path in files_to_scan:
-                    try:
-                        with open(file_path, 'rb') as f:
-                            files = {'file': f}
-                            response = requests.post(
-                                'https://www.virustotal.com/vtapi/v2/file/scan',
-                                params={'apikey': virustotal_api_key},
-                                files=files
-                            )
-                        
-                        if response.status_code == 200:
-                            scan_result = response.json()
-                            
-                            report_response = requests.get(
-                                'https://www.virustotal.com/vtapi/v2/file/report',
-                                params={
-                                    'apikey': virustotal_api_key,
-                                    'resource': scan_result['resource']
-                                }
-                            )
-                            
-                            if report_response.status_code == 200:
-                                analysis_results = report_response.json()
-                                
-                                scan_results['total_files_scanned'] += 1
-                                
-                                log_entry = {
-                                    'file': os.path.basename(file_path),
-                                    'status': 'clean',
-                                    'details': 'Archivo escaneado correctamente'
-                                }
-                                
-                                if analysis_results.get('positives', 0) > 0:
-                                    log_entry['status'] = 'threat'
-                                    log_entry['details'] = f"Amenazas detectadas: {analysis_results['positives']} de {analysis_results['total']} motores"
-                                    
-                                    scan_results['potentially_malicious'].append({
-                                        'file': file_path,
-                                        'detections': analysis_results['positives'],
-                                        'total_engines': analysis_results['total']
-                                    })
-                                else:
-                                    scan_results['clean_files'] += 1
-                                
-                                scan_results['scan_logs'].append(log_entry)
-                   
-                    except PermissionError:
-                        scan_results['scan_logs'].append({
+                files_in_path = get_files_to_scan(path)
+                for file in files_in_path:
+                    if len(all_files) >= max_total_files:
+                        break
+                    all_files.append(file)
+            if len(all_files) >= max_total_files:
+                break
+
+        for file_path in all_files:
+            try:
+                with open(file_path, 'rb') as f:
+                    files = {'file': f}
+                    response = requests.post(
+                        'https://www.virustotal.com/vtapi/v2/file/scan',
+                        params={'apikey': virustotal_api_key},
+                        files=files
+                    )
+
+                if response.status_code == 200:
+                    scan_result = response.json()
+
+                    report_response = requests.get(
+                        'https://www.virustotal.com/vtapi/v2/file/report',
+                        params={
+                            'apikey': virustotal_api_key,
+                            'resource': scan_result['resource']
+                        }
+                    )
+
+                    if report_response.status_code == 200:
+                        analysis_results = report_response.json()
+
+                        scan_results['total_files_scanned'] += 1
+
+                        log_entry = {
                             'file': os.path.basename(file_path),
-                            'status': 'error',
-                            'details': 'Permiso denegado'
-                        })
-                    except Exception as e:
-                        scan_results['scan_logs'].append({
-                            'file': os.path.basename(file_path),
-                            'status': 'error',
-                            'details': str(e)
-                        })
+                            'status': 'clean',
+                            'details': 'Archivo escaneado correctamente'
+                        }
+
+                        if analysis_results.get('positives', 0) > 0:
+                            log_entry['status'] = 'threat'
+                            log_entry['details'] = (
+                                f"Amenazas detectadas: {analysis_results['positives']} "
+                                f"de {analysis_results['total']} motores"
+                            )
+
+                            scan_results['potentially_malicious'].append({
+                                'file': file_path,
+                                'detections': analysis_results['positives'],
+                                'total_engines': analysis_results['total']
+                            })
+                        else:
+                            scan_results['clean_files'] += 1
+
+                        scan_results['scan_logs'].append(log_entry)
+
+            except PermissionError:
+                scan_results['scan_logs'].append({
+                    'file': os.path.basename(file_path),
+                    'status': 'error',
+                    'details': 'Permiso denegado'
+                })
+            except Exception as e:
+                scan_results['scan_logs'].append({
+                    'file': os.path.basename(file_path),
+                    'status': 'error',
+                    'details': str(e)
+                })
 
         return JsonResponse({
             'status': 'success',
@@ -764,7 +772,6 @@ def system_virus_scan(request):
             'status': 'error', 
             'message': str(e)
         }, status=500)
-
 # Vista adicional para obtener detalles del sistema
 @login_required
 @require_http_methods(["GET"])

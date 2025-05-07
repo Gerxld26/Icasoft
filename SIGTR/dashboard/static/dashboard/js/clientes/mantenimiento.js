@@ -270,6 +270,7 @@ function getCookie(name) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    getCache();
     if (btnLiberarEspacio) {
         btnLiberarEspacio.addEventListener('click', function () {
             ejecutarAccion('cleanup', this);
