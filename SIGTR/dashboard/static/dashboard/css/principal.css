@@ -939,51 +939,6 @@ body {
         /* el / significa que después de eso se determina el tamaño del ancho de cada columna */
         gap: 25px;
     }
-
-    /* .idiomas .listaIdiomas {
-        height: max-content;
-        background-color: #27272a;
-        border-radius: 30px;
-    }
-
-    .listaIdiomas {
-        display: none;
-        position: absolute;
-        top: 100%;
-        color: white;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        z-index: 1000;
-        width: 30%;
-    }
-
-    .listaIdiomas li {
-        border: 2px solid white;
-        border-radius: 30px;
-        box-shadow: 10px 5px 5px black;
-        margin: 5px;
-        padding: 8px 12px;
-        cursor: pointer;
-    }
-
-    /* Estilo del contenedor de idiomas 
-    .idiomas {
-        color: white;
-        position: relative;
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-    }
-
-    .idiomas:hover .listaIdiomas {
-        display: block;
-    }
-
-    .listaIdiomas li:hover {
-        background: linear-gradient(180deg, rgb(37, 36, 36), rgb(43, 67, 84));
-    } */
-
     /*primera columna:*/
     .primero {
         grid-template-rows: 15% 70% auto !important;
