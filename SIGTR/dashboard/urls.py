@@ -83,7 +83,14 @@ from .views import (
     run_diagnostic_scenario,
     get_scenario_result,
     mark_issue_resolved,
-    
+    get_latest_diagnosis_result,
+    download_diagnostic_file,
+    system_updates_info,
+    fix_all_drivers,
+    fix_driver,
+    download_driver,
+    scan_drivers,
+    restart_system
         
 )
 
@@ -174,8 +181,17 @@ urlpatterns = [
     path('api/diagnosis/defender/status/', defender_status_api, name='defender_status_api'),
     path('api/diagnosis/scenario/<int:scenario_id>/', run_diagnostic_scenario, name='run_diagnostic_scenario'),
     path('api/diagnosis/scenario/result/<int:run_id>/', get_scenario_result, name='get_scenario_result'),
+    path('api/diagnosis/latest/', get_latest_diagnosis_result, name='get_latest_diagnosis_result'),
+    path('api/diagnosis/<int:diagnosis_id>/file/<str:file_type>/', download_diagnostic_file, name='download_diagnostic_file'),
+    path('system/updates-info/', system_updates_info, name='system_updates_info'),
     
-    # Marcar problemas como resueltos
     path('api/diagnosis/issue/<int:issue_id>/resolve/', mark_issue_resolved, name='mark_issue_resolved'),
+    
+    #Soluciones drivers
+    path('api/diagnosis/fix-driver/<str:driver_id>/', fix_driver, name='fix_driver'),
+    path('api/diagnosis/fix-all-drivers/', fix_all_drivers, name='fix_all_drivers'),
+    path('api/diagnosis/scan-drivers/', scan_drivers, name='scan_drivers'),
+    path('api/diagnosis/download-driver/<str:device_id>/', download_driver, name='download_driver'),
+    path('api/system/restart/', restart_system, name='restart_system'),
     
 ]

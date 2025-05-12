@@ -1271,6 +1271,535 @@ div#cpu-name {
     }
 }
 
+.component-category-title {
+    font-size: 1.1rem;
+    margin: 20px 0 10px;
+    color: #fff;
+    background-color: rgba(0, 150, 215, 0.2);
+    padding: 8px 15px;
+    border-radius: 4px;
+}
+
+/* Estilos para componentes del sistema */
+.system-components-list {
+    margin-bottom: 20px;
+}
+
+/* Estilos para mensajes de error */
+.error-message {
+    background-color: rgba(255, 50, 50, 0.1);
+    border-left: 3px solid #ff5050;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 0 4px 4px 0;
+}
+
+.error-message p {
+    margin: 5px 0;
+    color: #e6e6e6;
+}
+
+/* Estilos para botón de reintentar */
+.retry-button {
+    background-color: #0096d7;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.retry-button:hover {
+    background-color: #007bb8;
+}
+
+/* Estados de componentes */
+.component-status.unknown {
+    background-color: #6c757d;
+}
+
+/* Mejorar alertas */
+.alert {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-left: 3px solid #28a745;
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-left: 3px solid #ffc107;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-left: 3px solid #dc3545;
+}
+
+.alert h5 {
+    margin-top: 0;
+    color: #e6e6e6;
+}
+
+/* Estilos para ítems de seguridad */
+.security-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.security-item {
+    display: flex;
+    align-items: center;
+    background-color: rgba(33, 37, 41, 0.6);
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.security-icon {
+    font-size: 24px;
+    margin-right: 15px;
+}
+
+.security-details h5 {
+    margin: 0 0 5px;
+}
+
+.security-status {
+    font-size: 0.9rem;
+}
+
+/* Estados de seguridad */
+.security-item.success .security-icon {
+    color: #28a745;
+}
+
+.security-item.error .security-icon {
+    color: #dc3545;
+}
+
+.security-item.warning .security-icon {
+    color: #ffc107;
+}
+
+.security-item.unknown .security-icon {
+    color: #6c757d;
+}
+
+/* Estilos para categorías de componentes */
+.component-category-title {
+    font-size: 1.1rem;
+    margin: 20px 0 10px;
+    color: #fff;
+    background-color: rgba(0, 150, 215, 0.2);
+    padding: 8px 15px;
+    border-radius: 4px;
+}
+
+/* Estilos para componentes del sistema */
+.system-components-list {
+    margin-bottom: 20px;
+}
+
+.system-components-list .component-item {
+    margin-bottom: 8px;
+}
+
+/* Estilos para estados desconocidos */
+.component-status.unknown {
+    background-color: #6c757d;
+}
+
+/* Estilos para categorías de componentes */
+.component-category-title {
+    font-size: 1.1rem;
+    margin: 20px 0 10px;
+    color: #fff;
+    background-color: rgba(0, 150, 215, 0.2);
+    padding: 8px 15px;
+    border-radius: 4px;
+}
+
+/* Estilos para componentes del sistema */
+.system-components-list {
+    margin-bottom: 20px;
+}
+
+.system-components-list .component-item {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: rgba(33, 37, 41, 0.4);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.system-components-list .component-item:hover {
+    background-color: rgba(33, 37, 41, 0.6);
+}
+
+/* Estado del componente */
+.component-status {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.component-status.success {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.component-status.warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.component-status.error {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.component-status.unknown {
+    background-color: rgba(108, 117, 125, 0.2);
+    color: #6c757d;
+}
+
+.fix-driver-btn, .update-driver-btn {
+    transition: all 0.3s ease;
+}
+
+.fix-driver-btn:hover, .update-driver-btn:hover {
+    transform: scale(1.05);
+}
+
+.fix-driver-btn.btn-success, .update-driver-btn.btn-success {
+    pointer-events: none;
+}
+
+.driver-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.repair-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.repair-spinner {
+    background: #1e2a38;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.repair-spinner i {
+    font-size: 40px;
+    color: #0d6efd;
+    margin-bottom: 15px;
+}
+
+
+.issue-action {
+    margin-top: 10px;
+}
+
+.fix-driver-issue-btn, .fix-all-driver-issues-btn, .fix-all-scenario-drivers-btn {
+    transition: all 0.3s ease;
+}
+
+.fix-driver-issue-btn:hover, .fix-all-driver-issues-btn:hover, .fix-all-scenario-drivers-btn:hover {
+    transform: scale(1.03);
+}
+
+.scenario-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.issue-item {
+    border-left: 4px solid;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+}
+
+.issue-item.high {
+    border-color: #dc3545;
+}
+
+.issue-item.medium {
+    border-color: #fd7e14;
+}
+
+.issue-item.low {
+    border-color: #ffc107;
+}
+
+.issue-severity {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.high .issue-severity {
+    background-color: #dc3545;
+    color: white;
+}
+
+.medium .issue-severity {
+    background-color: #fd7e14;
+    color: white;
+}
+
+.low .issue-severity {
+    background-color: #ffc107;
+    color: black;
+}
+
+.reinicio-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.dialog-content {
+    background: #1e2a38;
+    border-radius: 10px;
+    padding: 25px;
+    width: 80%;
+    max-width: 500px;
+    text-align: center;
+}
+
+.dialog-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+@keyframes progress-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.progress-pulse {
+    animation: progress-pulse 1.5s infinite;
+}
+
+.scan-progress-footer {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* botones diag */
+
+/* Estilos base para todos los botones */
+.btn-dashboard {
+    position: relative;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    min-width: 120px;
+    text-transform: none;
+}
+
+.btn-dashboard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-dashboard:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.btn-dashboard i {
+    margin-right: 8px;
+}
+
+/* Botón primario - azul para acciones principales */
+.btn-primary-dashboard {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+}
+
+.btn-primary-dashboard:hover {
+    background: linear-gradient(135deg, #0069d9, #004494);
+}
+
+/* Botón secundario - gris para acciones secundarias */
+.btn-secondary-dashboard {
+    background: linear-gradient(135deg, #434e5b, #2c3540);
+    color: white;
+}
+
+.btn-secondary-dashboard:hover {
+    background: linear-gradient(135deg, #3a434e, #242b34);
+}
+
+/* Botón de éxito - verde para acciones positivas como reiniciar */
+.btn-success-dashboard {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: white;
+}
+
+.btn-success-dashboard:hover {
+    background: linear-gradient(135deg, #218838, #1a682d);
+}
+
+/* Botón de advertencia - amarillo/naranja para acciones de precaución */
+.btn-warning-dashboard {
+    background: linear-gradient(135deg, #ffc107, #d39e00);
+    color: #212529;
+}
+
+.btn-warning-dashboard:hover {
+    background: linear-gradient(135deg, #e0a800, #b78900);
+}
+
+/* Botón de peligro - rojo para acciones destructivas */
+.btn-danger-dashboard {
+    background: linear-gradient(135deg, #dc3545, #bd2130);
+    color: white;
+}
+
+.btn-danger-dashboard:hover {
+    background: linear-gradient(135deg, #c82333, #a71d2a);
+}
+
+/* Botón de información - azul claro para acciones informativas */
+.btn-info-dashboard {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+}
+
+.btn-info-dashboard:hover {
+    background: linear-gradient(135deg, #138496, #0f6674);
+}
+
+/* Botón deshabilitado */
+.btn-dashboard:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Estilos específicos para contenedores de botones */
+.action-buttons-container {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+/* Estilos para botones en el modal de diagnóstico */
+.scan-progress-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Animación para botones */
+@keyframes pulse-button {
+    0% { box-shadow: 0 0 0 0 rgba(123, 181, 255, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(123, 181, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(123, 181, 255, 0); }
+}
+
+.btn-pulse {
+    animation: pulse-button 2s infinite;
+}
+
+#bg-process-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #1e2a38, #263547);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    border-left: 4px solid #17a2b8;
+    transition: all 0.3s ease;
+}
+
+#bg-process-indicator:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+#repair-complete-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #1e2a38, #263547);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+    border-left: 4px solid #28a745;
+    min-width: 300px;
+}
+
+#repair-complete-notification button {
+    transition: all 0.2s ease;
+}
+
+#repair-complete-notification button:hover {
+    transform: translateY(-2px);
+}
 
 /*MODAL MANTENIMIENTO*/
 #modalMantenimiento .modal-content {

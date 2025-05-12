@@ -116,8 +116,8 @@ function animarProgreso(span, porcentajeFinal, callback, typeNotification) {
 const TempFileMonitor = {
     lastSize: null,
     lastCheck: 0,
-    minCheckInterval: 5000, // 5 segundos mínimo entre verificaciones
-    warningThreshold: 500, // MB
+    minCheckInterval: 5000, 
+    warningThreshold: 500, 
     isMonitoring: false,
     
     async checkTempFiles() {
@@ -134,7 +134,6 @@ const TempFileMonitor = {
             const currentSize = parseFloat(data.total_temp_size);
             const archTemp = document.getElementById('archTemp');
             
-            // Actualizar solo si hay cambios significativos (más de 1MB de diferencia)
             if (this.lastSize === null || Math.abs(currentSize - this.lastSize) > 1) {
                 this.lastSize = currentSize;
                 
@@ -152,16 +151,9 @@ const TempFileMonitor = {
                     </div>
                 `;
 
-                // Actualizar indicador visual
                 const tempIndicator = document.querySelector('.temp-indicator');
                 if (tempIndicator) {
                     tempIndicator.className = `temp-indicator ${this.getStatusClass(currentSize)}`;
-                }
-
-                // Mostrar advertencia si es necesario
-                if (currentSize >= this.warningThreshold) {
-                    mostrarNotificacion('advertencia', 
-                        `Los archivos temporales están ocupando ${data.total_temp_size}.\nConsidere liberar espacio.`);
                 }
             }
             
@@ -194,55 +186,123 @@ const TempFileMonitor = {
         return 'low';
     },
 
-    startMonitoring() {
-        if (this.isMonitoring) return;
-        this.isMonitoring = true;
+    manualCheck() {
         this.checkTempFiles();
-
-        // Eventos que disparan verificación
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                this.checkTempFiles();
-            }
-        });
-
-        // Verificar después de acciones de limpieza
-        const cleanupEvents = ['tempCleanup', 'fileDelete', 'maintenance'];
-        cleanupEvents.forEach(event => {
-            document.addEventListener(event, () => this.checkTempFiles());
-        });
     }
 };
 
-// Reemplazar la llamada existente a fetchTemp() con:
+
 $(document).ready(function() {
-    TempFileMonitor.startMonitoring();
-    
-    // ... resto del código existente ...
-    
-    // Actualizar los eventos de limpieza para disparar la verificación
+    const btnLiberarEspacio = document.getElementById('liberarEspacio');
     if (btnLiberarEspacio) {
-        btnLiberarEspacio.addEventListener('click', async function() {
-            await clearTempSpace();
-            document.dispatchEvent(new Event('tempCleanup'));
+        btnLiberarEspacio.addEventListener('click', function() {
+            clearTempSpace();
+            TempFileMonitor.manualCheck();
         });
     }
-});
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+    
+    const btnMostrarGrandes = document.getElementById('mostrarGrandes');
+    if (btnMostrarGrandes) {
+        btnMostrarGrandes.addEventListener('click', mostrarArchivosMasGrandes);
     }
-    return cookieValue;
-}
+
+    const robotImg = document.getElementById("robotimg");
+    const videoRobot = document.getElementById("video-container");
+    const videoRobotInput = document.getElementById("video-container2");
+    const mensajeIA = document.getElementById('mensajeIA');
+    const input = document.getElementById('textIAID');
+    const btnAnalisis = document.getElementById('btnAnalisiCompleto');
+
+    $("#robotimg").on('click', function () {
+        audio.muted = false;
+        audio.play();
+        video.play();
+        videoRobot.style.display = "flex";
+        robotImg.style.display = "none";
+        input.style.pointerEvents = 'none';
+        mensajeIA.style.opacity = '0.4';
+    });
+
+    video.addEventListener('ended', function () {
+        videoRobot.style.display = "none";
+        robotImg.style.display = "flex";
+        input.style.pointerEvents = 'auto';
+        mensajeIA.style.opacity = '1';
+    });
+    input.addEventListener('input', function () {
+        if (input.value.trim() !== '') {
+            videOjos.play();
+            videoRobotInput.style.display = "flex";
+            robotImg.style.display = "none";
+        } else {
+            videOjos.pause();
+            videOjos.currentTime = 0;
+            videoRobotInput.style.display = "none";
+            robotImg.style.display = "flex";
+        }
+    })
+
+    $("#closeNotification").on("click", function () {
+        notificacionesContainer.style.display = 'none';
+    });
+    function animarProgreso2(span, porcentajeFinal, onComplete) {
+        let actual = 0;
+        const intervalo = setInterval(() => {
+            if (actual >= porcentajeFinal) {
+                clearInterval(intervalo);
+                onComplete();
+            } else {
+                actual++;
+                span.style.width = actual + '%';
+                span.textContent = actual + '%';
+            }
+        }, 20);
+    }
+    btnAnalisis.addEventListener('click', function () {
+        window.btnPressAnalisis = true;
+        const allImgs = document.querySelectorAll('.imgDetDiag');
+        const allTextsTitulo = document.getElementById('textMonitoreo');
+        const imgGraficoMon = document.getElementById('imgGraficoMonitoreo');
+        const allTexts = document.querySelectorAll('.btnUlt');
+        const allProgress = document.querySelectorAll('.progress-bar');
+        const allSpans = document.querySelectorAll('.progress-bar span');
+
+        let completados = 0;
+        const totalSpans = allSpans.length;
+
+        allSpans.forEach((span) => {
+            const final = parseInt(span.dataset.width.replace('%', '')) || 0;
+
+            animarProgreso2(span, final, () => {
+                completados++;
+                if (completados === totalSpans) {
+                    mostrarNotificacion('success', 'Análisis completo del sistema', 0);
+                }
+            });
+        });
+
+        allImgs.forEach((img) => {
+            img.style.height = '70px';
+        });
+
+        allTextsTitulo.style.fontSize = '17px';
+        allTextsTitulo.style.padding = '0';
+        imgGraficoMon.style.animation = "rotarImg 1.5s linear infinite";
+        imgMant.style.display = 'none';
+        imgMantGIF.style.display = 'flex';
+        openModalMonitoreo.style.cursor = 'pointer';
+
+        allTexts.forEach((btn) => {
+            btn.style.fontSize = '18px';
+        });
+
+        allProgress.forEach((progress) => {
+            progress.style.display = 'flex';
+        });
+    });
+
+    fetchCpuUse();
+});
 
 async function fetchCpuUse() {
     try {

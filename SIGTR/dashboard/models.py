@@ -7,7 +7,7 @@ from datetime import datetime
 class Diagnosis(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="diagnoses")
     timestamp = models.DateTimeField(auto_now_add=True)
-    scan_type = models.CharField(max_length=20, default="QuickScan")
+    scan_type = models.CharField(max_length=100, default="QuickScan")
     
     # Datos CPU
     cpu_usage = models.CharField(max_length=10)
@@ -40,6 +40,7 @@ class Diagnosis(models.Model):
     
     # Datos de GPU
     gpu_name = models.CharField(max_length=100, null=True, blank=True)
+    gpu_model = models.CharField(max_length=200, null=True, blank=True)
     gpu_driver = models.CharField(max_length=50, null=True, blank=True)
     gpu_memory = models.CharField(max_length=20, null=True, blank=True)
     gpu_usage = models.CharField(max_length=10, null=True, blank=True)
@@ -57,6 +58,16 @@ class Diagnosis(models.Model):
     
     def __str__(self):
         return f"Diagnóstico de {self.user.username} - {self.timestamp}"
+
+class DiagnosticFile(models.Model):
+    diagnosis = models.ForeignKey(Diagnosis, on_delete=models.CASCADE, related_name='files')
+    file_type = models.CharField(max_length=50)
+    file_path = models.CharField(max_length=512)
+    file_name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.file_type} - {self.file_name}"
 
 class DiagnosticReport(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
