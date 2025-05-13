@@ -13,9 +13,17 @@
             <form id="formAsistencia">
                 {% csrf_token %}
                 <div class="asistencia1" id="problemaDescript">
-                    <div class="textDescrip">Describe el problema</div>
+                    <div class="textDescrip">
+                        <select class="form-control selectTecnico">
+                            <option value="">Seleccione el problema</option>
+                            <option value="">Mi laptop/computadora enciende</option>
+                            <option value="">Mi PC está lenta</option>
+                            <option value="">La pantalla está negra</option>
+                            <option value="">El sistema operativo no termina de cargar</option>
+                        </select>
+                    </div>
                     <div class="inputDescrip">
-                        <input type="text" id="descripcion" class="textAsistencia">
+                        <input type="text" id="descripcion" class="textAsistencia" placeholder="Describe el problema">
                     </div>
                 </div>
                 <div class="asistencia1" id="contentDireccion">
