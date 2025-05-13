@@ -1,5 +1,5 @@
 const actionUrls = window.ACTION_URLS = {
-    getcache: "/dashboard/client/clear-space/",
+    getcache: "/dashboard/client/get-temp-size/",  // Cambiado para obtener solo información sin limpiar
     cleanup: "/dashboard/client/clear-space/",
     update: "/dashboard/client/maintenance/update-software/",
     defrag: "/dashboard/client/maintenance/defragment-disk/",
@@ -228,19 +228,28 @@ async function ejecutarAccion(accion, boton) {
     }
 }
 
-async function getCache() {
-    const url = actionUrls['getcache'];
+async function getSizeInfo() {
     try {
         const archTemp = document.getElementById('archTemp');
         const archUso = document.getElementById('archUso');
-        const response = await fetch(url, {
-            method: 'POST',
+        
+        // Verificar si los elementos existen
+        if (!archTemp || !archUso) {
+            console.error('Elementos archTemp o archUso no encontrados');
+            return;
+        }
+
+        // Establecer valores mientras se carga
+        archTemp.textContent = "Archivos temporales: Cargando...";
+        archUso.textContent = "Archivos en uso: Cargando...";
+
+        // Usar la URL directa para obtener el tamaño
+        const response = await fetch('/dashboard/client/get-temp-size/', {
+            method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRFToken': getCookie('csrftoken')
-            },
-            credentials: 'same-origin'
+            }
         });
 
         if (!response.ok) {
@@ -248,12 +257,34 @@ async function getCache() {
         }
 
         const data = await response.json();
-        archTemp.textContent = `Archivos temporales: ${data.total_scanned_size}`;
-        archUso.textContent = `Archivos en uso: ${data.files_in_use}`;
+        console.log("Respuesta del servidor:", data); // Para depuración
+
+        // Asegurarse de que tengamos los campos correctos del servidor
+        if (data && (data.total_temp_size || data.total_scanned_size)) {
+            const tempSize = data.total_temp_size || data.total_scanned_size;
+            archTemp.textContent = `Archivos temporales: ${tempSize}`;
+        } else {
+            archTemp.textContent = "Archivos temporales: No disponible";
+            console.warn("Formato de respuesta inesperado:", data);
+        }
+        
+        if (data && (data.files_in_use_count || data.files_in_use)) {
+            const filesInUse = data.files_in_use_count || data.files_in_use;
+            archUso.textContent = `Archivos en uso: ${filesInUse}`;
+        } else {
+            archUso.textContent = "Archivos en uso: No disponible";
+        }
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error al obtener información de archivos temporales:', error);
+        
+        const archTemp = document.getElementById('archTemp');
+        const archUso = document.getElementById('archUso');
+        
+        if (archTemp) archTemp.textContent = "Archivos temporales: Error de conexión";
+        if (archUso) archUso.textContent = "Archivos en uso: Error de conexión";
     } 
 }
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -270,7 +301,8 @@ function getCookie(name) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    getCache();
+    getSizeInfo();
+
     if (btnLiberarEspacio) {
         btnLiberarEspacio.addEventListener('click', function () {
             ejecutarAccion('cleanup', this);

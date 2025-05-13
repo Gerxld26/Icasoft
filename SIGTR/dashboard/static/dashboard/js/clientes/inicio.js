@@ -113,35 +113,196 @@ function animarProgreso(span, porcentajeFinal, callback, typeNotification) {
     }, 30);
 }
 
-// Reemplazar la llamada existente a fetchTemp() con:
+const TempFileMonitor = {
+    lastSize: null,
+    lastCheck: 0,
+    minCheckInterval: 5000, 
+    warningThreshold: 500, 
+    isMonitoring: false,
+    
+    async checkTempFiles() {
+        const now = Date.now();
+        if (now - this.lastCheck < this.minCheckInterval) return;
+        
+        try {
+            const response = await fetch('/dashboard/client/get-temp-size/');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            const data = await response.json();
+            if (data.status !== 'success') throw new Error(data.message || 'Error desconocido');
+            
+            const currentSize = parseFloat(data.total_temp_size);
+            const archTemp = document.getElementById('archTemp');
+            
+            if (this.lastSize === null || Math.abs(currentSize - this.lastSize) > 1) {
+                this.lastSize = currentSize;
+                
+                archTemp.innerHTML = `
+                    <div class="temp-info">
+                        <div class="temp-size">
+                            <i class="fas ${this.getStatusIcon(currentSize)}"></i>
+                            Archivos Temporales: ${data.total_temp_size || '0 MB'}
+                        </div>
+                        <div class="temp-files-count">
+                            <small style="display:block; font-size:0.7em; color:#888;">
+                                ${data.files_in_use_count} archivos en uso 
+                            </small>
+                        </div>
+                    </div>
+                `;
+
+                const tempIndicator = document.querySelector('.temp-indicator');
+                if (tempIndicator) {
+                    tempIndicator.className = `temp-indicator ${this.getStatusClass(currentSize)}`;
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error al verificar archivos temporales:', error);
+            const archTemp = document.getElementById('archTemp');
+            archTemp.innerHTML = `
+                <div class="temp-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Error al conectar con el servidor
+                    <button onclick="TempFileMonitor.checkTempFiles()" class="retry-button">
+                        Reintentar
+                    </button>
+                </div>
+            `;
+        } finally {
+            this.lastCheck = now;
+        }
+    },
+
+    getStatusIcon(size) {
+        if (size >= this.warningThreshold) return 'fa-exclamation-triangle text-warning';
+        if (size >= 100) return 'fa-info-circle text-info';
+        return 'fa-check-circle text-success';
+    },
+
+    getStatusClass(size) {
+        if (size >= this.warningThreshold) return 'high';
+        if (size >= 100) return 'medium';
+        return 'low';
+    },
+
+    manualCheck() {
+        this.checkTempFiles();
+    }
+};
+
+
 $(document).ready(function() {
-    TempFileMonitor.startMonitoring();
-    
-    // ... resto del código existente ...
-    
-    // Actualizar los eventos de limpieza para disparar la verificación
+    const btnLiberarEspacio = document.getElementById('liberarEspacio');
     if (btnLiberarEspacio) {
-        btnLiberarEspacio.addEventListener('click', async function() {
-            await clearTempSpace();
-            document.dispatchEvent(new Event('tempCleanup'));
+        btnLiberarEspacio.addEventListener('click', function() {
+            clearTempSpace();
+            TempFileMonitor.manualCheck();
         });
     }
-});
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+    
+    const btnMostrarGrandes = document.getElementById('mostrarGrandes');
+    if (btnMostrarGrandes) {
+        btnMostrarGrandes.addEventListener('click', mostrarArchivosMasGrandes);
     }
-    return cookieValue;
-}
+
+    const robotImg = document.getElementById("robotimg");
+    const videoRobot = document.getElementById("video-container");
+    const videoRobotInput = document.getElementById("video-container2");
+    const mensajeIA = document.getElementById('mensajeIA');
+    const input = document.getElementById('textIAID');
+    const btnAnalisis = document.getElementById('btnAnalisiCompleto');
+
+    $("#robotimg").on('click', function () {
+        audio.muted = false;
+        audio.play();
+        video.play();
+        videoRobot.style.display = "flex";
+        robotImg.style.display = "none";
+        input.style.pointerEvents = 'none';
+        mensajeIA.style.opacity = '0.4';
+    });
+
+    video.addEventListener('ended', function () {
+        videoRobot.style.display = "none";
+        robotImg.style.display = "flex";
+        input.style.pointerEvents = 'auto';
+        mensajeIA.style.opacity = '1';
+    });
+    input.addEventListener('input', function () {
+        if (input.value.trim() !== '') {
+            videOjos.play();
+            videoRobotInput.style.display = "flex";
+            robotImg.style.display = "none";
+        } else {
+            videOjos.pause();
+            videOjos.currentTime = 0;
+            videoRobotInput.style.display = "none";
+            robotImg.style.display = "flex";
+        }
+    })
+
+    $("#closeNotification").on("click", function () {
+        notificacionesContainer.style.display = 'none';
+    });
+    function animarProgreso2(span, porcentajeFinal, onComplete) {
+        let actual = 0;
+        const intervalo = setInterval(() => {
+            if (actual >= porcentajeFinal) {
+                clearInterval(intervalo);
+                onComplete();
+            } else {
+                actual++;
+                span.style.width = actual + '%';
+                span.textContent = actual + '%';
+            }
+        }, 20);
+    }
+    btnAnalisis.addEventListener('click', function () {
+        window.btnPressAnalisis = true;
+        const allImgs = document.querySelectorAll('.imgDetDiag');
+        const allTextsTitulo = document.getElementById('textMonitoreo');
+        const imgGraficoMon = document.getElementById('imgGraficoMonitoreo');
+        const allTexts = document.querySelectorAll('.btnUlt');
+        const allProgress = document.querySelectorAll('.progress-bar');
+        const allSpans = document.querySelectorAll('.progress-bar span');
+
+        let completados = 0;
+        const totalSpans = allSpans.length;
+
+        allSpans.forEach((span) => {
+            const final = parseInt(span.dataset.width.replace('%', '')) || 0;
+
+            animarProgreso2(span, final, () => {
+                completados++;
+                if (completados === totalSpans) {
+                    mostrarNotificacion('success', 'Análisis completo del sistema', 0);
+                }
+            });
+        });
+
+        allImgs.forEach((img) => {
+            img.style.height = '70px';
+        });
+
+        allTextsTitulo.style.fontSize = '17px';
+        allTextsTitulo.style.padding = '0';
+        imgGraficoMon.style.animation = "rotarImg 1.5s linear infinite";
+        imgMant.style.display = 'none';
+        imgMantGIF.style.display = 'flex';
+        openModalMonitoreo.style.cursor = 'pointer';
+
+        allTexts.forEach((btn) => {
+            btn.style.fontSize = '18px';
+        });
+
+        allProgress.forEach((progress) => {
+            progress.style.display = 'flex';
+        });
+    });
+
+    fetchCpuUse();
+});
 
 async function fetchCpuUse() {
     try {
