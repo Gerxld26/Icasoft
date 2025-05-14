@@ -3959,7 +3959,9 @@ async function cargarResultadosDiagnostico(reportId) {
         console.error('Error al cargar datos de mantenimiento:', error);
     }
 }
+
 document.addEventListener('DOMContentLoaded', function() {
+    modalDiagnostico.classList.add('modal-hidden');
     cargarHistorialDiagnosticos();
     inicializarEstadoSistema();
     

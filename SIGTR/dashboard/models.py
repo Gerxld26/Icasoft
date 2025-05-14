@@ -7,7 +7,7 @@ from datetime import datetime
 class Diagnosis(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="diagnoses")
     timestamp = models.DateTimeField(auto_now_add=True)
-    scan_type = models.CharField(max_length=100, default="QuickScan")
+    scan_type = models.CharField(max_length=150, default="QuickScan")
     
     # Datos CPU
     cpu_usage = models.CharField(max_length=10)
