@@ -90,14 +90,16 @@ from .views import (
     fix_driver,
     download_driver,
     scan_drivers,
-    restart_system
+    restart_system,
+    speech_to_text,
+    transcribe_audio
         
 )
 
 urlpatterns = [
     #chat
     path('chatIA/', chatIA, name='chat'),
-    
+    path('api/transcribe-audio/', transcribe_audio, name='transcribe_audio'),
     # Dashboards
     path("admin/", admin_inicio, name="admin_inicio"),
     path("adminDashboard/", admin_dashboard, name="admin_dashboard"),
@@ -193,5 +195,6 @@ urlpatterns = [
     path('api/diagnosis/scan-drivers/', scan_drivers, name='scan_drivers'),
     path('api/diagnosis/download-driver/<str:device_id>/', download_driver, name='download_driver'),
     path('api/system/restart/', restart_system, name='restart_system'),
+    path('api/speech-to-text/', speech_to_text, name='speech_to_text'),
     
 ]

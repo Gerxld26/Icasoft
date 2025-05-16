@@ -143,6 +143,68 @@ def client_maintenance(request):
 def client_recommendations(request):
     return render(request, "dashboard/client/recommendations.html")
 
+
+@csrf_exempt
+@login_required
+@user_passes_test(is_client)
+def speech_to_text(request):
+    if request.method == 'POST':
+        try:
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Transcripción recibida correctamente'
+            })
+        except Exception as e:
+            logger.error(f"Error en speech_to_text: {str(e)}")
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error al procesar la transcripción: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método no permitido'
+    }, status=405)
+
+
+import speech_recognition as sr
+
+@csrf_exempt
+@login_required
+@user_passes_test(is_client)
+def transcribe_audio(request):
+    if request.method == 'POST':
+        try:
+            if 'audio_data' in request.POST:
+                # Procesar audio desde base64
+                audio_data = request.POST.get('audio_data')
+                
+                # Para propósitos de demostración, simplemente devolver texto simulado
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Transcripción simulada',
+                    'text': 'Texto transcrito desde el audio'
+                })
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'No se recibieron datos de audio',
+                    'text': ''
+                }, status=400)
+        except Exception as e:
+            logger.error(f"Error general: {str(e)}")
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error al procesar el audio: {str(e)}',
+                'text': ''
+            }, status=500)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Método incorrecto',
+        'text': ''
+    }, status=405)
+
 #View del wifi
 import socket
 
@@ -4089,6 +4151,9 @@ def repair_device(device_id):
     except Exception as e:
         logger.error(f"Error al reparar dispositivo: {str(e)}")
         return {'success': False, 'message': f'Error: {str(e)}'}
+    
+    
+
     
 @login_required
 @user_passes_test(is_client)

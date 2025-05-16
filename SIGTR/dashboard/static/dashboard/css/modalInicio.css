@@ -15,6 +15,7 @@
     filter: drop-shadow(6px 6px 10px rgb(28, 29, 29));
     justify-content: center;
     align-items: center;
+    z-index: 1000; 
 }
 
 .modal-content {
@@ -317,7 +318,6 @@ div#cpu-name {
 }
 
 /* MODAL DIAGNÓSTICO  */
-/* MODAL DIAGNÓSTICO  */
 #modalDiagnostico .modal {
     display: none;
     position: fixed;
@@ -340,12 +340,37 @@ div#cpu-name {
     border: 2px solid #03658c;
     border-radius: 15px;
     width: 80%;
+    max-height: 80vh !important;
+    overflow-y: auto !important; 
+    display: flex !important;
+    flex-direction: column !important;
     max-width: 800px;
     box-shadow: 0 0 25px rgba(3, 101, 140, 0.9);
     color: #ffffff;
     animation: modalopen 0.5s;
 }
 
+#modalDiagnostico .contentData {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding-right: 10px !important;
+}
+
+#modalDiagnostico .tab-content {
+    height: auto !important;
+    max-height: calc(80vh - 120px) !important;
+    overflow-y: auto !important;
+}
+
+#scanProgressModal .modal-content {
+    max-height: 60vh !important;
+    overflow-y: auto !important;
+}
+
+#detailed-results {
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+}
 @keyframes modalopen {
     from {
         opacity: 0;
