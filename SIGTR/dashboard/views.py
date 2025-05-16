@@ -422,7 +422,7 @@ def client_chat(request):
         return render(request, "dashboard/client/client_chat.html")
 
 
-@login_required
+
 @user_passes_test(lambda user: user.role == 'client')
 def cpu_monitoring_data(request):
     try:
@@ -4375,55 +4375,6 @@ def formatear_tamano(bytes_size):
         bytes_size /= 1024.0
     return f"{bytes_size:.2f} PB"
 
-
-
-@login_required
-@require_GET
-def get_temp_size(request):
-    try:
-        # Usar la función común para obtener los directorios temporales
-        temp_directories = get_temp_directories()
-        temp_directories = [d for d in temp_directories if d and os.path.exists(d) and os.path.isdir(d)]
-
-        total_temp_size = 0
-        total_temp_files = 0
-        files_in_use_size = 0
-        files_in_use_count = 0
-
-        for temp_dir in temp_directories:
-            for root, _, files in os.walk(temp_dir):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    
-                    try:
-                        if os.path.isfile(file_path) and os.path.getsize(file_path) > 0:
-                            file_size = os.path.getsize(file_path)
-                            
-                            # Usar la función común para verificar si el archivo está en uso
-                            if is_file_in_use(file_path):
-                                files_in_use_size += file_size
-                                files_in_use_count += 1
-                            else:
-                                total_temp_size += file_size
-                                total_temp_files += 1
-                    except Exception:
-                        continue
-
-        return JsonResponse({
-            "status": "success",
-            "total_temp_size": formatear_tamano(total_temp_size),
-            "total_temp_files": total_temp_files,
-            "files_in_use_size": formatear_tamano(files_in_use_size),
-            "files_in_use_count": files_in_use_count
-        })
-
-    except Exception as e:
-        logger.error(f"Error en get_temp_size: {str(e)}")
-        return JsonResponse({
-            "status": "error",
-            "message": str(e)
-        }, status=500)
-
         
 @login_required
 @require_POST
@@ -5005,6 +4956,11 @@ def client_learning_center(request):
     return JsonResponse({'videos': video_list})
 
 # Admin dashboard
+@login_required
+@user_passes_test(is_admin)
+def admin_inicio(request):
+    return render(request, 'dashboard/admin/admin_inicio.html')
+
 @login_required
 @user_passes_test(is_admin)
 def admin_dashboard(request):

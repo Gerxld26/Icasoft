@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     # Dashboards
+    admin_inicio,
     admin_dashboard,
     tech_dashboard,
     client_dashboard,
@@ -41,8 +42,7 @@ from .views import (
     client_clear_space,
     client_update_software,
     client_defragment_disk,
-    client_repair_disk,
-    get_temp_size,  
+    client_repair_disk, 
     get_largest_temp_files,
     get_system_temp_info,
     client_clear_specific_temp, 
@@ -99,7 +99,8 @@ urlpatterns = [
     path('chatIA/', chatIA, name='chat'),
     
     # Dashboards
-    path("admin/", admin_dashboard, name="admin_dashboard"),
+    path("admin/", admin_inicio, name="admin_inicio"),
+    path("adminDashboard/", admin_dashboard, name="admin_dashboard"),
     path("tech/", tech_dashboard, name="tech_dashboard"),
     path("client/", client_dashboard, name="client_dashboard"),
 
@@ -139,7 +140,6 @@ urlpatterns = [
     path("client/maintenance/update-software/", client_update_software, name="client_update_software"),
     path("client/maintenance/defragment-disk/", client_defragment_disk, name="client_defragment_disk"),
     path("client/maintenance/repair-disk/", client_repair_disk, name="client_repair_disk"),
-    path('client/get-temp-size/', get_temp_size, name='get_temp_size'),
     path('client/clear-space/', client_clear_space, name='client_clear_space'),
     path('client/get-largest-temp-files/', get_largest_temp_files, name='get_largest_temp_files'),
     path('client/clear-specific-temp/', client_clear_specific_temp, name='client_clear_specific_temp'),

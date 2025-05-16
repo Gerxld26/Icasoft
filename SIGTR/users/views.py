@@ -34,7 +34,7 @@ def user_login(request):
 
             # Redirigir según el rol del usuario
             if user.role == 'admin':
-                return redirect('admin_dashboard')
+                return redirect('admin_inicio')
             elif user.role == 'tech':
                 return redirect('tech_dashboard')
             elif user.role == 'client':

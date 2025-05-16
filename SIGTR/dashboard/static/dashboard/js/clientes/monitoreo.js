@@ -29,7 +29,7 @@ function MonitoreoFunction() {
 function habilitarBotones(type) {
     switch (type) {
         case 'monitoreo':
-            openModalDiagnostico.disabled = false;
+            btnAbrirModalDiagnostico.disabled = false;
             openModalMantenimiento.disabled = false;
             openModalAntivirus.disabled = false;
             openModalHistorial.disabled = false;
@@ -44,7 +44,7 @@ function habilitarBotones(type) {
             break;
         case 'mantenimiento':
             openModalMonitoreo.disabled = false;
-            openModalDiagnostico.disabled = false;
+            btnAbrirModalDiagnostico.disabled = false;
             openModalAntivirus.disabled = false;
             openModalHistorial.disabled = false;
             btnRed.disabled = false;
@@ -52,7 +52,7 @@ function habilitarBotones(type) {
         case 'antivirus':
             openModalMonitoreo.disabled = false;
             openModalMantenimiento.disabled = false;
-            openModalDiagnostico.disabled = false;
+            btnAbrirModalDiagnostico.disabled = false;
             openModalHistorial.disabled = false;
             btnRed.disabled = false;
             break;
@@ -60,13 +60,13 @@ function habilitarBotones(type) {
             openModalMonitoreo.disabled = false;
             openModalMantenimiento.disabled = false;
             openModalAntivirus.disabled = false;
-            openModalDiagnostico.disabled = false;
+            btnAbrirModalDiagnostico.disabled = false;
             btnRed.disabled = false;
             break;
         case 'red':
             openModalMonitoreo.disabled = false;
             openModalMantenimiento.disabled = false;
-            openModalDiagnostico.disabled = false;
+            btnAbrirModalDiagnostico.disabled = false;
             openModalAntivirus.disabled = false;
             openModalHistorial.disabled = false;
             break;
@@ -78,7 +78,7 @@ function habilitarBotones(type) {
 function deshabilitarBotones(type) {
     switch (type) {
         case 'monitoreo':
-            openModalDiagnostico.disabled = true;
+            btnAbrirModalDiagnostico.disabled = true;
             openModalMantenimiento.disabled = true;
             openModalAntivirus.disabled = true;
             openModalHistorial.disabled = true;
@@ -93,7 +93,7 @@ function deshabilitarBotones(type) {
             break;
         case 'mantenimiento':
             openModalMonitoreo.disabled = true;
-            openModalDiagnostico.disabled = true;
+            btnAbrirModalDiagnostico.disabled = true;
             openModalAntivirus.disabled = true;
             openModalHistorial.disabled = true;
             btnRed.disabled = true;
@@ -101,7 +101,7 @@ function deshabilitarBotones(type) {
         case 'antivirus':
             openModalMonitoreo.disabled = true;
             openModalMantenimiento.disabled = true;
-            openModalDiagnostico.disabled = true;
+            btnAbrirModalDiagnostico.disabled = true;
             openModalHistorial.disabled = true;
             btnRed.disabled = true;
             break;
@@ -109,18 +109,18 @@ function deshabilitarBotones(type) {
             openModalMonitoreo.disabled = true;
             openModalMantenimiento.disabled = true;
             openModalAntivirus.disabled = true;
-            openModalDiagnostico.disabled = true;
+            btnAbrirModalDiagnostico.disabled = true;
             btnRed.disabled = true;
             break;
         case 'red':
             openModalMonitoreo.disabled = true;
             openModalMantenimiento.disabled = true;
-            openModalDiagnostico.disabled = true;
+            btnAbrirModalDiagnostico.disabled = true;
             openModalAntivirus.disabled = true;
             openModalHistorial.disabled = true;
             break;
         default:
-            openModalDiagnostico.disabled = true;
+            btnAbrirModalDiagnostico.disabled = true;
             openModalMantenimiento.disabled = true;
             openModalAntivirus.disabled = true;
             openModalHistorial.disabled = true;

@@ -3,6 +3,7 @@ let marker, markerAsist;
 let markerTech = [];
 let defaultLocation = { lat: 0, lng: 0 };
 let ubicacionInicial = defaultLocation;
+let circuloCliente = null;
 // let mapaAsistenciaCreado = false;
 let eventoUbicacionAgregado = false;
 let marcadorMovido = false;
@@ -56,9 +57,10 @@ async function mapaAsistencia() {
 
     const { Map } = await google.maps.importLibrary("maps");
     const { Marker } = await google.maps.importLibrary("marker");
+    const { Circle } = await google.maps.importLibrary("geometry");
     mapaAsist = new Map(document.getElementById("mapAsistencia"), {
         center: ubicacionInicial,
-        zoom: 20,
+        zoom: 13,
         mapId: "ASIST_MAP_ID",
     });
     markerAsist = new Marker({
@@ -67,10 +69,23 @@ async function mapaAsistencia() {
         draggable: true,
     });
 
+    // Crear el círculo de 20 km alrededor del cliente
+    circuloCliente = new google.maps.Circle({
+        strokeColor: "#FF0000",
+        fillOpacity: 0,
+        map: mapaAsist,
+        center: ubicacionInicial,
+        radius: 2000 // 20 km en metros
+    });
     markerAsist.addListener('dragend', function () {
         marcadorMovido = true;
         const pos = markerAsist.getPosition();
         obtenerDireccion(pos.lat(), pos.lng());
+
+        // Actualizar centro del círculo
+        if (circuloCliente) {
+            circuloCliente.setCenter(pos);
+        }
     });
 
     miUbicacion();
