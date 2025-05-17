@@ -359,7 +359,7 @@ class IcasoftToolsContext:
     TOOLS = {
         'diagnostico': {
             'keywords': ['lenta', 'lento', 'rendimiento', 'rapido'],
-            'solution': 'Usa el módulo de Análisis Completo del Sistema para diagnosticar problemas de rendimiento.'
+            'solution': 'Ejecuta el módulo de diagnóstico para problemas de rendimiento.'
         },
         'antivirus': {
             'keywords': ['virus', 'malware', 'seguridad'],
@@ -371,11 +371,23 @@ class IcasoftToolsContext:
         },
         'mantenimiento': {
             'keywords': ['limpieza', 'optimizar', 'mejorar'],
-            'solution': 'Utiliza el módulo de Mantenimiento para optimizar tu sistema.'
+            'solution': 'Ejecuta el módulo de Mantenimiento para optimizar tu sistema.'
         },
         'red': {
             'keywords': ['wifi', 'internet', 'conexion', 'red'],
-            'solution': 'Usa la herramienta de Comprobación de Red para diagnosticar problemas de conectividad.'
+            'solution': 'Ejecuta el módulo de Testeo de Red para diagnosticar problemas de conectividad.'
+        },
+        'ubicacion': {
+            'keywords':['ubicacion', 'ubican', 'encuentran'],
+            'solution':'Nos ubicamos en Ica, Perú. Nuestro local está en Calle Cajamarca 156, Galería Amisur, puesto 135-A, Ica.'
+        },
+        'tecnico':{
+            'keywords': ['domicilio', 'enviar', 'necesito un tecnico', 'tecnico'],
+            'solution': 'Te brindamos el número para agendar asistencia a domicilio: +51 972 142 522 o en el módulo de asistencia técnica puede solicitar'
+        },
+        'horario':{
+            'keywords':['atencion', 'hora', 'abren', 'atienden'],
+            'solution': 'Nuestro horario de atención es de 9:00 A.M. - 9:00 P.M.'
         }
     }
 
@@ -387,7 +399,7 @@ class IcasoftToolsContext:
             if any(keyword in user_input for keyword in details['keywords']):
                 return details['solution']
         
-        return 'Explora las herramientas de ICASOFT en el menú principal para encontrar la solución.'
+        return 'Explora las herramientas de ICASOFT IA.'
 
 class ConversationManager:
     def __init__(self):
@@ -395,13 +407,14 @@ class ConversationManager:
             {
                 "role": "system", 
                 "content": """
-                Eres el Asistente Virtual de ICASOFT Ingeniería 21. 
+                Eres el Asistente Virtual de ICASOFT IA Ingeniería 21. 
                 Características:
-                - Respuestas breves y precisas
-                - Siempre recomienda herramientas específicas de ICASOFT
+                - Respuestas breves, concisas y precisas
+                - Siempre recomienda herramientas específicas de ICASOFT IA
                 - Usa un tono profesional y amigable
                 - Enfócate en soluciones prácticas
-                - Si no hay solución específica, dirige al usuario a Asistencia Técnica
+                - Brinda pasos ante los problemas
+                - Si no hay solución específica, dirige al usuario a Asistencia Técnica de manera corta
                 """
             }
         ]
@@ -429,19 +442,21 @@ class ConversationManager:
             )
 
             assistant_response = response.choices[0].message.content.strip()
-            
+
             if not assistant_response:
                 assistant_response = tool_recommendation
 
-            full_response = f"{assistant_response} {tool_recommendation}"
+            # Evita repetir si ya contiene la respuesta
+            if tool_recommendation.lower() in assistant_response.lower():
+                full_response = assistant_response
+            else:
+                full_response = f"{assistant_response} {tool_recommendation}"
             
-            self.add_message("assistant", full_response)
-
             return full_response
 
         except Exception as e:
             print(f"Error en generación de respuesta: {str(e)}")
-            return "Te recomendamos contactar a Asistencia Técnica de ICASOFT para resolver tu problema."
+            return "Te recomendamos contactar a Asistencia Técnica de ICASOFT IA para resolver tu problema."
 
 conversation_manager = ConversationManager()
     
@@ -472,7 +487,7 @@ def chatIA(request):
     except Exception as e:
         print(f"Error en chatIA: {str(e)}")
         return JsonResponse({
-            'response': 'Te recomendamos contactar a Asistencia Técnica de ICASOFT.'
+            'response': 'Te recomendamos contactar a Asistencia Técnica de ICASOFT IA.'
         }, status=500)
     
     
@@ -5269,62 +5284,99 @@ def tech_reports(request):
 def client_dashboard(request):
     return render(request, 'dashboard/client/inicio.html')
 
-# Add technician
+#Listar clientes
+# Listar técnicos
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
-def add_technician(request):
-    country_list = []
-    try:
-        response = requests.get('https://restcountries.com/v3.1/independent?status=true', timeout=10)
-        response.raise_for_status()
-        countries = response.json()
-        country_list = [country['name']['common'] for country in countries if 'name' in country and 'common' in country['name']]
-    except requests.RequestException as e:
-        messages.error(request, f'Error al obtener los países: {e}')
+def read_client(request):
+    """Vista para gestionar usuarios con búsqueda y paginación."""
+    query = request.GET.get('q', '')
+    current_user = request.user  # Obtener el usuario logueado
+    users = User.objects.filter(role='client').exclude(id=current_user.id)
+    if query:
+        users = users.filter(username__icontains=query) | users.filter(email__icontains=query)
 
-    if request.method == 'POST':
-        form = CreateTechForm(request.POST, request.FILES)
-        if form.is_valid():
-            # Guardar usuario
-            user = form.save(commit=False)
-            user.role = 'tech'  # Aseguramos que tenga el rol correcto
-            user.is_staff = True
-            user.save()
+    paginator = Paginator(users, 10)  # 10 usuarios por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-            # Convertir latitud y longitud a float para evitar errores en la base de datos
-            try:
-                latitude = float(request.POST.get('latitude', 0))
-                longitude = float(request.POST.get('longitude', 0))
-            except ValueError:
-                latitude, longitude = 0, 0  # Valores por defecto si no son válidos
+    context = {'page_obj': page_obj, 'query': query}
+    return render(request, 'dashboard/admin/read_client.html', context)
 
-            # Crear o actualizar UserProfile con el rol correcto
-            profile, created = UserProfile.objects.get_or_create(user=user)
-            profile.role = "technician"
-            profile.full_name = form.cleaned_data.get('full_name')
-            profile.phone_number = form.cleaned_data.get('phone_number')
-            profile.address = form.cleaned_data.get('address')
-            profile.certifications = form.cleaned_data.get('certifications')
-            profile.schedule_start = form.cleaned_data.get('schedule_start')
-            profile.schedule_end = form.cleaned_data.get('schedule_end')
-            profile.specialty = form.cleaned_data.get('specialty')
-            profile.country_name = request.POST.get('country')
-            profile.department_name = request.POST.get('department')
-            profile.province_name = request.POST.get('province')
-            profile.district_name = request.POST.get('city')
-            profile.latitude = latitude
-            profile.longitude = longitude
-            profile.photo = form.cleaned_data.get('photo')
-            profile.save()
+# Listar técnicos
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def read_technician(request):
+    """Vista para gestionar usuarios con búsqueda y paginación."""
+    query = request.GET.get('q', '')
+    current_user = request.user  # Obtener el usuario logueado
+    users = User.objects.filter(role='tech').exclude(id=current_user.id)
+    if query:
+        users = users.filter(username__icontains=query) | users.filter(email__icontains=query)
 
-            messages.success(request, 'Técnico agregado exitosamente.')
-            return redirect('admin_dashboard')
-        else:
-            messages.error(request, 'Corrige los errores en el formulario.')
-    else:
-        form = CreateTechForm()
+    paginator = Paginator(users, 10)  # 10 usuarios por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-    return render(request, 'dashboard/admin/add_technician.html', {'form': form, 'countries': country_list})
+    context = {'page_obj': page_obj, 'query': query}
+    return render(request, 'dashboard/admin/read_technician.html', context)
+
+# Add technician
+# @login_required
+# @user_passes_test(lambda u: u.role == 'admin')
+# def add_technician(request):
+#     country_list = []
+#     try:
+#         response = requests.get('https://restcountries.com/v3.1/independent?status=true', timeout=10)
+#         response.raise_for_status()
+#         countries = response.json()
+#         country_list = [country['name']['common'] for country in countries if 'name' in country and 'common' in country['name']]
+#     except requests.RequestException as e:
+#         messages.error(request, f'Error al obtener los países: {e}')
+
+#     if request.method == 'POST':
+#         form = CreateTechForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             # Guardar usuario
+#             user = form.save(commit=False)
+#             user.role = 'tech'  # Aseguramos que tenga el rol correcto
+#             user.is_staff = True
+#             user.save()
+
+#             # Convertir latitud y longitud a float para evitar errores en la base de datos
+#             try:
+#                 latitude = float(request.POST.get('latitude', 0))
+#                 longitude = float(request.POST.get('longitude', 0))
+#             except ValueError:
+#                 latitude, longitude = 0, 0  # Valores por defecto si no son válidos
+
+#             # Crear o actualizar UserProfile con el rol correcto
+#             profile, created = UserProfile.objects.get_or_create(user=user)
+#             profile.role = "technician"
+#             profile.full_name = form.cleaned_data.get('full_name')
+#             profile.phone_number = form.cleaned_data.get('phone_number')
+#             profile.address = form.cleaned_data.get('address')
+#             profile.certifications = form.cleaned_data.get('certifications')
+#             profile.schedule_start = form.cleaned_data.get('schedule_start')
+#             profile.schedule_end = form.cleaned_data.get('schedule_end')
+#             profile.specialty = form.cleaned_data.get('specialty')
+#             profile.country_name = request.POST.get('country')
+#             profile.department_name = request.POST.get('department')
+#             profile.province_name = request.POST.get('province')
+#             profile.district_name = request.POST.get('city')
+#             profile.latitude = latitude
+#             profile.longitude = longitude
+#             profile.photo = form.cleaned_data.get('photo')
+#             profile.save()
+
+#             messages.success(request, 'Técnico agregado exitosamente.')
+#             return redirect('admin_dashboard')
+#         else:
+#             messages.error(request, 'Corrige los errores en el formulario.')
+#     else:
+#         form = CreateTechForm()
+
+#     return render(request, 'dashboard/admin/add_technician.html', {'form': form, 'countries': country_list})
 
 # Add admin 
 @login_required
@@ -5515,24 +5567,6 @@ def fetch_online_users(request):
     online_users_count = User.objects.filter(last_login__gte=threshold_time).count()
     return JsonResponse({"count": online_users_count})
 
-
-
-@login_required
-@user_passes_test(is_admin)
-def manage_users(request):
-    """Vista para gestionar usuarios con búsqueda y paginación."""
-    query = request.GET.get('q', '')
-    current_user = request.user  # Obtener el usuario logueado
-    users = User.objects.exclude(id=current_user.id)  # Excluir el usuario actual
-    if query:
-        users = users.filter(username__icontains=query) | users.filter(email__icontains=query)
-
-    paginator = Paginator(users, 10)  # 10 usuarios por página
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {'page_obj': page_obj, 'query': query}
-    return render(request, 'dashboard/admin/manage_users.html', context)
 
 @login_required
 @user_passes_test(is_admin)

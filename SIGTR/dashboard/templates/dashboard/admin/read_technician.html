@@ -1,0 +1,161 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block content %}
+<div class="main-container mx-4" id="read_tecnico">
+    <h2 class="mb-4">Gestión de Técnicos</h2>
+    <form method="get" action="" class="d-flex mb-3">
+        <input type="text" name="q" placeholder="Buscar por nombre o correo" value="{{ query }}" class="form-control me-2">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+
+    <!-- CSRF Token oculto para AJAX -->
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in page_obj %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                    <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Agregar">
+                        <i id="newTech" class="bi bi-plus-circle-fill iaccionTecnico"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editar">
+                        <i id="editTech" class="bi bi-pencil-square iaccionTecnico"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Eliminar"
+                    onclick="confirmToggleUserStatus('{{ user.id }}', '{{ user.is_active }}')">
+                        {% if user.is_active %}
+                            <i id="deleteTech" class="bi bi-trash3-fill iaccionTecnico"></i>
+                        {% else %}
+                            Activar
+                        {% endif %}
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Paginación -->
+    <nav>
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+            </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Siguiente</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+  });
+// ✅ Obtiene el CSRF Token correctamente desde el input oculto
+function getCSRFToken() {
+    return document.querySelector("[name=csrfmiddlewaretoken]").value;
+}
+
+// ✅ Función para confirmar activación/desactivación de usuario
+function confirmToggleUserStatus(userId, isActive) {
+    Swal.fire({
+        title: isActive === 'true' ? '¿Estás seguro de desactivar este usuario?' : '¿Estás seguro de activar este usuario?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, confirmar!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            toggleUserStatus(userId);
+        }
+    });
+}
+
+// ✅ Función para activar/desactivar usuario mediante `POST`
+function toggleUserStatus(userId) {
+    fetch(`/dashboard/toggle-user-status/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            Swal.fire('¡Hecho!', data.message, 'success').then(() => location.reload());
+        } else {
+            Swal.fire('Error', data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Ocurrió un error al cambiar el estado.', 'error');
+    });
+}
+
+// ✅ Función para confirmar la eliminación del usuario
+function confirmDeleteUser(userId) {
+    Swal.fire({
+        title: '¿Estás seguro de eliminar este usuario?',
+        text: "Esta acción no se puede deshacer!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, eliminar!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            deleteUser(userId);
+        }
+    });
+}
+
+// ✅ Función para eliminar usuario mediante `POST`
+function deleteUser(userId) {
+    fetch(`/dashboard/delete-user/${userId}/`, {
+        method: 'POST',  // 🔥 Ahora solo usa POST
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),  // ✅ CSRF Token correcto
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            Swal.fire('¡Eliminado!', data.message, 'success').then(() => location.reload());
+        } else {
+            Swal.fire('Error', data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Ocurrió un error al eliminar al usuario.', 'error');
+    });
+}
+</script>
+{% endblock %}

@@ -9,8 +9,10 @@ from .views import (
 
     # Admin-specific views
     add_admin,
-    add_technician,
-    manage_users,
+    read_technician,
+    # add_technician,
+    read_client, 
+    #manage_users, #borrar
     inactive_users,
     deactivate_user,
     toggle_user_status,
@@ -107,9 +109,11 @@ urlpatterns = [
     path("client/", client_dashboard, name="client_dashboard"),
 
     # Admin routes
-    path("add-technician/", add_technician, name="add_technician"),
+    # path("add-technician/", add_technician, name="add_technician"),
+    path("tecnicos/", read_technician, name = "read_technician"),
     path("add-admin/", add_admin, name="add_admin"),
-    path("manage-users/", manage_users, name="manage_users"),
+    path("clientes/", read_client, name="read_client"),
+    #path("manage-users/", manage_users, name="manage_users"), #borrar
     path("inactive-users/", inactive_users, name="inactive_users"),
     path("deactivate-user/<int:user_id>/", deactivate_user, name="deactivate_user"),
     path("toggle-user-status/<int:user_id>/", toggle_user_status, name="toggle_user_status"),

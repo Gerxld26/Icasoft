@@ -1,5 +1,5 @@
 from django.db import models
-from users.models import User, UserProfile
+from users.models import User, TipoAsistencia
 from geopy.distance import geodesic  # Para calcular distancias entre cliente y técnicos
 
 class Ticket(models.Model):
@@ -26,6 +26,13 @@ class Ticket(models.Model):
         null=True, 
         blank=True, 
         related_name='tickets_assigned'
+    )
+    tipo_asistencia = models.ForeignKey(
+        TipoAsistencia,
+        on_delete=models.PROTECT, #evita que se elimine el objeto relacionado si todavía hay objetos que dependen de él.
+        null=True,
+        blank=True,
+        related_name='tickets_asistencias'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

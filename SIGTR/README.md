@@ -45,4 +45,7 @@ templates: se ubica los htmls.
 el cpuinfo trae toda la data referente.
 
 ##FLUJO:
-del template a las views, de ahí urls, 
+del template a las views, de ahí urls.
+
+## INSTALAR:
+npm i bootstrap-icons

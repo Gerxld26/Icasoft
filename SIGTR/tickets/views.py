@@ -16,7 +16,7 @@ from geopy.distance import geodesic
 from django.http import JsonResponse, HttpResponseNotAllowed
 
 # Definir constantes para la lógica de proximidad - Un solo límite
-MAX_DISTANCE_KM = 20  # Distancia máxima para considerar a un técnico como "cercano" y permitir crear tickets
+MAX_DISTANCE_KM = 2  # Distancia máxima para considerar a un técnico como "cercano" y permitir crear tickets
 @login_required
 @user_passes_test(lambda user: user.role == "client")
 def asistencia(request):

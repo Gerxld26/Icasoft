@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'dashboard/css/admin.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/css/admin/admin.css' %}">
     <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
@@ -32,7 +32,7 @@
                                 <div class="iconFunction">
                                     <i class="fa-solid fa-ticket"></i>
                                 </div>
-                                <div class="textFunction">TICKETS</div>
+                                <a class="textFunction">TICKETS</a>
                             </button>
                         </div>
                         <div class="function">
@@ -40,7 +40,7 @@
                                 <div class="iconFunction">
                                     <i class="fa-solid fa-users"></i>
                                 </div>
-                                <div class="textFunction">USUARIOS</div>
+                                <a  href="{% url 'read_client' %}" class="textFunction">CLIENTES</a>
                             </button>
                         </div>
                         <div class="function">
@@ -48,7 +48,7 @@
                                 <div class="iconFunction">
                                     <i class="fa-solid fa-screwdriver-wrench"></i>
                                 </div>
-                                <div class="textFunction">TÉCNICOS</div>
+                                <a href="{% url 'read_technician' %}" class="textFunction">TÉCNICOS</a>
                             </button>
                         </div>
                         <div class="function">
