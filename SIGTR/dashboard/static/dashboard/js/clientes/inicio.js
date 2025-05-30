@@ -21,12 +21,12 @@ advertencia.classList.add("advertencia");
 danger.classList.add("danger");
 let contador = 0;
 
-function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', index) {
+function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto') {
     const mensajeFormateado = mensaje.replace(/<br>/g, '\n');
     let elemento;
     if (tipo === 'success') {
         success.innerHTML = `
-        <div id="success-${index}">
+        <div id="success">
             <span><i class="fa-solid fa-circle-check iconNotification"></i></span>
             <div>
                 <h3>ÉXITO</h3>
@@ -38,7 +38,7 @@ function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', 
         success.style.animation = 'fadeOut 400ms ease-out 3s';
     } else if (tipo === 'advertencia') {
         advertencia.innerHTML = `
-        <div id="advertencia-${index}">
+        <div id="advertencia">
             <span><i class="fa-solid fa-triangle-exclamation iconNotification"></i></span>
             <div>
                 <h3>ADVERTENCIA</h3>
@@ -50,7 +50,7 @@ function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', 
         advertencia.style.animation = 'fadeOut 400ms ease-out 3s';
     } else if (tipo === 'danger') {
         danger.innerHTML = `
-        <div id="danger-${index}">
+        <div id="danger">
             <span><i class="fa-solid fa-circle-xmark iconNotification"></i></span>
             <div>
                 <h3>ALERTA</h3>
@@ -64,9 +64,9 @@ function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto', 
 
     notificacionesContainer.appendChild(elemento);
     notificacionesContainer.style.display = 'flex';
-    setTimeout(() => {
-        notificacionesContainer.style.display = 'none';
-    }, 2000);
+    // setTimeout(() => {
+    //     notificacionesContainer.style.display = 'none';
+    // }, 2000);
     $("#closeNotification").on("click", function () {
         notificacionesContainer.style.display = 'none';
     });
@@ -210,7 +210,7 @@ $(document).ready(function () {
             animarProgreso2(span, final, () => {
                 completados++;
                 if (completados === totalSpans) {
-                    mostrarNotificacion('success', 'Análisis completo del sistema', 0);
+                    mostrarNotificacion('success', 'Análisis completo del sistema');
                 }
             });
         });

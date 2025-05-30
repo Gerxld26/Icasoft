@@ -9,7 +9,7 @@ import json
 User = get_user_model()
 
 logger = logging.getLogger(__name__)
-from .models import Ticket
+from .models import Ticket, TipoAsistencia
 from .forms import TicketRequestForm
 from users.models import UserProfile
 from geopy.distance import geodesic
@@ -26,7 +26,7 @@ def asistencia(request):
         except json.JSONDecodeError:
             return JsonResponse({"status": "error", "message": "Datos inválidos."}, status=400)
 
-        required_fields = ["descripcion", "latitud", "longitud", "tecnico"]
+        required_fields = ["latitud", "longitud", "tecnico"]
         missing = [field for field in required_fields if not data.get(field)]
         if missing:
             return JsonResponse({
@@ -44,7 +44,7 @@ def asistencia(request):
             })
 
         technician_id = data["tecnico"]
-
+        tipo_asistencia_id =  int(data["tipoAsistencia"])
         try:
             technician = User.objects.get(id=technician_id)
             tech_profile = UserProfile.objects.get(user=technician)
@@ -64,14 +64,22 @@ def asistencia(request):
                     "status": "error",
                     "message": f"El técnico seleccionado está a {distance:.1f} km, lo cual excede el límite permitido de {MAX_DISTANCE_KM} km."
                 })
-
+            try:
+                tipo_asistencia = TipoAsistencia.objects.get(id=tipo_asistencia_id)
+            except TipoAsistencia.DoesNotExist:
+                return JsonResponse({
+                    "status": "error",
+                    "message": "El tipo de asistencia seleccionado no existe."
+                })
+            
             # Crear el ticket
             ticket = Ticket.objects.create(
                 client=request.user,
                 assigned_to=technician,
                 description=data["descripcion"],
                 latitude=latitude,
-                longitude=longitude
+                longitude=longitude,
+                tipo_asistencia = tipo_asistencia
             )
 
             return JsonResponse({
@@ -98,153 +106,52 @@ def asistencia(request):
                 "message": "Ocurrió un error al procesar tu solicitud."
             })
 
-
 @login_required
 @user_passes_test(lambda user: user.role == "client")
-def get_nearby_technicians_view(request):
-    """
-    Endpoint AJAX para obtener técnicos cercanos a una ubicación específica
-    """
-    if request.method != "GET":
-        return JsonResponse({'error': 'Método no permitido'}, status=405)
-    
+def tipo_asistencia(request):
     try:
-        lat = float(request.GET.get('lat', 0))
-        lon = float(request.GET.get('lon', 0))
-        
-        client_location = (lat, lon)
-        technicians_data = get_nearby_technicians_list(client_location)
-        
-        # Formatear para la respuesta JSON
-        technicians_list = []
-        for tech in technicians_data:
-            technicians_list.append({
-                'id': tech['technician'].id,
-                'username': tech['technician'].username,
-                'distance': tech['distance'],
-                'district_name': tech['district_name'],
-                'latitude': float(tech['latitude']),
-                'longitude': float(tech['longitude']),
-                'is_nearby': tech['is_nearby']
-            })
-        
-        return JsonResponse({
-            'technicians': technicians_list,
-            'has_nearby_technicians': any(tech['is_nearby'] for tech in technicians_list),
-            'max_distance': MAX_DISTANCE_KM
-        })
+        tipos_asistencia = TipoAsistencia.objects.all()  # Retorna: status='open'
+        return JsonResponse({"status": "success", "tipo_asistencia": list(tipos_asistencia.values())})
     except Exception as e:
-        logger.error(f"Error al obtener técnicos cercanos: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=400)
-
-def get_nearby_technicians_list(client_location):
-    """
-    Función auxiliar para obtener técnicos cercanos
-    Clasifica los técnicos como "cercanos" si están dentro de la distancia máxima
-    """
-    # Filtrar técnicos online
-    technicians = UserProfile.objects.filter(
-        user__role="tech", estado_conexion="online", latitude__isnull=False, longitude__isnull=False
-    )
-
-    technician_distances = []
-    for tech in technicians:
-        try:
-            tech_location = (float(tech.latitude), float(tech.longitude))
-            distance = geodesic(client_location, tech_location).km
-            
-            # Determinar si el técnico está realmente cerca
-            is_nearby = distance <= MAX_DISTANCE_KM
-            
-            technician_distances.append({
-                'technician': tech.user,
-                'distance': round(distance, 2), 
-                'district_name': tech.district_name or "Desconocido",
-                'latitude': tech.latitude,
-                'longitude': tech.longitude,
-                'is_nearby': is_nearby
-            })
-        except (ValueError, TypeError) as e:
-            logger.error(f"Error al calcular distancia para técnico {tech.user.username}: {str(e)}")
-            continue
-
-    # Ordenar por distancia
-    return sorted(technician_distances, key=lambda x: x['distance'])
-    
-def assign_nearest_technician(ticket):
-    """
-    Encuentra y retorna el técnico más cercano al cliente, solo considerando técnicos 'online'.
-    Aplica la lógica de distancia máxima.
-    """
-    if not ticket.latitude or not ticket.longitude:
-        return None
-
-    # Filtrar técnicos que estén online y tengan coordenadas
-    technicians = UserProfile.objects.filter(
-        user__role="tech", 
-        estado_conexion="online",  
-        latitude__isnull=False, 
-        longitude__isnull=False
-    )
-
-    nearest_technician = None
-    min_distance = float("inf")
-
-    for tech in technicians:
-        try:
-            tech_location = (float(tech.latitude), float(tech.longitude))
-            client_location = (float(ticket.latitude), float(ticket.longitude))
-            distance = geodesic(client_location, tech_location).km
-
-            # Solo considerar técnicos que estén dentro del límite permitido
-            if distance < min_distance and distance <= MAX_DISTANCE_KM:
-                min_distance = distance
-                nearest_technician = tech.user
-        except (ValueError, TypeError) as e:
-            logger.error(f"Error al calcular distancia para técnico {tech.user.username}: {str(e)}")
-            continue
-
-    # Si no se encontró un técnico dentro del límite permitido, return None
-    if not nearest_technician:
-        logger.warning(f"No se encontró ningún técnico dentro del límite permitido de {MAX_DISTANCE_KM} km")
-    
-    return nearest_technician
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 @login_required
 @user_passes_test(lambda user: user.role == "client")
-def assign_selected_technician(request, ticket_id):
+def listar_tecnicos_cercanos(request):
     try:
-        ticket = Ticket.objects.get(id=ticket_id, client=request.user)
+        lat = request.GET.get('lat')
+        lon = request.GET.get('lon')
+        
+        if not lat or not lon:
+            return JsonResponse({"status": "error", "message": "Faltan parámetros de latitud o longitud."}, status=400)
 
-        if request.method == "POST":
-            technician_id = request.POST.get("technician")
-            try:
-                technician = User.objects.get(id=technician_id, role="tech")
-                tech_profile = UserProfile.objects.get(user=technician)
-                
-                # Verificar la distancia
-                client_location = (float(ticket.latitude), float(ticket.longitude))
-                tech_location = (float(tech_profile.latitude), float(tech_profile.longitude))
-                distance = geodesic(client_location, tech_location).km
-                
-                if distance > MAX_DISTANCE_KM:
-                    messages.error(request, f"El técnico seleccionado está a {distance:.1f} km de distancia, lo cual excede el límite permitido de {MAX_DISTANCE_KM} km.")
-                    return redirect('client_tickets')
-                
-                # Asignar el técnico seleccionado al ticket
-                ticket.assigned_to = technician
-                ticket.save()
-                
-                messages.success(request, f"Técnico {technician.username} asignado correctamente al ticket.")
-                return redirect('ticket_detail', ticket_id=ticket.id)
-            except User.DoesNotExist:
-                messages.error(request, "El técnico seleccionado no existe.")
-            except UserProfile.DoesNotExist:
-                messages.error(request, "El técnico seleccionado no tiene un perfil válido.")
-            except Exception as e:
-                logger.error(f"Error al asignar técnico: {str(e)}")
-                messages.error(request, "Error al procesar la solicitud. Por favor, inténtelo de nuevo.")
-    except Ticket.DoesNotExist:
-        messages.error(request, "El ticket solicitado no existe o no tienes permisos para verlo.")
+        locacion_cliente = (float(lat), float(lon))
+
+        technicians = UserProfile.objects.filter(
+            user__role="tech",
+            estado_conexion="online",
+            latitude__isnull=False,
+            longitude__isnull=False
+        )
+
+        technician_distances = []
+        for tecnico in technicians:
+            locacion_tecnico = (float(tecnico.latitude), float(tecnico.longitude))
+            distancia = geodesic(locacion_cliente, locacion_tecnico).km
+            localizacion = distancia <= MAX_DISTANCE_KM
+
+            technician_distances.append({
+                'technician_id': tecnico.user.id,
+                'technician_name': tecnico.full_name or tecnico.user.username,
+                'distance_km': round(distancia, 2),
+                'province_name': tecnico.province_name, 
+                'latitude': tecnico.latitude,
+                'longitude': tecnico.longitude,
+                'localizacion': localizacion
+            })
+
+        return JsonResponse({"status": "success", "tecnicos_cercanos": technician_distances})
     
-    return redirect('client_tickets')
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    

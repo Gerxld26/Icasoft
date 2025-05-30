@@ -1,4 +1,5 @@
-from django.http import JsonResponse, HttpResponseForbidden, JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login 
@@ -383,7 +384,7 @@ class IcasoftToolsContext:
         },
         'tecnico':{
             'keywords': ['domicilio', 'enviar', 'necesito un tecnico', 'tecnico'],
-            'solution': 'Te brindamos el número para agendar asistencia a domicilio: +51 972 142 522 o en el módulo de asistencia técnica puede solicitar'
+            'solution': 'Te brindamos el número para agendar asistencia a domicilio: +51 972 142 522 o en el módulo de Asistencia Técnica puede solicitar'
         },
         'horario':{
             'keywords':['atencion', 'hora', 'abren', 'atienden'],
@@ -5303,81 +5304,154 @@ def read_client(request):
     context = {'page_obj': page_obj, 'query': query}
     return render(request, 'dashboard/admin/read_client.html', context)
 
-# Listar técnicos
+# Listar técnicos:
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
 def read_technician(request):
-    """Vista para gestionar usuarios con búsqueda y paginación."""
     query = request.GET.get('q', '')
-    current_user = request.user  # Obtener el usuario logueado
+    current_user = request.user
     users = User.objects.filter(role='tech').exclude(id=current_user.id)
+
     if query:
         users = users.filter(username__icontains=query) | users.filter(email__icontains=query)
 
-    paginator = Paginator(users, 10)  # 10 usuarios por página
+    paginator = Paginator(users, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    context = {'page_obj': page_obj, 'query': query}
+    # Obtener lista de países para el modal
+    country_list = []
+    try:
+        response = requests.get('https://restcountries.com/v3.1/independent?status=true', timeout=10)
+        response.raise_for_status()
+        countries = response.json()
+        country_list = [country['name']['common'] for country in countries if 'name' in country and 'common' in country['name']]
+    except requests.RequestException as e:
+        messages.error(request, f'Error al obtener los países: {e}')
+
+    form = CreateTechForm()
+
+    context = {
+        'page_obj': page_obj,
+        'query': query,
+        'form': form,
+        'countries': country_list,
+    }
     return render(request, 'dashboard/admin/read_technician.html', context)
+##Add tech:
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def add_technician(request):
+    if request.method == 'POST':
+        form = CreateTechForm(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.role = 'tech'
+            user.is_staff = True
+            user.save()
 
-# Add technician
-# @login_required
-# @user_passes_test(lambda u: u.role == 'admin')
-# def add_technician(request):
-#     country_list = []
-#     try:
-#         response = requests.get('https://restcountries.com/v3.1/independent?status=true', timeout=10)
-#         response.raise_for_status()
-#         countries = response.json()
-#         country_list = [country['name']['common'] for country in countries if 'name' in country and 'common' in country['name']]
-#     except requests.RequestException as e:
-#         messages.error(request, f'Error al obtener los países: {e}')
+            try:
+                latitude = float(request.POST.get('latitude', 0))
+                longitude = float(request.POST.get('longitude', 0))
+            except ValueError:
+                latitude, longitude = 0, 0
 
-#     if request.method == 'POST':
-#         form = CreateTechForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             # Guardar usuario
-#             user = form.save(commit=False)
-#             user.role = 'tech'  # Aseguramos que tenga el rol correcto
-#             user.is_staff = True
-#             user.save()
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            profile.role = "technician"
+            profile.full_name = form.cleaned_data.get('full_name')
+            profile.phone_number = form.cleaned_data.get('phone_number')
+            profile.address = form.cleaned_data.get('address')
+            profile.certifications = form.cleaned_data.get('certifications')
+            profile.schedule_start = form.cleaned_data.get('schedule_start')
+            profile.schedule_end = form.cleaned_data.get('schedule_end')
+            profile.specialty = form.cleaned_data.get('specialty')
+            profile.country_name = request.POST.get('country')
+            profile.department_name = request.POST.get('department')
+            profile.province_name = request.POST.get('province')
+            profile.district_name = request.POST.get('city')
+            profile.latitude = latitude
+            profile.longitude = longitude
+            profile.photo = form.cleaned_data.get('photo')
+            profile.save()
 
-#             # Convertir latitud y longitud a float para evitar errores en la base de datos
-#             try:
-#                 latitude = float(request.POST.get('latitude', 0))
-#                 longitude = float(request.POST.get('longitude', 0))
-#             except ValueError:
-#                 latitude, longitude = 0, 0  # Valores por defecto si no son válidos
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'message': 'Técnico agregado exitosamente.'})
+            else:
+                messages.success(request, 'Técnico agregado exitosamente.')
+                return redirect('read_technician')
 
-#             # Crear o actualizar UserProfile con el rol correcto
-#             profile, created = UserProfile.objects.get_or_create(user=user)
-#             profile.role = "technician"
-#             profile.full_name = form.cleaned_data.get('full_name')
-#             profile.phone_number = form.cleaned_data.get('phone_number')
-#             profile.address = form.cleaned_data.get('address')
-#             profile.certifications = form.cleaned_data.get('certifications')
-#             profile.schedule_start = form.cleaned_data.get('schedule_start')
-#             profile.schedule_end = form.cleaned_data.get('schedule_end')
-#             profile.specialty = form.cleaned_data.get('specialty')
-#             profile.country_name = request.POST.get('country')
-#             profile.department_name = request.POST.get('department')
-#             profile.province_name = request.POST.get('province')
-#             profile.district_name = request.POST.get('city')
-#             profile.latitude = latitude
-#             profile.longitude = longitude
-#             profile.photo = form.cleaned_data.get('photo')
-#             profile.save()
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                errors = form.errors.as_json()
+                return JsonResponse({'errors': errors}, status=400)
+            else:
+                messages.error(request, 'Corrige los errores en el formulario.')
+                return redirect('read_technician')
+    return redirect('read_technician')
+# Update tech
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def update_technician(request, pk):
+    user = get_object_or_404(User, pk=pk, role='tech')
+    profile, created = UserProfile.objects.get_or_create(user=user)
 
-#             messages.success(request, 'Técnico agregado exitosamente.')
-#             return redirect('admin_dashboard')
-#         else:
-#             messages.error(request, 'Corrige los errores en el formulario.')
-#     else:
-#         form = CreateTechForm()
+    if request.method == 'POST':
+        form = CreateTechForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.role = 'tech'
+            user.save()
 
-#     return render(request, 'dashboard/admin/add_technician.html', {'form': form, 'countries': country_list})
+            try:
+                latitude = float(request.POST.get('latitude', 0))
+                longitude = float(request.POST.get('longitude', 0))
+            except ValueError:
+                latitude, longitude = 0, 0
 
+            profile.full_name = form.cleaned_data.get('full_name')
+            profile.phone_number = form.cleaned_data.get('phone_number')
+            profile.address = form.cleaned_data.get('address')
+            profile.certifications = form.cleaned_data.get('certifications')
+            profile.schedule_start = form.cleaned_data.get('schedule_start')
+            profile.schedule_end = form.cleaned_data.get('schedule_end')
+            profile.specialty = form.cleaned_data.get('specialty')
+            profile.country_name = request.POST.get('country')
+            profile.department_name = request.POST.get('department')
+            profile.province_name = request.POST.get('province')
+            profile.district_name = request.POST.get('city')
+            profile.latitude = latitude
+            profile.longitude = longitude
+            if request.FILES.get('photo'):
+                profile.photo = request.FILES['photo']
+            profile.save()
+
+            return JsonResponse({'message': 'Técnico actualizado exitosamente.'})
+        else:
+            return JsonResponse({'errors': form.errors}, status=400)
+
+    # GET: enviar datos del técnico en JSON
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        data = {
+            'username': user.username,
+            'email': user.email,
+            'specialty': profile.specialty,
+            'full_name': profile.full_name,
+            'phone_number': profile.phone_number,
+            'address': profile.address,
+            'certifications': profile.certifications,
+            'schedule_start': profile.schedule_start.strftime('%H:%M') if profile.schedule_start else '',
+            'schedule_end': profile.schedule_end.strftime('%H:%M') if profile.schedule_end else '',
+            'country': profile.country_name,
+            'department': profile.department_name,
+            'province': profile.province_name,
+            'city': profile.district_name,
+            'latitud': profile.latitude,
+            'longitude': profile.longitude,
+            'photo': profile.photo.url if profile.photo else '',
+        }
+        return JsonResponse(data)
+
+    return HttpResponseBadRequest("Solicitud inválida.")
 # Add admin 
 @login_required
 @user_passes_test(is_admin)

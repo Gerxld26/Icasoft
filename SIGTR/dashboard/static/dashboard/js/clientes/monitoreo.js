@@ -16,7 +16,7 @@ function MonitoreoFunction() {
     spanMonitoreo.style.width = '0%';
     spanMonitoreo.textContent = '0%';
     const porcentajeFinal = parseInt(spanMonitoreo.dataset.width.replace('%', ''));
-    const typeNotification = () => mostrarNotificacion('success', 'Análisis completo del monitoreo', 1);
+    const typeNotification = () => mostrarNotificacion('success', 'Análisis completo del monitoreo');
 
     animarProgreso(spanMonitoreo, porcentajeFinal, () => {
         setTimeout(() => {

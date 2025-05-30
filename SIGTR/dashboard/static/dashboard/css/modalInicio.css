@@ -15,7 +15,6 @@
     filter: drop-shadow(6px 6px 10px rgb(28, 29, 29));
     justify-content: center;
     align-items: center;
-    z-index: 1000; 
 }
 
 .modal-content {
@@ -111,6 +110,7 @@
 
     /*regresa a la posición 0 cuando termina*/
 }
+
 
 /*MODAL MONITOREO*/
 #modalMonitoreo .modal-content {

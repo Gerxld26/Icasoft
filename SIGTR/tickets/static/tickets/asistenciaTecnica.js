@@ -18,79 +18,90 @@ window.addEventListener('click', function (event) {
     }
 })
 
-function tecnicosDisp(lat, lon) { //la lat y lon que se le pasa es del cliente.
-    //clearTechMarkers(); // Limpiar marcadores existentes
-    fetch(`/tickets/get_nearby_technicians/?lat=${lat}&lon=${lon}`, {
+function tecnicosDisp(lat, lon) { //lat y lon es del cliente que le pasamos en mapa.js
+    //Elminar marcadores anteriores
+    markerTech.forEach(marker => marker.setMap(null));
+    markerTech = [];
+
+    fetch(`/tickets/listar_tecnicos_cercanos/?lat=${lat}&lon=${lon}`, {
         headers: {
             "X-Requested-With": "XMLHttpRequest"
         }
     })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
+    .then(response => {
+        console.log("Nueva petición a listar_tecnicos_cercanos", lat, lon);
+        return response.json();
+    })
+    .then(data => {
+        const tecnicos = data.tecnicos_cercanos;
 
-            btnAsistencia.disabled = !data.has_nearby_technicians;
-            updateTechniciansList(data.technicians);
-        })
-        .catch(error => {
-            console.error("Error obteniendo técnicos:", error);
+        let select = '';
+        tecnicos.forEach((listTecnicos) => {            
+                const nombre = listTecnicos.technician_name;
+                var lugarTecnico = listTecnicos.province_name;
+                var distanciaTecnico = listTecnicos.distance_km;
+
+                // Mostrar solo técnicos dentro del radio permitido (2km)
+                if (listTecnicos.distance_km <= 2) {
+                    select += `<option value="${listTecnicos.technician_id}" class="opcion">${nombre} - ${distanciaTecnico} km</option>`;
+                    // Mostrar en el mapa
+                    locationTech(
+                        listTecnicos.latitude,
+                        listTecnicos.longitude,
+                        nombre,
+                        distanciaTecnico
+                    );
+                } else{
+                    select += `<option class="opcion" disabled selected>No hay técnicos cercanos disponibles</option>`;  
+                }
+                
+                tipoAsistencia(lugarTecnico, distanciaTecnico);
+                
         });
+        $("#technician").html(select);
+    })
+    .catch(error => {
+        console.error("Error obteniendo técnicos:", error);
+    });
 }
-//Cargar el combo de selecciones: 
-function updateTechniciansList(technicians) {
-    const select = document.getElementById('technician');
-    // Limpiar opciones actuales
-    select.innerHTML = '<option value="">Técnicos disponibles</option>';
-    
-    if (!technicians || technicians.length === 0) {
-        select.innerHTML += '<option>No hay técnicos disponibles en línea.</option>';
-        return;
-    }
-    
-    // Dividir en cercanos y lejanos
-    const nearbyTechs = technicians.filter(tech => tech.is_nearby);
-    const distantTechs = technicians.filter(tech => !tech.is_nearby);
-    
-    // técnicos cercanos (habilitados)
-    if (nearbyTechs.length > 0) {
-        const nearbyGroup = document.createElement('optgroup');
-        
-        nearbyTechs.forEach(tech => {
-            const option = document.createElement('option');
-            option.value = tech.id;
-            option.textContent = `${tech.username} - ${tech.distance} km - ${tech.district_name}`;
-            nearbyGroup.appendChild(option);
-            locationTech(tech.latitude, tech.longitude);
-        });
-        
-        select.appendChild(nearbyGroup);
-    }
-    
-    // // técnicos lejanos (deshabilitados)
-    // if (distantTechs.length > 0) {
-    //     const distantGroup = document.createElement('optgroup');
-    //     distantGroup.label = 'Técnicos fuera de rango (no disponibles)';
-        
-    //     distantTechs.forEach(tech => {
-    //         const option = document.createElement('option');
-    //         option.value = tech.id;
-    //         option.disabled = true;
-    //         option.textContent = `${tech.username} - ${tech.distance} km - ${tech.district_name} (demasiado lejos)`;
-    //         distantGroup.appendChild(option);
-    //     });
-        
-    //     select.appendChild(distantGroup);
-    // }
+function tipoAsistencia(lugar, distancia) {
+    fetch(`/tickets/tipo_asistencia/`, {
+        headers: {
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        const tipoAsistencia = data.tipo_asistencia;
+        let radioOption = '';
 
-    if (nearbyTechs.length > 0) {
-        select.value = nearbyTechs[0].id;
-    } else {
-        select.value = "";
-    }
+        if ((lugar == 'Ica' || lugar == 'Ica Province') && distancia <= 2) {
+            tipoAsistencia.forEach((listAsitencias) => {
+                checked = listAsitencias.id === 4 ? 'checked' : '';
+                radioOption += `<input type="radio" id="asistencia_${listAsitencias.id}" name="radioType" value="${listAsitencias.id}" ${checked}>`;
+                radioOption += `<label for="asistencia_${listAsitencias.id}">${listAsitencias.tipo_asistencia}</label><br>`;
+            });
+        } else if ((lugar == 'Ica' || lugar == 'Ica Province') && distancia > 2 && distancia < 70) {
+            radioOption += `<input type="radio" id="asistencia_1" name="radioType" value="1" checked>`;
+            radioOption += `<label for="asistencia_1">Remota</label><br>`;
+            radioOption += `<input type="radio" id="asistencia_4" name="radioType" value="4" checked>`;
+            radioOption += `<label for="asistencia_4">Traer al local</label><br>`;
+        } else if (distancia >= 70) {
+            radioOption += `<input type="radio" id="asistencia_1" name="radioType" value="1" checked>`;
+            radioOption += `<label for="asistencia_1">Remota</label><br>`;
+        } else {
+            console.log('Caso no esperado con distancia:', distancia);
+        }
+        document.getElementById('conentRadioAsist').innerHTML = radioOption;
+    })
+    .catch(error => {
+        console.error('Error al obtener datos de tipo de asistencia:', error);
+    });
 }
 const formData = document.getElementById('formAsistencia'); 
 document.getElementById('formAsistencia').addEventListener("submit", function (event) {
@@ -101,6 +112,7 @@ document.getElementById('formAsistencia').addEventListener("submit", function (e
             latitud: document.getElementById('id_latitude').value,
             longitud: document.getElementById('id_longitude').value,
             tecnico: document.getElementById('technician').value,
+            tipoAsistencia: document.querySelector('input[name="radioType"]:checked').value,
         }
         fetch("/tickets/asistencia/", {
             method: "POST",
@@ -118,18 +130,10 @@ document.getElementById('formAsistencia').addEventListener("submit", function (e
                 return response.json();
             })
             .then(data => {
-    
-                Swal.fire({
-                    icon: data.status === "success" ? "success" : "error",
-                    title: data.status === "success" ? "Éxito" : "Error",
-                    text: data.message,
-                    confirmButtonColor: "#3085d6",
-                    confirmButtonText: "Entendido"
-                }).then((result) => {
-                    if (result.isConfirmed && data.status === "success") {
-                       modalAsistencia.style.display='none';
-                    }
-                });
+                modalAsistencia.style.display='none';
+                setTimeout(()=>{
+                    mostrarNotificacion('success', 'Solicitud de asistencia realizada con éxito', 10);
+                }, 1000)
     
                 btnAsistencia.disabled = false;
             })

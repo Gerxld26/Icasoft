@@ -42,27 +42,15 @@
                             <div class="textDescrip">Técnicos cerca a tu dirección:</div>
                             <div class="inputDescrip">
                                 <select name="technician" id="technician" class="form-control selectOpcion">
-                                    {% for technician in technicians %}
-                                    <option class="option" value="{{ technician.technician.id }}" {% if not technician.is_nearby %}disabled="disabled" {% endif %}>
-                                        {{ technician.technician.username }} - {{ technician.distance }} km - {{technician.district_name }}
-                                        {% if not technician.is_nearby %}(demasiado lejos){% endif %}
-                                    </option>
-                                    {% empty %}
-                                    <option>No hay técnicos disponibles en línea cerca de ti.</option>
-                                    {% endfor %}
+                                    <!--contenido js-->
                                 </select>
                             </div>
                         </div>
                         <div class="contentAsistencia">
                             <div>Tipo de asistencia</div>
-                            <div class="radioAsis">
-                                <div class="conentRadio">
-                                    <input type="radio" id="domicilioType" name="radioType" checked>
-                                    <label for="domicilioType">Domicilio</label>
-                                </div>
-                                <div class="conentRadio">
-                                    <input type="radio" id="localType" name="radioType">
-                                    <label for="localType">Traer al local</label>
+                            <div>
+                                <div id="conentRadioAsist" class="radioAsis">
+                                    <!--contenido ajax-->
                                 </div>
                             </div>
                         </div>

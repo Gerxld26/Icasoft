@@ -10,7 +10,8 @@ from .views import (
     # Admin-specific views
     add_admin,
     read_technician,
-    # add_technician,
+    add_technician,
+    update_technician,
     read_client, 
     #manage_users, #borrar
     inactive_users,
@@ -109,10 +110,11 @@ urlpatterns = [
     path("client/", client_dashboard, name="client_dashboard"),
 
     # Admin routes
-    # path("add-technician/", add_technician, name="add_technician"),
     path("tecnicos/", read_technician, name = "read_technician"),
     path("add-admin/", add_admin, name="add_admin"),
     path("clientes/", read_client, name="read_client"),
+    path("tecnicos/agregar/", add_technician, name = "add_technician"),
+    path('tecnicos/update/<int:pk>/', update_technician, name='update_technician'),
     #path("manage-users/", manage_users, name="manage_users"), #borrar
     path("inactive-users/", inactive_users, name="inactive_users"),
     path("deactivate-user/<int:user_id>/", deactivate_user, name="deactivate_user"),

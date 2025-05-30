@@ -17,7 +17,7 @@
     <div class="contenedorPrincipal">
         <div class="container">
             <div class="header">
-                <div>
+                <div style="font-size:larger; font-weight: 500;">
                     ¡Hola, {{ request.user.username }}!
                 </div>
                 <div class="contactos">
@@ -238,8 +238,8 @@
     <script src="{% static 'dashboard/js/clientes/recomendaciones.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/red.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/chat.js' %}"></script>
-    <!-- <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=marker,geometry&callback=initMap"
-    async defer></script> -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=marker,geometry&callback=initMap"
+    async defer></script>
 </body>
 
 </html>
