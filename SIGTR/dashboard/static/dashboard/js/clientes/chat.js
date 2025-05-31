@@ -8,12 +8,36 @@ $(document).ready(function() {
     const sendChat = document.getElementById('sendChat');
     const audioSend = document.getElementById('audioSend');
     
-    // Variables para grabación de audio
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
     
-    // Funciones del chat
+    function speakText(text) {
+    function loadAndSpeak() {
+        const voices = speechSynthesis.getVoices();
+        const selectedVoice = voices.find(v => 
+            v.name.includes("Google español") || 
+            v.name.includes("Microsoft Sabina") ||
+            v.name.includes("es-ES") && v.gender === "female" 
+        );
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.voice = selectedVoice || voices[0]; 
+        utterance.lang = "es-ES";
+        utterance.rate = 1.1;
+        utterance.pitch = 1.3;
+        speechSynthesis.speak(utterance);
+    }
+
+    if (speechSynthesis.getVoices().length === 0) {
+        speechSynthesis.onvoiceschanged = loadAndSpeak;
+    } else {
+        loadAndSpeak();
+    }
+}
+
+
+
     function addMessage(message, type = 'user') {
         const messageElement = $('<div>', {
             class: `mensaje ${type === 'user' ? 'mensaje-usuario userRequest' : 'mensaje-asistente iaResponse'}`,
@@ -40,6 +64,7 @@ $(document).ready(function() {
             success: function(response) {
                 setTimeout(() => {
                     addMessage(response.response, 'assistant');
+                    speakText(response.response);
                 }, 500);
             },
             error: function() {
@@ -58,7 +83,6 @@ $(document).ready(function() {
         $asistenteSoporte.addClass('modo-chat-activo');
     }
     
-    // Event listeners para el chat
     $sendButton.on('click', sendMessage);
     
     $textInput.on('input', function() {
@@ -82,7 +106,6 @@ $(document).ready(function() {
         }
     });
     
-    // Funciones de reconocimiento de voz (speech to text)
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         $(audioButton).on('click', function() {
             if (isRecording) {
@@ -197,14 +220,11 @@ $(document).ready(function() {
                     if (data.text && data.text.trim() !== '') {
                         $textInput.val(data.text);
                         
-                        // Importante: Asegurar que el chat se active antes de enviar el mensaje
                         $asistenteSoporte.addClass('modo-chat-activo');
                         
-                        // Actualizar la visualización de los botones
                         sendChat.style.display = 'grid';
                         audioSend.style.display = 'none';
                         
-                        // Pequeño retraso para que los cambios visuales sean perceptibles
                         setTimeout(() => {
                             sendMessage();
                         }, 300);
@@ -222,7 +242,6 @@ $(document).ready(function() {
             });
         }, 1000);
         
-        // Establecer un límite de tiempo para la transcripción
         setTimeout(() => {
             clearInterval(checkInterval);
             finishRecording(false);

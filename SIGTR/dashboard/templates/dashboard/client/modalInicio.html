@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 {% block content %}
 <link rel="stylesheet" href="{% static 'dashboard/css/modalInicio.css' %}">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -78,22 +79,24 @@
             <h2 class="modal-title">Diagnósticos del sistema</h2>
             <span id="closeModalDiagn" class="close">&times;</span>
         </div>
-        
+
         <div class="contentData">
             <div class="diagnosis-tabs">
                 <button class="tab-btn active" data-tab="fast-diagnosis">Herramienta de diagnóstico</button>
                 <button class="tab-btn" data-tab="diagnosis-history">Resultados de diagnóstico</button>
             </div>
-            
+
             <div class="tab-content">
                 <!-- Tab de Diagnóstico Rápido -->
                 <div id="fast-diagnosis" class="tab-pane active">
                     <div class="diagnosis-section">
                         <div class="diagnosis-header">
                             <h3>Diagnóstico con un clic</h3>
-                            <p class="diagnosis-desc">Si no está seguro de qué componente está causando el problema, esta es su mejor solución. Ejecute una prueba completa para obtener un informe de diagnóstico detallado.</p>
+                            <p class="diagnosis-desc">Si no está seguro de qué componente está causando el problema,
+                                esta es su mejor solución. Ejecute una prueba completa para obtener un informe de
+                                diagnóstico detallado.</p>
                         </div>
-                        
+
                         <div class="progress-container">
                             <div class="progress-bar" id="quick-scan-progress">
                                 <span data-width="0%" style="width: 0%">0%</span>
@@ -101,50 +104,53 @@
                             <button id="start-quick-scan" class="action-button">Iniciar diagnóstico</button>
                         </div>
                     </div>
-                    
+
                     <div class="diagnosis-section">
                         <div class="diagnosis-header">
                             <h3>Diagnóstico por escenario</h3>
                         </div>
-                        
+
                         <div id="scenarios-container" class="scenarios-grid">
                             <!-- Los escenarios se cargarán dinámicamente desde JavaScript -->
                         </div>
                     </div>
                 </div>
-                
-                 <!-- Tab de Resultados de Diagnóstico -->
-                 <div id="diagnosis-history" class="tab-pane">
+
+                <!-- Tab de Resultados de Diagnóstico -->
+                <div id="diagnosis-history" class="tab-pane">
                     <div class="diagnosis-results-container">
                         <h3 class="diagnosis-results-title">Resultados de los diagnósticos</h3>
-                        
+
                         <div class="diagnosis-note">
-                            <p>Nota: A continuación, únicamente se mostrará el último resultado de cada elemento de prueba.</p>
+                            <p>Nota: A continuación, únicamente se mostrará el último resultado de cada elemento de
+                                prueba.</p>
                         </div>
-                        
+
                         <div class="diagnosis-summary">
                             <div class="diagnosis-summary-icon">
                                 <i class="fa-solid fa-laptop-medical"></i>
                             </div>
                             <div class="diagnosis-summary-info">
-                                <p class="diagnosis-type">Diagnóstico con un clic | <span class="diagnosis-problems">0 Problemas</span>, <span class="diagnosis-suggestions">0 Sugerencias</span></p>
+                                <p class="diagnosis-type">Diagnóstico con un clic | <span class="diagnosis-problems">0
+                                        Problemas</span>, <span class="diagnosis-suggestions">0 Sugerencias</span></p>
                             </div>
                         </div>
-                        
+
                         <!-- Componentes principales del sistema -->
                         <h4 class="component-category-title">Componentes del sistema</h4>
                         <div class="components-list">
                             <!-- Los componentes se cargarán dinámicamente desde JavaScript -->
                         </div>
-                        
+
                         <!-- Componentes de estado del sistema -->
                         <h4 class="component-category-title">Estado del sistema</h4>
                         <div class="system-components-list">
                             <!-- Los componentes de sistema se cargarán dinámicamente -->
                         </div>
-                        
+
                         <div class="diagnosis-actions">
-                            <p class="diagnosis-recommendation">Si no están convencido de los resultados de la prueba, le recomendamos que la repita.</p>
+                            <p class="diagnosis-recommendation">Si no están convencido de los resultados de la prueba,
+                                le recomendamos que la repita.</p>
                             <div class="diagnosis-buttons">
                                 <button id="retry-diagnosis" class="action-button secondary">Probar de nuevo</button>
                                 <button id="complete-diagnosis" class="action-button primary">Completado</button>
@@ -154,7 +160,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Contenedor para mostrar resultados detallados -->
         <div id="detailed-results" class="detailed-results-container" style="display: none;">
             <div class="detailed-results-header">
@@ -163,7 +169,7 @@
                 </button>
                 <h3>Resultados detallados</h3>
             </div>
-            
+
             <div id="detailed-results-content" class="detailed-results-content">
                 <!-- Aquí se cargarán los resultados detallados -->
             </div>
@@ -177,17 +183,17 @@
         <div class="headerModal">
             <h3>Diagnóstico en progreso</h3>
         </div>
-        
+
         <div class="scan-progress-container">
             <div class="scan-status">
                 <p id="current-component-scan">Analizando sistema...</p>
                 <p id="scan-percentage">0%</p>
             </div>
-            
+
             <div class="progress-bar" id="scan-progress-bar">
                 <span data-width="0%" style="width: 0%">0%</span>
             </div>
-            
+
             <div class="scan-details">
                 <p id="scan-details-text">Por favor, espere mientras se completa el análisis...</p>
             </div>
@@ -241,7 +247,7 @@
                     <button id="verMasAnt">Ver más</button>
                 </div>
             </div>
- 
+
             <div id="antivirus-resultados">
                 <div class="antivirus-detalles">
                     <div class="antivirus-info">
@@ -257,7 +263,7 @@
                         <div id="versionAntivirus">-</div>
                     </div>
                 </div>
- 
+
                 <div class="antivirus-analisis">
                     <div class="analisis-componente">
                         <div class="titulo">Estado de Protección</div>
@@ -278,7 +284,7 @@
             </div>
         </div>
     </div>
- </div>
+</div>
 
 <!-- MODAL MANTENIMIENTO  -->
 <div id="modalMantenimiento" class="modal">
@@ -341,102 +347,91 @@
         </div>
     </div>
 </div>
+
 <!--MODAL RECOMENDACIONES SW-->
 <div id="modalRecomendaciones" class="modal">
     <div class="modal-content">
+        <!-- Las categorías y productos se cargarán dinámicamente -->
+        {% for categoria in categorias %}
+        <div class="apartado">
+            <div class="{% if forloop.first %}headerModal{% endif %}">
+                {% if forloop.first %}
+                <span id="closeModalRecom" class="close">&times;</span>
+                {% endif %}
+                <div class="textHW">{{ categoria.nombreCategoria|upper }}</div>
+            </div>
+            <div class="contentApartado">
+                <!-- Los productos de esta categoría -->
+                {% for producto in productos_por_categoria|get_item:categoria.idCategoria %}
+                <div class="productSW">
+                    <div class="detalleProducto">
+                        <div class="contentImg">
+                            {% if producto.imagenProducto %}
+                            <img src="{{ producto.imagenProducto.url }}" alt="{{ producto.nombreProducto }}"
+                                class="imgSW">
+                            {% else %}
+                            <img src="{% static 'dashboard/img/windows.webp' %}" alt="{{ producto.nombreProducto }}"
+                                class="imgSW">
+                            {% endif %}
+                        </div>
+                        <div class="nombreProducto">
+                            <div class="textProducto">{{ producto.nombreProducto }}</div>
+                            <div class="precioProducto">s/. {{ producto.precioVenta }}</div>
+                        </div>
+                    </div>
+                    <div class="opciones">
+                        <button class="btnComprar" data-product-id="{{ producto.idProducto }}">COMPRAR</button>
+                    </div>
+                </div>
+                {% empty %}
+                <!-- Si no hay productos en la categoría -->
+                <div class="productSW">
+                    <div class="detalleProducto">
+                        <div class="contentImg">
+                            <img src="{% static 'dashboard/img/product-placeholder.webp' %}" alt="No hay productos"
+                                class="imgSW">
+                        </div>
+                        <div class="nombreProducto">
+                            <div class="textProducto">No hay productos en esta categoría</div>
+                            <div class="precioProducto">s/. 0.00</div>
+                        </div>
+                    </div>
+                    <div class="opciones">
+                        <button class="btnComprar" disabled>NO DISPONIBLE</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <!-- Si no hay categorías -->
         <div class="apartado">
             <div class="headerModal">
                 <span id="closeModalRecom" class="close">&times;</span>
-                <div class="textHW">SEGURIDAD</div>
+                <div class="textHW">PRODUCTOS</div>
             </div>
             <div class="contentApartado">
                 <div class="productSW">
                     <div class="detalleProducto">
-                        <div class="contentImg"><img src="{% static 'dashboard/img/antivirus.webp' %}" alt="antivirus"
-                                class="imgSW"></div>
+                        <div class="contentImg">
+                            <img src="{% static 'dashboard/img/product-placeholder.webp' %}" alt="No hay categorías"
+                                class="imgSW">
+                        </div>
                         <div class="nombreProducto">
-                            <div class="textProducto">NOD 32 Antivirus</div>
-                            <div class="precioProducto">s/. 122</div>
+                            <div class="textProducto">No hay categorías disponibles</div>
+                            <div class="precioProducto">s/. 0.00</div>
                         </div>
                     </div>
                     <div class="opciones">
-                        <button class="btnComprar">COMPRAR</button>
-                    </div>
-                </div>
-                <div class="productSW">
-                    <div class="detalleProducto">
-                        <div class="contentImg"><img src="{% static 'dashboard/img/antivirus.webp' %}" alt="antivirus"
-                                class="imgSW"></div>
-                        <div class="nombreProducto">
-                            <div class="textProducto">NOD 32 Antivirus</div>
-                            <div class="precioProducto">s/. 122</div>
-                        </div>
-                    </div>
-                    <div class="opciones">
-                        <button class="btnComprar">COMPRAR</button>
-                    </div>
-                </div>
-                <div class="productSW">
-                    <div class="detalleProducto">
-                        <div class="contentImg"><img src="{% static 'dashboard/img/antivirus.webp' %}" alt="antivirus"
-                                class="imgSW"></div>
-                        <div class="nombreProducto">
-                            <div class="textProducto">NOD 32 Antivirus</div>
-                            <div class="precioProducto">s/. 122</div>
-                        </div>
-                    </div>
-                    <div class="opciones">
-                        <button class="btnComprar">COMPRAR</button>
+                        <button class="btnComprar" disabled>NO DISPONIBLE</button>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="apartado">
-            <div class="textHW">MICROSOFT</div>
-            <div class="contentApartado">
-                <div class="productSW">
-                    <div class="detalleProducto">
-                        <div class="contentImg"><img src="{% static 'dashboard/img/windows.webp' %}" alt="antivirus"
-                                class="imgSW"></div>
-                        <div class="nombreProducto">
-                            <div class="textProducto">WINDOWS 10</div>
-                            <div class="precioProducto">s/. 50</div>
-                        </div>
-                    </div>
-                    <div class="opciones">
-                        <button class="btnComprar">COMPRAR</button>
-                    </div>
-                </div>
-                <div class="productSW">
-                    <div class="detalleProducto">
-                        <div class="contentImg"><img src="{% static 'dashboard/img/windows.webp' %}" alt="antivirus"
-                                class="imgSW"></div>
-                        <div class="nombreProducto">
-                            <div class="textProducto">OFFICE 2024</div>
-                            <div class="precioProducto">s/. 80</div>
-                        </div>
-                    </div>
-                    <div class="opciones">
-                        <button class="btnComprar">COMPRAR</button>
-                    </div>
-                </div>
-                <div class="productSW">
-                    <div class="detalleProducto">
-                        <div class="contentImg"><img src="{% static 'dashboard/img/windows.webp' %}" alt="antivirus"
-                                class="imgSW"></div>
-                        <div class="nombreProducto">
-                            <div class="textProducto">NOD 32 Antivirus</div>
-                            <div class="precioProducto">s/. 122</div>
-                        </div>
-                    </div>
-                    <div class="opciones">
-                        <button class="btnComprar">COMPRAR</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </div>
+
 <!--MODAL HISTORIAL-->
 <div id="modalHistorial" class="modal historial-modal">
     <div class="modal-content historial-modal-content">
@@ -447,7 +442,6 @@
         <div class="contentDataHistorial historial-content">
 
             <div id="contenidoHistorial" class="tabla-contenedor">
-                <!-- Aquí se insertará la tabla de historial -->
             </div>
         </div>
     </div>
@@ -461,9 +455,7 @@
             <div class="textHW">COMPROBACIÓN DE RED</div>
         </div>
         <div class="contentData red-content-data">
-            <!-- Estado inicial con velocímetro -->
             <div class="red-estado-seccion">
-                <!-- Velocímetro inicial -->
                 <div class="red-velocimetro-container">
                     <div class="red-velocimetro">
                         <div class="red-velocimetro-escala">
@@ -480,7 +472,6 @@
                         </div>
                         <div class="red-velocimetro-centro"></div>
                     </div>
-                    <!-- Valor de velocidad -->
                     <div class="red-velocimetro-valor-box">
                         <div class="red-velocimetro-valor">0.00</div>
                         <div class="red-velocimetro-unidad">Mbps</div>
@@ -565,7 +556,6 @@
                     </div>
                 </div>
 
-                <!-- Recomendación -->
                 <div class="red-recomendacion-caja">
                     <div class="red-recomendacion-contenido" id="red-recomendacion-text">
                         Su conexión es óptima para todas las actividades en línea, incluyendo streaming en 4K y
@@ -573,7 +563,6 @@
                     </div>
                 </div>
 
-                <!--  nueva prueba -->
                 <div class="red-nueva-prueba-seccion">
                     <button id="red-btn-nueva-prueba" class="red-btn-test">
                         <i class="fa-solid fa-rotate"></i> REALIZAR NUEVA PRUEBA

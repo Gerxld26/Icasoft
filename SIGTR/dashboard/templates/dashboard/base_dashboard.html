@@ -70,12 +70,47 @@
                         <i class="fas fa-user-slash me-2"></i> Usuarios Inactivos
                     </a>
                 </li>
-                <!-- Nueva opción para gestionar recomendaciones de video -->
                 <li class="nav-item">
                     <a class="nav-link text-white {% if request.resolver_match.url_name == 'video_list' %}active{% endif %}"
                         href="{% url 'video_list' %}">
                         <i class="fas fa-video me-2"></i> Recomendaciones de Video
                     </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white d-flex justify-content-between align-items-center" href="#"
+                        role="button" id="productToggle" data-bs-toggle="collapse" data-bs-target="#productSubmenu"
+                        aria-expanded="false" aria-controls="productSubmenu">
+                        <span>
+                            <i class="fas fa-shopping-cart me-2"></i> Gestión de Productos
+                        </span>
+                        <i class="fas fa-chevron-down"></i>
+                    </a>
+                    <ul class="collapse list-unstyled ps-4" id="productSubmenu">
+                        <li>
+                            <a class="nav-link text-white {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}"
+                                href="{% url 'product_list' %}">
+                                <i class="fas fa-list me-2"></i> Listar Productos
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link text-white {% if request.resolver_match.url_name == 'product_create' %}active{% endif %}"
+                                href="{% url 'product_create' %}">
+                                <i class="fas fa-plus me-2"></i> Agregar Producto
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link text-white {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}"
+                                href="{% url 'category_list' %}">
+                                <i class="fas fa-tags me-2"></i> Categorías
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link text-white {% if request.resolver_match.url_name == 'sales_report' %}active{% endif %}"
+                                href="{% url 'sales_report' %}">
+                                <i class="fas fa-chart-line me-2"></i> Reporte de Ventas
+                            </a>
+                        </li>
+                    </ul>
                 </li>
 
                 {% elif request.user.role == 'client' %}
@@ -156,8 +191,8 @@
                 </li>
 
                 {% elif request.user.role == 'tech' %}
-                 <!-- Technician Navigation -->
-                 <li class="nav-item">
+                <!-- Technician Navigation -->
+                <li class="nav-item">
                     <a class="nav-link text-white {% if request.resolver_match.url_name == 'tech_cases' %}active{% endif %}"
                         href="{% url 'tech_cases' %}">
                         <i class="fas fa-briefcase me-2"></i> Casos Asignados

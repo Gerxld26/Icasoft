@@ -129,3 +129,142 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.status})"
+    
+    
+class Categoria(models.Model):
+    idCategoria = models.AutoField(primary_key=True)
+    nombreCategoria = models.CharField(max_length=100)
+    estadoCategoria = models.BooleanField(default=True)
+    fechaCreacionCategoria = models.DateTimeField(auto_now_add=True)
+    fechaModificacionCategoria = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.nombreCategoria
+
+class Producto(models.Model):
+    idProducto = models.AutoField(primary_key=True)
+    nombreProducto = models.CharField(max_length=200)
+    descripcionProducto = models.TextField()
+    stock = models.IntegerField(default=0)
+    precioVenta = models.DecimalField(max_digits=10, decimal_places=2)
+    precioCompra = models.DecimalField(max_digits=10, decimal_places=2)
+    estadoProducto = models.BooleanField(default=True)
+    fechaCaducidad = models.DateField(null=True, blank=True)
+    fechaCreacionProducto = models.DateTimeField(auto_now_add=True)
+    fechaModificacionProducto = models.DateTimeField(auto_now=True)
+    idCategoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
+    imagenProducto = models.ImageField(upload_to='productos/', null=True, blank=True)
+
+    def __str__(self):
+        return self.nombreProducto
+
+class Carrito(models.Model):
+    idCarrito = models.AutoField(primary_key=True)
+    idUsuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    precioConImpuesto = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    cantidadSeleccionada = models.IntegerField(default=0)
+    idProducto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    fechaCreacion = models.DateTimeField(auto_now_add=True)
+    fechaModificacion = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Carrito de {self.idUsuario.username}"
+
+class RegistroVenta(models.Model):
+    ESTADO_CHOICES = (
+        ('pendiente', 'Pendiente'),
+        ('pagado', 'Pagado'),
+        ('enviado', 'Enviado'),
+        ('entregado', 'Entregado'),
+        ('cancelado', 'Cancelado'),
+    )
+    
+    idRegistroVenta = models.AutoField(primary_key=True)
+    serieVenta = models.CharField(max_length=50)
+    numVenta = models.CharField(max_length=50)
+    horaVenta = models.TimeField(auto_now_add=True)
+    igv = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    numCuotas = models.IntegerField(default=1)
+    subTotal = models.DecimalField(max_digits=10, decimal_places=2)
+    descuento = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    totalVenta = models.DecimalField(max_digits=10, decimal_places=2)
+    estadoVenta = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    fechaCreacionVenta = models.DateTimeField(auto_now_add=True)
+    fechaModificacionVenta = models.DateTimeField(auto_now=True)
+    idUsuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    idTipoComprobante = models.ForeignKey('TipoComprobante', on_delete=models.CASCADE)
+    idMetodoPago = models.ForeignKey('MetodoPago', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Venta {self.serieVenta}-{self.numVenta}"
+
+class DetalleVenta(models.Model):
+    idDetalleVenta = models.AutoField(primary_key=True)
+    cantidad = models.IntegerField()
+    precioTotalProducto = models.DecimalField(max_digits=10, decimal_places=2)
+    idProducto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    idRegistroVenta = models.ForeignKey(RegistroVenta, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Detalle {self.idRegistroVenta.serieVenta}-{self.idRegistroVenta.numVenta} - {self.idProducto.nombreProducto}"
+
+class Ubicacion(models.Model):
+    idUbicacion = models.AutoField(primary_key=True)
+    direccion = models.TextField()
+    tiempoEstimadoEntrega = models.IntegerField(help_text="Tiempo en días")
+    estadoUbicacion = models.BooleanField(default=True)
+    fechaCreacionUbicacion = models.DateTimeField(auto_now_add=True)
+    fechaModificacionUbicacion = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.direccion
+
+class TipoComprobante(models.Model):
+    idTipoComprobante = models.AutoField(primary_key=True)
+    nombreComprobante = models.CharField(max_length=100)
+    estadoComprobante = models.BooleanField(default=True)
+    fechaCreacionComprobante = models.DateTimeField(auto_now_add=True)
+    fechaModificacionComprobante = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.nombreComprobante
+
+class MetodoPago(models.Model):
+    idMetodoPago = models.AutoField(primary_key=True)
+    nombreMetodo = models.CharField(max_length=100)
+    descripcionMetodo = models.TextField()
+    estadoMetodoPago = models.BooleanField(default=True)
+    fechaCreacionPago = models.DateTimeField(auto_now_add=True)
+    fechaModificacionPago = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.nombreMetodo
+
+class Entrega(models.Model):
+    ESTADO_CHOICES = (
+        ('preparado', 'Preparado'),
+        ('en_camino', 'En Camino'),
+        ('entregado', 'Entregado'),
+        ('cancelado', 'Cancelado'),
+    )
+    
+    idEntrega = models.AutoField(primary_key=True)
+    fechaPreparado = models.DateTimeField(null=True, blank=True)
+    fechaEntrega = models.DateTimeField(null=True, blank=True)
+    estadoEntrega = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='preparado')
+    idRegistroVenta = models.ForeignKey(RegistroVenta, on_delete=models.CASCADE)
+    idUbicacion = models.ForeignKey(Ubicacion, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Entrega para venta {self.idRegistroVenta.serieVenta}-{self.idRegistroVenta.numVenta}"
+
+class CompraRecurrente(models.Model):
+    idCompraRecurrente = models.AutoField(primary_key=True)
+    cantidadComprado = models.IntegerField(default=1)
+    nombreCompra = models.CharField(max_length=200)
+    fechaCreacionRecurrente = models.DateTimeField(auto_now_add=True)
+    fechaModificacionRecurrente = models.DateTimeField(auto_now=True)
+    idRegistroVenta = models.ForeignKey(RegistroVenta, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.nombreCompra

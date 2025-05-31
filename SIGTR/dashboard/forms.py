@@ -3,7 +3,7 @@ from users.models import User, UserProfile
 from .models import LearningVideo
 from tickets.models import Ticket
 import re
-
+from users.models import Producto, Categoria
 
 # FORMULARIO PARA TÉCNICOS
 
@@ -139,20 +139,16 @@ class LearningVideoForm(forms.ModelForm):
         """
         youtube_url = self.cleaned_data['youtube_url'].strip()
 
-        # Si es un código iframe
         if youtube_url.startswith("<iframe") and youtube_url.endswith("</iframe>"):
-            # Extraer la URL del atributo `src` en el iframe
             match = re.search(r'src=["\'](.*?)["\']', youtube_url)
             if match:
                 return match.group(1)
             else:
                 raise forms.ValidationError("El código iframe proporcionado no es válido.")
 
-        # Si es una URL estándar
         elif "youtube.com/watch?v=" in youtube_url or "youtu.be/" in youtube_url:
             return youtube_url
 
-        # Si no es un iframe ni una URL válida
         raise forms.ValidationError("Proporcione una URL válida de YouTube o un código iframe.")
 
 
@@ -194,3 +190,21 @@ class TicketStatusForm(forms.ModelForm):
         widgets = {
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
+
+#Carrito de compras
+
+class ProductoForm(forms.ModelForm):
+    class Meta:
+        model = Producto
+        fields = ['nombreProducto', 'descripcionProducto', 'stock', 
+                'precioVenta', 'precioCompra', 'estadoProducto', 
+                'fechaCaducidad', 'idCategoria', 'imagenProducto']
+        widgets = {
+            'fechaCaducidad': forms.DateInput(attrs={'type': 'date'}),
+            'descripcionProducto': forms.Textarea(attrs={'rows': 3}),
+        }
+
+class CategoriaForm(forms.ModelForm):
+    class Meta:
+        model = Categoria
+        fields = ['nombreCategoria', 'estadoCategoria']

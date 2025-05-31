@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 import heapq
+from django.db.models import Sum, Count
 from django.db.models import Count, F, Func, Value
 from django.db.models.functions import TruncMonth
 from users.models import User, UserProfile
@@ -28,6 +29,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
 from openai import OpenAI
+from django.templatetags.static import static
 import psutil
 import speedtest 
 import platform
@@ -38,6 +40,7 @@ import cpuinfo
 import subprocess  
 from .models import Diagnosis, DiagnosticReport, SystemComponent, DriverInfo, DiagnosticIssue, DiagnosticScenario, ScenarioRun, DiagnosticFile
 import subprocess
+from dashboard.forms import ProductoForm, CategoriaForm
 import json
 import GPUtil 
 from users.models import UserProfile
@@ -64,7 +67,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .utils import perform_speed_test
 from dotenv import load_dotenv
-
+from users.models import Categoria, Producto, RegistroVenta, DetalleVenta, Carrito
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -75,6 +78,9 @@ import time
 import shutil
 import threading
 from datetime import datetime, timedelta
+from django.http import FileResponse
+from django.http import Http404
+
 
 
 from .models import (
@@ -176,10 +182,8 @@ def transcribe_audio(request):
     if request.method == 'POST':
         try:
             if 'audio_data' in request.POST:
-                # Procesar audio desde base64
                 audio_data = request.POST.get('audio_data')
                 
-                # Para propósitos de demostración, simplemente devolver texto simulado
                 return JsonResponse({
                     'status': 'success',
                     'message': 'Transcripción simulada',
@@ -204,6 +208,324 @@ def transcribe_audio(request):
         'message': 'Método incorrecto',
         'text': ''
     }, status=405)
+    
+# View del carrito de compras
+
+@login_required
+@user_passes_test(is_admin)
+def product_list(request):
+    productos = Producto.objects.all().order_by('-fechaCreacionProducto')
+    
+    query = request.GET.get('q')
+    if query:
+        productos = productos.filter(nombreProducto__icontains=query)
+    
+    categoria_id = request.GET.get('categoria')
+    if categoria_id:
+        productos = productos.filter(idCategoria=categoria_id)
+    
+    paginator = Paginator(productos, 10)
+    page = request.GET.get('page')
+    productos_paginados = paginator.get_page(page)
+    
+    categorias = Categoria.objects.all()
+    
+    context = {
+        'productos': productos_paginados,
+        'categorias': categorias,
+        'query': query,
+        'categoria_seleccionada': categoria_id
+    }
+    
+    return render(request, 'dashboard/admin/product_list.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def product_create(request):
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Producto creado exitosamente.')
+            return redirect('product_list')
+    else:
+        form = ProductoForm()
+    
+    context = {
+        'form': form,
+        'title': 'Crear Producto'
+    }
+    
+    return render(request, 'dashboard/admin/product_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def product_update(request, pk):
+    producto = get_object_or_404(Producto, idProducto=pk)
+    
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES, instance=producto)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Producto actualizado exitosamente.')
+            return redirect('product_list')
+    else:
+        form = ProductoForm(instance=producto)
+    
+    context = {
+        'form': form,
+        'title': 'Editar Producto',
+        'producto': producto
+    }
+    
+    return render(request, 'dashboard/admin/product_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def product_delete(request, pk):
+    producto = get_object_or_404(Producto, idProducto=pk)
+    
+    if request.method == 'POST':
+        producto.delete()
+        messages.success(request, 'Producto eliminado exitosamente.')
+        return redirect('product_list')
+    
+    context = {
+        'producto': producto
+    }
+    
+    return render(request, 'dashboard/admin/product_confirm_delete.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def category_list(request):
+    categorias = Categoria.objects.all().order_by('-fechaCreacionCategoria')
+    
+    query = request.GET.get('q')
+    if query:
+        categorias = categorias.filter(nombreCategoria__icontains=query)
+    
+    paginator = Paginator(categorias, 10)
+    page = request.GET.get('page')
+    categorias_paginadas = paginator.get_page(page)
+    
+    context = {
+        'categorias': categorias_paginadas,
+        'query': query
+    }
+    
+    return render(request, 'dashboard/admin/category_list.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def category_create(request):
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Categoría creada exitosamente.')
+            return redirect('category_list')
+    else:
+        form = CategoriaForm()
+    
+    context = {
+        'form': form,
+        'title': 'Crear Categoría'
+    }
+    
+    return render(request, 'dashboard/admin/category_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def category_update(request, pk):
+    categoria = get_object_or_404(Categoria, idCategoria=pk)
+    
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST, instance=categoria)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Categoría actualizada exitosamente.')
+            return redirect('category_list')
+    else:
+        form = CategoriaForm(instance=categoria)
+    
+    context = {
+        'form': form,
+        'title': 'Editar Categoría',
+        'categoria': categoria
+    }
+    
+    return render(request, 'dashboard/admin/category_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def category_delete(request, pk):
+    categoria = get_object_or_404(Categoria, idCategoria=pk)
+    
+    if request.method == 'POST':
+        try:
+            categoria.delete()
+            messages.success(request, 'Categoría eliminada exitosamente.')
+        except Exception as e:
+            messages.error(request, f'No se pudo eliminar la categoría porque tiene productos asociados.')
+        return redirect('category_list')
+    
+    context = {
+        'categoria': categoria
+    }
+    
+    return render(request, 'dashboard/admin/category_confirm_delete.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def sales_report(request):
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    
+    ventas = RegistroVenta.objects.all().order_by('-fechaCreacionVenta')
+    
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            end_date = datetime.datetime.combine(end_date, datetime.time.max)
+            
+            ventas = ventas.filter(fechaCreacionVenta__range=[start_date, end_date])
+        except ValueError:
+            messages.error(request, 'Formato de fecha incorrecto. Use YYYY-MM-DD.')
+    
+    total_ventas = ventas.aggregate(total=Sum('totalVenta'))['total'] or 0
+    num_ventas = ventas.count()
+    
+    productos_mas_vendidos = DetalleVenta.objects.values(
+        'idProducto__nombreProducto'
+    ).annotate(
+        total_vendido=Sum('cantidad')
+    ).order_by('-total_vendido')[:5]
+    
+    ventas_por_categoria = DetalleVenta.objects.values(
+        'idProducto__idCategoria__nombreCategoria'
+    ).annotate(
+        total=Sum('precioTotalProducto')
+    ).order_by('-total')
+    
+    context = {
+        'ventas': ventas[:10], 
+        'total_ventas': total_ventas,
+        'num_ventas': num_ventas,
+        'productos_mas_vendidos': productos_mas_vendidos,
+        'ventas_por_categoria': ventas_por_categoria,
+        'start_date': start_date_str,
+        'end_date': end_date_str
+    }
+    
+    return render(request, 'dashboard/admin/sales_report.html', context)
+
+#Views de recomendacion
+@login_required
+@user_passes_test(is_client)
+def client_recommendations(request):
+    security_products = Producto.objects.filter(
+        idCategoria__nombreCategoria__icontains='seguridad', 
+        estadoProducto=True
+    ).order_by('-fechaCreacionProducto')[:3]
+    
+    microsoft_products = Producto.objects.filter(
+        idCategoria__nombreCategoria__icontains='microsoft', 
+        estadoProducto=True
+    ).order_by('-fechaCreacionProducto')[:3]
+    
+    if security_products.count() < 3:
+        other_security = Producto.objects.filter(
+            estadoProducto=True
+        ).exclude(id__in=security_products.values_list('id', flat=True))[:3-security_products.count()]
+        security_products = list(security_products) + list(other_security)
+    
+    if microsoft_products.count() < 3:
+        other_microsoft = Producto.objects.filter(
+            estadoProducto=True
+        ).exclude(id__in=microsoft_products.values_list('id', flat=True))[:3-microsoft_products.count()]
+        microsoft_products = list(microsoft_products) + list(other_microsoft)
+    
+    context = {
+        'security_products': security_products,
+        'microsoft_products': microsoft_products
+    }
+    
+    return render(request, 'dashboard/client/client_recommendations.html', context)
+
+@login_required
+def add_to_cart(request, producto_id):
+    if request.method == 'POST':
+        producto = get_object_or_404(Producto, idProducto=producto_id)
+        cantidad = int(request.POST.get('cantidad', 1))
+        
+        carrito, created = Carrito.objects.get_or_create(
+            idUsuario=request.user,
+            idProducto=producto,
+            defaults={
+                'cantidadSeleccionada': cantidad,
+                'precioConImpuesto': producto.precioVenta * cantidad
+            }
+        )
+        
+        if not created:
+            carrito.cantidadSeleccionada += cantidad
+            carrito.precioConImpuesto = producto.precioVenta * carrito.cantidadSeleccionada
+            carrito.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Producto agregado al carrito'})
+    
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+@login_required
+def client_recommendations_api(request):
+    security_products = Producto.objects.filter(
+        idCategoria__nombreCategoria__icontains='seguridad', 
+        estadoProducto=True
+    ).order_by('-fechaCreacionProducto')[:3]
+    
+    microsoft_products = Producto.objects.filter(
+        idCategoria__nombreCategoria__icontains='microsoft', 
+        estadoProducto=True
+    ).order_by('-fechaCreacionProducto')[:3]
+    
+    if security_products.count() < 3:
+        more_products = Producto.objects.filter(
+            estadoProducto=True
+        ).exclude(idProducto__in=[p.idProducto for p in security_products])[:3-security_products.count()]
+        security_products = list(security_products) + list(more_products)
+    
+    if microsoft_products.count() < 3:
+        more_products = Producto.objects.filter(
+            estadoProducto=True
+        ).exclude(idProducto__in=[p.idProducto for p in microsoft_products])[:3-microsoft_products.count()]
+        microsoft_products = list(microsoft_products) + list(more_products)
+    
+    security_data = []
+    for producto in security_products:
+        security_data.append({
+            'id': producto.idProducto,
+            'nombre': producto.nombreProducto,
+            'precio': float(producto.precioVenta),
+            'imagen': producto.imagenProducto.url if producto.imagenProducto else static('dashboard/img/antivirus.webp')
+        })
+    
+    microsoft_data = []
+    for producto in microsoft_products:
+        microsoft_data.append({
+            'id': producto.idProducto,
+            'nombre': producto.nombreProducto,
+            'precio': float(producto.precioVenta),
+            'imagen': producto.imagenProducto.url if producto.imagenProducto else static('dashboard/img/windows.webp')
+        })
+    
+    data = {
+        'security': security_data,
+        'microsoft': microsoft_data
+    }
+    
+    return JsonResponse(data)
 
 #View del wifi
 import socket
@@ -228,6 +550,8 @@ def check_speedtest_servers(max_attempts=3):
             logger.warning(f"Intento {attempt + 1} de conexión a servidores fallido: {str(e)}")
             if attempt == max_attempts - 1:
                 return False
+            
+
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -987,7 +1311,6 @@ def get_system_data():
                     'secsleft': battery_stats.secsleft if battery_stats.secsleft != -1 else None
                 }
         
-        # Datos del sistema operativo
         system_info = {
             'system': platform.system(),
             'version': platform.version(),
@@ -996,7 +1319,6 @@ def get_system_data():
             'processor': platform.processor()
         }
         
-        # Temperatura de CPU (si está disponible)
         cpu_temp = "N/A"
         if hasattr(psutil, "sensors_temperatures"):
             temps = psutil.sensors_temperatures()
@@ -1006,10 +1328,8 @@ def get_system_data():
                         cpu_temp = f"{entries[0].current:.1f}°C"
                         break
         
-        # Obtener información de GPU
         gpu_info = get_gpu_info()
         
-        # Construir respuesta completa
         system_data = {
             # CPU
             "cpu_usage": f"{cpu_percent}%",
@@ -1085,20 +1405,17 @@ def get_gpu_info():
     """Obtiene información de GPU"""
     try:
         if platform.system() == "Windows":
-            # Intentar obtener información de GPU en Windows
             cmd = "powershell \"Get-WmiObject Win32_VideoController | Select Name, AdapterRAM, DriverVersion | ConvertTo-Json\""
             result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
             
             if result.returncode == 0 and result.stdout:
                 gpu_data = json.loads(result.stdout)
                 
-                # Convertir a lista si es un solo objeto
                 if not isinstance(gpu_data, list):
                     gpu_data = [gpu_data]
                 
                 gpus = []
                 for gpu in gpu_data:
-                    # Convertir RAM a formato legible si existe
                     if 'AdapterRAM' in gpu and gpu['AdapterRAM']:
                         try:
                             gpu_ram = get_size_str(int(gpu['AdapterRAM']))
@@ -1115,9 +1432,7 @@ def get_gpu_info():
                 
                 return gpus
         elif platform.system() == "Linux":
-            # Intentar obtener información de GPU en Linux
             try:
-                # Comprobar si nvidia-smi está disponible (tarjetas NVIDIA)
                 nvidia_cmd = "nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader"
                 nvidia_result = subprocess.run(nvidia_cmd, capture_output=True, text=True, shell=True)
                 
@@ -1135,7 +1450,6 @@ def get_gpu_info():
             except:
                 pass
             
-            # Si no es NVIDIA, intentar con lspci
             try:
                 lspci_cmd = "lspci | grep -i 'vga\\|3d\\|2d'"
                 lspci_result = subprocess.run(lspci_cmd, capture_output=True, text=True, shell=True)
@@ -1153,7 +1467,6 @@ def get_gpu_info():
             except:
                 pass
         
-        # Si no se pudo obtener información específica
         return [{
             "name": "GPU detectada",
             "memory": "Desconocido",
@@ -1271,7 +1584,6 @@ def create_diagnosis_entry(user, system_data, scan_type):
            warnings_count=warnings_count
        )
        
-       # Crear reporte de diagnóstico inmediatamente
        report = DiagnosticReport.objects.create(
            user=user,
            diagnosis=diagnosis,
@@ -1280,7 +1592,6 @@ def create_diagnosis_entry(user, system_data, scan_type):
            current_component="Iniciando diagnóstico"
        )
        
-       # Iniciar análisis en segundo plano para todos los tipos de escaneo
        if scan_type in ["FullScan", "CustomScan", "QuickScan"]:
            try:
                analysis_thread = threading.Thread(
@@ -1415,7 +1726,6 @@ def analyze_cpu(system_data):
                 "recommendation": "Considere cerrar algunas aplicaciones para reducir la carga del procesador."
             })
         
-        # Verificar temperatura si está disponible
         if cpu_temp != "N/A" and cpu_temp_value > 0:
             if cpu_temp_value > 85:
                 status = "CRITICAL"
@@ -1435,7 +1745,6 @@ def analyze_cpu(system_data):
                     "recommendation": "Mejore la ventilación de su equipo y considere limpiar el polvo acumulado."
                 })
         
-        # Generar recomendaciones generales
         recommendations = "El procesador está funcionando correctamente."
         if issues:
             recommendations = "\n".join([issue["recommendation"] for issue in issues])
@@ -1476,7 +1785,6 @@ def analyze_ram(system_data):
         swap_used = swap_data.get('used', 'N/A')
         swap_percent = swap_data.get('percent', 'N/A')
         
-        # Convertir valores a números para comparación
         ram_percent_value = float(ram_percent.replace('%', '')) if '%' in ram_percent else 0
         swap_percent_value = float(swap_percent.replace('%', '')) if '%' in swap_percent else 0
         
@@ -1501,7 +1809,6 @@ def analyze_ram(system_data):
                 "recommendation": "Considere cerrar algunas aplicaciones para liberar memoria."
             })
         
-        # Verificar memoria virtual (swap)
         if swap_total != "N/A" and swap_total != "0.00 B" and swap_percent_value > 75:
             if status != "CRITICAL":
                 status = "WARNING"
@@ -1512,16 +1819,14 @@ def analyze_ram(system_data):
                 "recommendation": "El sistema está utilizando mucha memoria virtual, lo que puede reducir el rendimiento. Considere cerrar aplicaciones o ampliar la RAM física."
             })
         
-        # Obtener procesos que más memoria consumen
         top_processes = system_data.get('top_processes', [])
         memory_intensive_processes = []
         for process in top_processes:
             memory_percent = process.get('memory_percent', '0%')
             memory_value = float(memory_percent.replace('%', '')) if '%' in memory_percent else 0
-            if memory_value > 10:  # Procesos que usan más del 10% de RAM
+            if memory_value > 10:  
                 memory_intensive_processes.append(process)
         
-        # Generar recomendaciones
         recommendations = "La memoria RAM está funcionando correctamente."
         if issues:
             recommendations = "\n".join([issue["recommendation"] for issue in issues])
@@ -1561,7 +1866,6 @@ def analyze_disk(system_data):
     try:
         partitions = system_data.get('disk_usage', {}).get('partitions', [])
         
-        # Determinar estado
         status = "NORMAL"
         issues = []
         critical_partitions = []
@@ -1572,7 +1876,6 @@ def analyze_disk(system_data):
             mountpoint = partition.get('mountpoint', 'Desconocido')
             percent = partition.get('percent', '0%')
             
-            # Convertir a valor numérico
             percent_value = float(percent.replace('%', '')) if '%' in percent else 0
             
             if percent_value > 95:
@@ -1595,11 +1898,9 @@ def analyze_disk(system_data):
                     "recommendation": f"Considere liberar espacio en la unidad {device} eliminando archivos innecesarios."
                 })
         
-        # Analizar fragmentación (solo en Windows)
         fragmentation_data = None
         if platform.system() == "Windows":
             try:
-                # Solo analizamos el disco C: para no sobrecargar el análisis
                 cmd = "defrag C: /A /H"
                 result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
                 
@@ -1629,7 +1930,6 @@ def analyze_disk(system_data):
             except:
                 pass
         
-        # Verificar salud del disco en Windows
         disk_health_data = None
         if platform.system() == "Windows":
             try:
@@ -1639,7 +1939,6 @@ def analyze_disk(system_data):
                 if result.returncode == 0 and result.stdout:
                     health_data = json.loads(result.stdout)
                     
-                    # Convertir a lista si es un solo objeto
                     if not isinstance(health_data, list):
                         health_data = [health_data]
                     
@@ -1660,7 +1959,6 @@ def analyze_disk(system_data):
             except:
                 pass
         
-        # Generar recomendaciones
         recommendations = "El almacenamiento está funcionando correctamente."
         if issues:
             recommendations = "\n".join([issue["recommendation"] for issue in issues])
@@ -1696,11 +1994,9 @@ def analyze_network(system_data):
         recv = network_data.get('bytes_recv', 'N/A')
         connections = network_data.get('connections', 0)
         
-        # Determinar estado
         status = "NORMAL"
         issues = []
         
-        # Comprobar conectividad a Internet
         internet_status = check_internet_connectivity()
         if not internet_status["connected"]:
             status = "CRITICAL"
@@ -1711,7 +2007,6 @@ def analyze_network(system_data):
                 "recommendation": "Verifique su conexión de red, router o contacte con su proveedor de servicios de Internet."
             })
         
-        # Comprobar latencia
         if internet_status["connected"] and internet_status["ping"] > 150:
             if status != "CRITICAL":
                 status = "WARNING"
@@ -1722,7 +2017,6 @@ def analyze_network(system_data):
                 "recommendation": "La velocidad de respuesta de su conexión es lenta. Verifique si hay otras aplicaciones usando el ancho de banda o contacte con su proveedor de Internet."
             })
         
-                        # Verificar estado del adaptador Wi-Fi en Windows
         wifi_status = None
         if platform.system() == "Windows":
             try:
@@ -1732,7 +2026,6 @@ def analyze_network(system_data):
                 if result.returncode == 0 and result.stdout:
                     wifi_data = json.loads(result.stdout)
                     
-                    # Convertir a lista si es un solo objeto
                     if not isinstance(wifi_data, list):
                         wifi_data = [wifi_data]
                     
@@ -1751,7 +2044,6 @@ def analyze_network(system_data):
             except:
                 pass
         
-        # Generar recomendaciones
         recommendations = "La conexión de red está funcionando correctamente."
         if issues:
             recommendations = "\n".join([issue["recommendation"] for issue in issues])
@@ -2001,9 +2293,26 @@ def analyze_battery(system_data):
             }],
             "recommendations": "No se pudo completar el análisis de la batería."
         }
+EXCLUDED_DRIVERS = [
+    "WAN Miniport (Network Monitor)",
+    "WAN Miniport (IPv6)",
+    "WAN Miniport (IP)",
+    "WAN Miniport (PPPOE)",
+    "WAN Miniport (PPTP)",
+    "WAN Miniport (L2TP)"
+]
+import re
+def is_excluded(driver_name):
+    driver_name = driver_name.lower()
+    for excluded in EXCLUDED_DRIVERS:
+        pattern = re.escape(excluded.lower())
+        if re.search(rf"\b{pattern}\b", driver_name):
+            return True
+    return False
 
 def analyze_drivers(system_data):
     """Analiza los controladores del sistema"""
+
     try:
         drivers_info = []
         outdated_drivers = []
@@ -2020,8 +2329,10 @@ def analyze_drivers(system_data):
                     if not isinstance(drivers_data, list):
                         drivers_data = [drivers_data]
                     
-                    for driver in drivers_data[:20]:
-                        device_name = driver.get('DeviceName', 'Desconocido')
+                    
+                    
+                    for driver in drivers_data:
+                        device_name = driver.get('DeviceName', 'Desconocido').strip()
                         driver_version = driver.get('DriverVersion', 'Desconocido')
                         driver_date_str = driver.get('DriverDate', '')
                         
@@ -2047,8 +2358,10 @@ def analyze_drivers(system_data):
                             if driver_date != "Desconocida":
                                 date_obj = datetime.strptime(driver_date, "%Y-%m-%d")
                                 years_old = (datetime.now() - date_obj).days / 365
-                                
-                                if years_old > 3:
+                                print(f"Evaluando: {device_name} ({driver_date})")
+                                print(f"¿Excluido?: {is_excluded(device_name)}")
+
+                                if years_old > 10 and not is_excluded(device_name):
                                     driver_info["status"] = "Desactualizado"
                                     outdated_drivers.append(driver_info)
                         except:
@@ -2134,6 +2447,8 @@ def analyze_drivers(system_data):
             }],
             "recommendations": "No se pudo completar el análisis de controladores."
         }
+        
+
 
 def analyze_software(system_data):
     """Analiza el software instalado en el sistema"""
@@ -5307,11 +5622,32 @@ def tech_reports(request):
     }
     return render(request, 'dashboard/tech/tech_reports.html', context)
 
+def serve_media_file(request, path):
+    """Vista para servir archivos de media directamente"""
+    full_path = os.path.join(settings.MEDIA_ROOT, path)
+    if os.path.exists(full_path):
+        return FileResponse(open(full_path, 'rb'))
+    raise Http404(f"Media file not found: {path}")
+
 # Client dashboard
-@login_required
-@user_passes_test(is_client)
 def client_dashboard(request):
-    return render(request, 'dashboard/client/inicio.html')
+    # Obtener categorías y productos de la app users
+    categorias = Categoria.objects.filter(estadoCategoria=True)
+    productos_por_categoria = {}
+    
+    for categoria in categorias:
+        productos = Producto.objects.filter(
+            idCategoria=categoria,
+            estadoProducto=True
+        )[:3]
+        productos_por_categoria[categoria.idCategoria] = productos
+    
+    context = {
+        'categorias': categorias,
+        'productos_por_categoria': productos_por_categoria,
+    }
+    
+    return render(request, 'dashboard/client/inicio.html', context)
 
 # Add technician
 @login_required
