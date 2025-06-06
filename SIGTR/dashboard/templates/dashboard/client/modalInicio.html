@@ -111,7 +111,6 @@
                         </div>
 
                         <div id="scenarios-container" class="scenarios-grid">
-                            <!-- Los escenarios se cargarán dinámicamente desde JavaScript -->
                         </div>
                     </div>
                 </div>
@@ -136,16 +135,12 @@
                             </div>
                         </div>
 
-                        <!-- Componentes principales del sistema -->
                         <h4 class="component-category-title">Componentes del sistema</h4>
                         <div class="components-list">
-                            <!-- Los componentes se cargarán dinámicamente desde JavaScript -->
                         </div>
 
-                        <!-- Componentes de estado del sistema -->
                         <h4 class="component-category-title">Estado del sistema</h4>
                         <div class="system-components-list">
-                            <!-- Los componentes de sistema se cargarán dinámicamente -->
                         </div>
 
                         <div class="diagnosis-actions">
@@ -161,7 +156,6 @@
             </div>
         </div>
 
-        <!-- Contenedor para mostrar resultados detallados -->
         <div id="detailed-results" class="detailed-results-container" style="display: none;">
             <div class="detailed-results-header">
                 <button id="back-to-diagnosis" class="back-button">
@@ -348,10 +342,9 @@
     </div>
 </div>
 
-<!--MODAL RECOMENDACIONES SW-->
+<!--MODAL RECOMENDACIONES -->
 <div id="modalRecomendaciones" class="modal">
     <div class="modal-content">
-        <!-- Las categorías y productos se cargarán dinámicamente -->
         {% for categoria in categorias %}
         <div class="apartado">
             <div class="{% if forloop.first %}headerModal{% endif %}">
@@ -361,7 +354,6 @@
                 <div class="textHW">{{ categoria.nombreCategoria|upper }}</div>
             </div>
             <div class="contentApartado">
-                <!-- Los productos de esta categoría -->
                 {% for producto in productos_por_categoria|get_item:categoria.idCategoria %}
                 <div class="productSW">
                     <div class="detalleProducto">
@@ -384,7 +376,6 @@
                     </div>
                 </div>
                 {% empty %}
-                <!-- Si no hay productos en la categoría -->
                 <div class="productSW">
                     <div class="detalleProducto">
                         <div class="contentImg">
@@ -404,7 +395,6 @@
             </div>
         </div>
         {% empty %}
-        <!-- Si no hay categorías -->
         <div class="apartado">
             <div class="headerModal">
                 <span id="closeModalRecom" class="close">&times;</span>

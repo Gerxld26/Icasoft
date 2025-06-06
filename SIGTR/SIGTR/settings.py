@@ -52,6 +52,7 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'error',
 }
+
 # Leer la clave desde el entorno
 OPENAI_API_KEY = config("OPENAI_API_KEY", default=None)
 GOOGLE_API_KEY = config('API_KEY_MAPS')
@@ -84,7 +85,7 @@ LOGGING = {
         'level': 'DEBUG',
     },
 }
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [] #['192.168.8.121']
 
 
 # Application definition
@@ -180,7 +181,7 @@ LOGIN_REDIRECT_URL = "/"
 
 
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-es'
 
 TIME_ZONE = 'America/Lima'
 

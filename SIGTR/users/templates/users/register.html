@@ -15,7 +15,7 @@
     <section>
         <div class="register-box">
             <h2>Registrarse</h2>
-            <form method="POST" action="{% url 'users:register' %}">
+            <form method="POST" action="{% url 'users:register' %}" id="formRegister">
                 {% csrf_token %}
                 <!-- Nombre de Usuario -->
                 <div class="input-container">
@@ -24,9 +24,8 @@
                         type="text" 
                         name="username" 
                         placeholder="Nombre de Usuario" 
-                        value="{{ form.username.value|default:'' }}" 
-                        class="{% if form.username.errors %}is-invalid{% endif %}" 
-                        required>
+                        value="{% if form.is_bound and form.errors %}{{ form.username.value }}{% endif %}"
+                        class="{% if form.username.errors %}is-invalid{% endif %}" >
                 </div>
                 {% for error in form.username.errors %}
                     <small class="text-danger">{{ error }}</small>
@@ -39,11 +38,25 @@
                         type="email" 
                         name="email" 
                         placeholder="Correo Electrónico" 
-                        value="{{ form.email.value|default:'' }}" > <!--esto se define en models-->
-                        class="{% if form.email.errors %}is-invalid{% endif %}" 
-                        required>
+                        value="{% if form.errors %}{{ form.email.value }}{% endif %}" 
+                        class="{% if form.email.errors %}is-invalid{% endif %}" >
                 </div>
                 {% for error in form.email.errors %}
+                    <small class="text-danger">{{ error }}</small>
+                {% endfor %}
+
+                <!-- Celular -->
+                <div class="input-container">
+                    <i class="fa-solid fa-phone-volume icon"></i>
+                    <input 
+                        type="text" 
+                        name="telefono" 
+                        placeholder="Número de celular" 
+                        value="{{ form.telefono.value|default:'' }}" 
+                        class="{% if form.telefono.errors %}is-invalid{% endif %}" 
+                        required>
+                </div>
+                {% for error in form.telefono.errors %}
                     <small class="text-danger">{{ error }}</small>
                 {% endfor %}
 

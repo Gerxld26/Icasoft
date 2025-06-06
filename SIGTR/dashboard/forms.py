@@ -6,7 +6,6 @@ import re
 from users.models import Producto, Categoria
 
 # FORMULARIO PARA TÉCNICOS
-
 class CreateTechForm(forms.ModelForm):
     full_name = forms.CharField(required=True, widget=forms.TextInput(attrs={'class': 'form-control'}), label="Nombre Completo")
     phone_number = forms.CharField(required=True, widget=forms.TextInput(attrs={'class': 'form-control'}), label="Número de Teléfono")
@@ -34,7 +33,6 @@ class CreateTechForm(forms.ModelForm):
         label="Foto",
         widget=forms.FileInput(attrs={'class': 'form-control'})
     )
-
     class Meta:
         model = User
         fields = ['username', 'email', 'password']
@@ -43,7 +41,7 @@ class CreateTechForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'password': forms.PasswordInput(attrs={'class': 'form-control'}),
         }
-
+    
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])

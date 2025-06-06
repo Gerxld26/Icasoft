@@ -1,0 +1,74 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+{% block content %}
+<div class="main-container mx-4" id="read_client">
+    <h2 class="mb-4">Gestión de Clientes</h2>
+    <div class="addSearch">
+        <div class="contentSearchTech w-50">
+            <form method="get" action="" class="d-flex mb-3">
+                <input type="text" name="q" placeholder="Buscar por nombre o correo" value="{{ query }}" class="form-control inputSearch">
+            <button type="submit" id="searchClient" class="searchTech"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </form>
+        </div>
+       <div class="contentAddTech">
+            <button type="button" id="btnAddClient" class="btn btn-sm accionTecnicoAdd px-2" data-bs-toggle="modal" data-bs-target="#addTechnicianModal" data-bs-title="Agregar">
+                <i id="newClient" class="fa-solid fa-user-plus"></i>  Agregar
+       </div>
+   </div>
+
+    <!-- CSRF Token oculto para AJAX -->
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in page_obj %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                    <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editar">
+                        <i id="editClient" class="bi bi-pencil-square iaccionTecnico"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Eliminar"
+                    onclick="confirmToggleClientStatus('{{ user.id }}', '{{ user.is_active }}')">
+                        {% if user.is_active %}
+                            <i id="deleteClient" class="bi bi-trash3-fill iaccionTecnico"></i>
+                        {% else %}
+                            Activar
+                        {% endif %}
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Paginación -->
+    <nav>
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+            </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Siguiente</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}

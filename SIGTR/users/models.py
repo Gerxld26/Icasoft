@@ -41,6 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=150, unique=True) # va a jalar de la bd esto, obtener los valores de la bd
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
+    telefono = models.CharField(max_length=9, null=True)
     role = models.CharField(max_length=10, choices=ROLES, default='client')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -52,7 +53,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    REQUIRED_FIELDS = ['username', 'telefono']
 
     def __str__(self):
         return self.email
@@ -92,7 +93,7 @@ class UserProfile(models.Model):
     # Estado de conexión para Técnicos
     estado_conexion = models.CharField(max_length=10, choices=[('online', 'En Línea'), ('offline', 'Fuera de Línea')], default='offline')
 
-    photo = models.ImageField(upload_to="profiles/", blank=True, null=True)
+    photo = models.ImageField(upload_to="dashboard/img/tecnico/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -268,3 +269,38 @@ class CompraRecurrente(models.Model):
 
     def __str__(self):
         return self.nombreCompra
+    
+class TipoAsistenciaManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(status='open')
+
+class TipoAsistencia(models.Model):
+    STATUS_CHOICES = (
+        ('open', 'Activo'),
+        ('closed', 'Eliminado'),
+    )
+
+    tipo_asistencia = models.CharField(max_length=30, unique=True)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='open')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = TipoAsistenciaManager()    
+    all_objects = models.Manager()          
+
+    class Meta:
+        db_table = 'users_asistencia'
+        verbose_name = "Tipo de Asistencia"
+        verbose_name_plural = "Tipos de Asistencia"
+        ordering = ['tipo_asistencia']
+
+    def __str__(self):
+        return f"{self.tipo_asistencia} ({self.get_status_display()})"
+
+    def soft_delete(self):
+        self.status = 'closed'
+        self.save()
+
+    def restore(self):
+        self.status = 'open'
+        self.save()

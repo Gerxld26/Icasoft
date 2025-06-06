@@ -3,7 +3,10 @@ let marker, markerAsist;
 let markerTech = [];
 let defaultLocation = { lat: 0, lng: 0 };
 let ubicacionInicial = defaultLocation;
-// let mapaAsistenciaCreado = false;
+let circuloCliente = null;
+
+let contentString;
+let infowindow;
 let eventoUbicacionAgregado = false;
 let marcadorMovido = false;
 let LocationBorrar = { lat: -14.064165144575163, lng: -75.7278757166212 };
@@ -18,7 +21,27 @@ async function initMap() {
         mapId: "INICIO_MAP_ID",
     });
 
+   contentString = `
+        <div style="font-size: larger; font-weight: bold; color: black; text-align: center;">
+            <strong>Mi Ubicación</strong>
+        </div>
+    `;
+    infowindow = new google.maps.InfoWindow({
+        content: contentString,
+        ariaLabel: "Mi Ubicación",
+    });
     marker = new AdvancedMarkerElement({ map: mapInicio, position: defaultLocation });
+    infowindow.open({
+            anchor: marker,
+            map: mapInicio,
+    });
+    marker.addListener("click", () => {
+        infowindow.open({
+            anchor: marker,
+            map: mapInicio,
+        });
+    });
+
     geolocalizacion();
 }
 
@@ -56,9 +79,10 @@ async function mapaAsistencia() {
 
     const { Map } = await google.maps.importLibrary("maps");
     const { Marker } = await google.maps.importLibrary("marker");
+    const { Circle } = await google.maps.importLibrary("geometry");
     mapaAsist = new Map(document.getElementById("mapAsistencia"), {
         center: ubicacionInicial,
-        zoom: 20,
+        zoom: 13,
         mapId: "ASIST_MAP_ID",
     });
     markerAsist = new Marker({
@@ -67,20 +91,47 @@ async function mapaAsistencia() {
         draggable: true,
     });
 
+    // Crear el círculo de 20 km alrededor del cliente
+    circuloCliente = new google.maps.Circle({
+        strokeColor: "#FF0000",
+        fillOpacity: 0,
+        map: mapaAsist,
+        center: ubicacionInicial,
+        radius: 2000 // 20 km en metros
+    });
+    infowindow = new google.maps.InfoWindow({
+        content: contentString,
+        ariaLabel: "Ubicación de Asistencia",
+    });
+    infowindow.open({
+        anchor: markerAsist,
+        map: mapaAsist,
+    });
+    markerAsist.addListener("click", () => {
+        infowindow.open({
+            anchor: markerAsist,
+            map: mapaAsist,
+        });
+    });
     markerAsist.addListener('dragend', function () {
         marcadorMovido = true;
         const pos = markerAsist.getPosition();
+        
         obtenerDireccion(pos.lat(), pos.lng());
+        tecnicosDisp(pos.lat(), pos.lng());
+        // Actualizar centro del círculo
+        if (circuloCliente) {
+            circuloCliente.setCenter(pos);
+        }
     });
 
     miUbicacion();
     inputUbi();
 }
-async function locationTech(lat, lon) {
+async function locationTech(lat, lon, name, distance) {
     const { InfoWindow } = await google.maps.importLibrary("maps");
     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
-
-    let LocationTech = { lat: lat, lng: lon };
+    const LocationTech = { lat: parseFloat(lat), lng: parseFloat(lon) };
 
     const pin = new PinElement({
         background: "blue",
@@ -89,21 +140,22 @@ async function locationTech(lat, lon) {
         glyphColor: "white"
     });
 
-    const infoWindow = new InfoWindow();
+    const infoWindow = new InfoWindow({
+        content: `<div><strong>${name}</strong><br>Distancia: ${distance} km</div>`
+    });
 
     const newTech = new AdvancedMarkerElement({
         map: mapaAsist,
         position: LocationTech,
         content: pin.element,
+        title: name
     });
 
-    // newTech.addListener("gmp-click", ({ domEvent, latLng }) => {
-    //     const { target } = domEvent;
-    //     infoWindow.close();
-    //     infoWindow.setContent(newTech.title);
-    //     infoWindow.open(newTech.map, newTech);
-    // });
-
+    newTech.addListener("gmp-click", () => {
+        infoWindow.close();
+        infoWindow.setContent(`<div style="color: black;"><strong>${name}</strong><br>Distancia: ${distance} km</div>`);
+        infoWindow.open(mapaAsist, newTech);
+    });
     markerTech.push(newTech);
 }
 function miUbicacion() {
@@ -125,6 +177,9 @@ function inputUbi() {
 
         mapaAsist.setCenter(ubicacionInicial);
         markerAsist.setPosition(ubicacionInicial);
+         if (circuloCliente) {
+            circuloCliente.setCenter(ubicacionInicial);
+        }
         obtenerDireccion(ubicacionInicial.lat, ubicacionInicial.lng);
         tecnicosDisp(ubicacionInicial.lat, ubicacionInicial.lng);
     } else {

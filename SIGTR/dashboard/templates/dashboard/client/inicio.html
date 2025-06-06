@@ -17,7 +17,7 @@
     <div class="contenedorPrincipal">
         <div class="container">
             <div class="header">
-                <div>
+                <div style="font-size:larger; font-weight: 500;">
                     ¡Hola, {{ request.user.username }}!
                 </div>
                 <div class="contactos">
@@ -82,7 +82,6 @@
                         </div>
                     </div>
                     <div class="botonesSoporte">
-                        <!-- <button class="botResp" id="btnRespRest">RESPALDO Y RESTAURACIÓN</button> -->
                         <button class="botCentro" id="btnCentro">CENTRO DE APRENDIZAJES</button>
                     </div>
                 </div>
@@ -110,6 +109,7 @@
                     <div class="mensajeIA" id="mensajeIA">
                         <div class="header-chat" id="header-chat">
                             <h1>ICASOFT IA</h1>
+                            <i class="fa-solid fa-expand expand" id="expand"></i>
                         </div>
                         <div class="body-chat" id="body-chat">
                         </div>
@@ -238,10 +238,7 @@
     <script src="{% static 'dashboard/js/clientes/recomendaciones.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/red.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/chat.js' %}"></script>
-        <script src="{% static 'dashboard/js/clientes/speech.js' %}"></script>
-
-    <!--<script
-    src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=marker&callback=initMap"
+    <!--<script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=marker,geometry&callback=initMap"
     async defer></script>-->
 </body>
 

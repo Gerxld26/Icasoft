@@ -1,0 +1,105 @@
+:root {
+    --relleno-color: linear-gradient(135deg, #070F25 0%, #0B2A3F 50%, #03658C 100%);
+    /*linear-gradient(135deg, #070F25, #1C1E35, #03658C, #104E5E); rojizo: #411437, plomito:#303247*/
+}
+
+body {
+    background: #070F25;
+}
+
+#content {
+    margin-left: 250px;
+    background: #070F25;
+}
+
+#sidebar {
+    width: 250px;
+    position: fixed;
+    box-shadow: 5px 9px 15px 4px #4444443b;
+    background: var(--relleno-color);
+    border-radius: 5px;
+    /* background: #081028; */
+}
+
+/*parte superior*/
+#header-dashboard {
+    color: white;
+    font-size: x-large;
+}
+
+/*diseño fuera del sidebar*/
+.card {
+    margin: 20px;
+}
+
+/*tecnico*/
+#read_tecnico,
+#read_client {
+    background: #0b2a3f92;
+    color: white;
+}
+
+.table>thead>tr>th {
+    background-color: #193c4b !important;
+    color: white !important;
+    text-align: center;
+}
+
+/* Efecto hover para todas las filas */
+.table-hover tbody tr {
+    background: linear-gradient(to right, #135472, #217399, #1a3944) !important;
+    color: white !important;
+}
+
+table.table tbody td {
+    text-align: center !important;
+}
+
+button.accionTecnico {
+    padding: 0px;
+}
+button.accionTecnicoAdd {
+    padding: 5px;
+    border-radius: 8px;
+    padding-left: 15px;
+    padding-right: 15px;
+    color: white;
+    background: linear-gradient(65deg, #105d14, #4CAF50, #449247);
+}
+.inputSearch{
+    border-top-right-radius: 0px !important;
+    border-bottom-right-radius: 0px !important;
+}
+.iaccionTecnico {
+    font-size: 30px;
+}
+.addSearch {
+    display: flex;
+    justify-content: space-between;
+}
+.searchTech {
+    background: #1f6e93;
+    color: white;
+    border: none;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+#editTech,
+#editClient {
+    background: linear-gradient(65deg, #7a6b06, #cda110, #927f44);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#deleteTech,
+#deleteClient {
+    background: linear-gradient(65deg, #5d1010, #a71818, #853c3c);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+

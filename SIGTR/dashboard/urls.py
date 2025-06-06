@@ -5,14 +5,18 @@ from django.views.static import serve
 
 from .views import (
     # Dashboards
+    admin_inicio,
     admin_dashboard,
     tech_dashboard,
     client_dashboard,
 
     # Admin-specific views
     add_admin,
+    read_technician,
     add_technician,
-    manage_users,
+    update_technician,
+    read_client, 
+    #manage_users, #borrar
     inactive_users,
     deactivate_user,
     toggle_user_status,
@@ -44,8 +48,7 @@ from .views import (
     client_clear_space,
     client_update_software,
     client_defragment_disk,
-    client_repair_disk,
-    get_temp_size,  
+    client_repair_disk, 
     get_largest_temp_files,
     get_system_temp_info,
     client_clear_specific_temp, 
@@ -117,14 +120,18 @@ urlpatterns = [
     path('chatIA/', chatIA, name='chat'),
     path('api/transcribe-audio/', transcribe_audio, name='transcribe_audio'),
     # Dashboards
-    path("admin/", admin_dashboard, name="admin_dashboard"),
+    path("admin/", admin_inicio, name="admin_inicio"),
+    path("adminDashboard/", admin_dashboard, name="admin_dashboard"),
     path("tech/", tech_dashboard, name="tech_dashboard"),
     path("client/", client_dashboard, name="client_dashboard"),
 
     # Admin routes
-    path("add-technician/", add_technician, name="add_technician"),
+    path("tecnicos/", read_technician, name = "read_technician"),
     path("add-admin/", add_admin, name="add_admin"),
-    path("manage-users/", manage_users, name="manage_users"),
+    path("clientes/", read_client, name="read_client"),
+    path("tecnicos/agregar/", add_technician, name = "add_technician"),
+    path('tecnicos/update/<int:pk>/', update_technician, name='update_technician'),
+    #path("manage-users/", manage_users, name="manage_users"), #borrar
     path("inactive-users/", inactive_users, name="inactive_users"),
     path("deactivate-user/<int:user_id>/", deactivate_user, name="deactivate_user"),
     path("toggle-user-status/<int:user_id>/", toggle_user_status, name="toggle_user_status"),
@@ -157,7 +164,6 @@ urlpatterns = [
     path("client/maintenance/update-software/", client_update_software, name="client_update_software"),
     path("client/maintenance/defragment-disk/", client_defragment_disk, name="client_defragment_disk"),
     path("client/maintenance/repair-disk/", client_repair_disk, name="client_repair_disk"),
-    path('client/get-temp-size/', get_temp_size, name='get_temp_size'),
     path('client/clear-space/', client_clear_space, name='client_clear_space'),
     path('client/get-largest-temp-files/', get_largest_temp_files, name='get_largest_temp_files'),
     path('client/clear-specific-temp/', client_clear_specific_temp, name='client_clear_specific_temp'),
