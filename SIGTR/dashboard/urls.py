@@ -1,4 +1,7 @@
-from django.urls import path
+from django.urls import path, re_path
+from django.conf import settings
+from django.conf.urls.static import static
+from django.views.static import serve
 
 from .views import (
     # Dashboards
@@ -105,7 +108,20 @@ from .views import (
     scan_drivers,
     restart_system,
     speech_to_text,
-    transcribe_audio
+    transcribe_audio,
+    product_create,
+    product_update,
+    product_delete,
+    product_list,
+    category_create,
+    category_update,
+    category_delete,
+    category_list,
+    sales_report,
+    client_recommendations_api,
+    add_to_cart,
+    serve_media_file,
+    
         
 )
 
@@ -222,4 +238,26 @@ urlpatterns = [
     path('api/system/restart/', restart_system, name='restart_system'),
     path('api/speech-to-text/', speech_to_text, name='speech_to_text'),
     
+    #Carrito de compras
+    path('products/', product_list, name='product_list'),
+    path('products/create/', product_create, name='product_create'),
+    path('products/<int:pk>/update/', product_update, name='product_update'),
+    path('products/<int:pk>/delete/', product_delete, name='product_delete'),
+    
+    # Categorías
+    path('categories/', category_list, name='category_list'),
+    path('categories/create/', category_create, name='category_create'),
+    path('categories/<int:pk>/update/', category_update, name='category_update'),
+    path('categories/<int:pk>/delete/', category_delete, name='category_delete'),
+    
+    # Reporte de ventas
+    path('sales/report/', sales_report, name='sales_report'),
+    
+    path('client/recommendations/api/', client_recommendations_api, name='client_recommendations_api'),
+    path('client/cart/add/<int:producto_id>/', add_to_cart, name='add_to_cart'),
+    path('media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
+  re_path(r'^dashboard/media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

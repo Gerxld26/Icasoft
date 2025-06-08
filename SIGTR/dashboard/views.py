@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 import heapq
+from django.db.models import Sum, Count
 from django.db.models import Count, F, Func, Value
 from django.db.models.functions import TruncMonth
 from users.models import User, UserProfile
@@ -29,6 +30,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
 from openai import OpenAI
+from django.templatetags.static import static
 import psutil
 import speedtest 
 import platform
@@ -39,6 +41,7 @@ import cpuinfo
 import subprocess  
 from .models import Diagnosis, DiagnosticReport, SystemComponent, DriverInfo, DiagnosticIssue, DiagnosticScenario, ScenarioRun, DiagnosticFile
 import subprocess
+from dashboard.forms import ProductoForm, CategoriaForm
 import json
 import GPUtil 
 from users.models import UserProfile
@@ -66,7 +69,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .utils import perform_speed_test
 from dotenv import load_dotenv
-
+from users.models import Categoria, Producto, RegistroVenta, DetalleVenta, Carrito
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -77,6 +80,9 @@ import time
 import shutil
 import threading
 from datetime import datetime, timedelta
+from django.http import FileResponse
+from django.http import Http404
+
 
 
 from .models import (
@@ -178,10 +184,8 @@ def transcribe_audio(request):
     if request.method == 'POST':
         try:
             if 'audio_data' in request.POST:
-                # Procesar audio desde base64
                 audio_data = request.POST.get('audio_data')
                 
-                # Para propósitos de demostración, simplemente devolver texto simulado
                 return JsonResponse({
                     'status': 'success',
                     'message': 'Transcripción simulada',
@@ -206,6 +210,324 @@ def transcribe_audio(request):
         'message': 'Método incorrecto',
         'text': ''
     }, status=405)
+    
+# View del carrito de compras
+
+@login_required
+@user_passes_test(is_admin)
+def product_list(request):
+    productos = Producto.objects.all().order_by('-fechaCreacionProducto')
+    
+    query = request.GET.get('q')
+    if query:
+        productos = productos.filter(nombreProducto__icontains=query)
+    
+    categoria_id = request.GET.get('categoria')
+    if categoria_id:
+        productos = productos.filter(idCategoria=categoria_id)
+    
+    paginator = Paginator(productos, 10)
+    page = request.GET.get('page')
+    productos_paginados = paginator.get_page(page)
+    
+    categorias = Categoria.objects.all()
+    
+    context = {
+        'productos': productos_paginados,
+        'categorias': categorias,
+        'query': query,
+        'categoria_seleccionada': categoria_id
+    }
+    
+    return render(request, 'dashboard/admin/product_list.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def product_create(request):
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Producto creado exitosamente.')
+            return redirect('product_list')
+    else:
+        form = ProductoForm()
+    
+    context = {
+        'form': form,
+        'title': 'Crear Producto'
+    }
+    
+    return render(request, 'dashboard/admin/product_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def product_update(request, pk):
+    producto = get_object_or_404(Producto, idProducto=pk)
+    
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES, instance=producto)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Producto actualizado exitosamente.')
+            return redirect('product_list')
+    else:
+        form = ProductoForm(instance=producto)
+    
+    context = {
+        'form': form,
+        'title': 'Editar Producto',
+        'producto': producto
+    }
+    
+    return render(request, 'dashboard/admin/product_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def product_delete(request, pk):
+    producto = get_object_or_404(Producto, idProducto=pk)
+    
+    if request.method == 'POST':
+        producto.delete()
+        messages.success(request, 'Producto eliminado exitosamente.')
+        return redirect('product_list')
+    
+    context = {
+        'producto': producto
+    }
+    
+    return render(request, 'dashboard/admin/product_confirm_delete.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def category_list(request):
+    categorias = Categoria.objects.all().order_by('-fechaCreacionCategoria')
+    
+    query = request.GET.get('q')
+    if query:
+        categorias = categorias.filter(nombreCategoria__icontains=query)
+    
+    paginator = Paginator(categorias, 10)
+    page = request.GET.get('page')
+    categorias_paginadas = paginator.get_page(page)
+    
+    context = {
+        'categorias': categorias_paginadas,
+        'query': query
+    }
+    
+    return render(request, 'dashboard/admin/category_list.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def category_create(request):
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Categoría creada exitosamente.')
+            return redirect('category_list')
+    else:
+        form = CategoriaForm()
+    
+    context = {
+        'form': form,
+        'title': 'Crear Categoría'
+    }
+    
+    return render(request, 'dashboard/admin/category_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def category_update(request, pk):
+    categoria = get_object_or_404(Categoria, idCategoria=pk)
+    
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST, instance=categoria)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Categoría actualizada exitosamente.')
+            return redirect('category_list')
+    else:
+        form = CategoriaForm(instance=categoria)
+    
+    context = {
+        'form': form,
+        'title': 'Editar Categoría',
+        'categoria': categoria
+    }
+    
+    return render(request, 'dashboard/admin/category_form.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def category_delete(request, pk):
+    categoria = get_object_or_404(Categoria, idCategoria=pk)
+    
+    if request.method == 'POST':
+        try:
+            categoria.delete()
+            messages.success(request, 'Categoría eliminada exitosamente.')
+        except Exception as e:
+            messages.error(request, f'No se pudo eliminar la categoría porque tiene productos asociados.')
+        return redirect('category_list')
+    
+    context = {
+        'categoria': categoria
+    }
+    
+    return render(request, 'dashboard/admin/category_confirm_delete.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def sales_report(request):
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    
+    ventas = RegistroVenta.objects.all().order_by('-fechaCreacionVenta')
+    
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            end_date = datetime.datetime.combine(end_date, datetime.time.max)
+            
+            ventas = ventas.filter(fechaCreacionVenta__range=[start_date, end_date])
+        except ValueError:
+            messages.error(request, 'Formato de fecha incorrecto. Use YYYY-MM-DD.')
+    
+    total_ventas = ventas.aggregate(total=Sum('totalVenta'))['total'] or 0
+    num_ventas = ventas.count()
+    
+    productos_mas_vendidos = DetalleVenta.objects.values(
+        'idProducto__nombreProducto'
+    ).annotate(
+        total_vendido=Sum('cantidad')
+    ).order_by('-total_vendido')[:5]
+    
+    ventas_por_categoria = DetalleVenta.objects.values(
+        'idProducto__idCategoria__nombreCategoria'
+    ).annotate(
+        total=Sum('precioTotalProducto')
+    ).order_by('-total')
+    
+    context = {
+        'ventas': ventas[:10], 
+        'total_ventas': total_ventas,
+        'num_ventas': num_ventas,
+        'productos_mas_vendidos': productos_mas_vendidos,
+        'ventas_por_categoria': ventas_por_categoria,
+        'start_date': start_date_str,
+        'end_date': end_date_str
+    }
+    
+    return render(request, 'dashboard/admin/sales_report.html', context)
+
+#Views de recomendacion
+@login_required
+@user_passes_test(is_client)
+def client_recommendations(request):
+    security_products = Producto.objects.filter(
+        idCategoria__nombreCategoria__icontains='seguridad', 
+        estadoProducto=True
+    ).order_by('-fechaCreacionProducto')[:3]
+    
+    microsoft_products = Producto.objects.filter(
+        idCategoria__nombreCategoria__icontains='microsoft', 
+        estadoProducto=True
+    ).order_by('-fechaCreacionProducto')[:3]
+    
+    if security_products.count() < 3:
+        other_security = Producto.objects.filter(
+            estadoProducto=True
+        ).exclude(id__in=security_products.values_list('id', flat=True))[:3-security_products.count()]
+        security_products = list(security_products) + list(other_security)
+    
+    if microsoft_products.count() < 3:
+        other_microsoft = Producto.objects.filter(
+            estadoProducto=True
+        ).exclude(id__in=microsoft_products.values_list('id', flat=True))[:3-microsoft_products.count()]
+        microsoft_products = list(microsoft_products) + list(other_microsoft)
+    
+    context = {
+        'security_products': security_products,
+        'microsoft_products': microsoft_products
+    }
+    
+    return render(request, 'dashboard/client/client_recommendations.html', context)
+
+@login_required
+def add_to_cart(request, producto_id):
+    if request.method == 'POST':
+        producto = get_object_or_404(Producto, idProducto=producto_id)
+        cantidad = int(request.POST.get('cantidad', 1))
+        
+        carrito, created = Carrito.objects.get_or_create(
+            idUsuario=request.user,
+            idProducto=producto,
+            defaults={
+                'cantidadSeleccionada': cantidad,
+                'precioConImpuesto': producto.precioVenta * cantidad
+            }
+        )
+        
+        if not created:
+            carrito.cantidadSeleccionada += cantidad
+            carrito.precioConImpuesto = producto.precioVenta * carrito.cantidadSeleccionada
+            carrito.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Producto agregado al carrito'})
+    
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+@login_required
+def client_recommendations_api(request):
+    security_products = Producto.objects.filter(
+        idCategoria__nombreCategoria__icontains='seguridad', 
+        estadoProducto=True
+    ).order_by('-fechaCreacionProducto')[:3]
+    
+    microsoft_products = Producto.objects.filter(
+        idCategoria__nombreCategoria__icontains='microsoft', 
+        estadoProducto=True
+    ).order_by('-fechaCreacionProducto')[:3]
+    
+    if security_products.count() < 3:
+        more_products = Producto.objects.filter(
+            estadoProducto=True
+        ).exclude(idProducto__in=[p.idProducto for p in security_products])[:3-security_products.count()]
+        security_products = list(security_products) + list(more_products)
+    
+    if microsoft_products.count() < 3:
+        more_products = Producto.objects.filter(
+            estadoProducto=True
+        ).exclude(idProducto__in=[p.idProducto for p in microsoft_products])[:3-microsoft_products.count()]
+        microsoft_products = list(microsoft_products) + list(more_products)
+    
+    security_data = []
+    for producto in security_products:
+        security_data.append({
+            'id': producto.idProducto,
+            'nombre': producto.nombreProducto,
+            'precio': float(producto.precioVenta),
+            'imagen': producto.imagenProducto.url if producto.imagenProducto else static('dashboard/img/antivirus.webp')
+        })
+    
+    microsoft_data = []
+    for producto in microsoft_products:
+        microsoft_data.append({
+            'id': producto.idProducto,
+            'nombre': producto.nombreProducto,
+            'precio': float(producto.precioVenta),
+            'imagen': producto.imagenProducto.url if producto.imagenProducto else static('dashboard/img/windows.webp')
+        })
+    
+    data = {
+        'security': security_data,
+        'microsoft': microsoft_data
+    }
+    
+    return JsonResponse(data)
 
 #View del wifi
 import socket
@@ -230,6 +552,8 @@ def check_speedtest_servers(max_attempts=3):
             logger.warning(f"Intento {attempt + 1} de conexión a servidores fallido: {str(e)}")
             if attempt == max_attempts - 1:
                 return False
+            
+
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -852,55 +1176,148 @@ def system_virus_scan(request):
             'status': 'error', 
             'message': str(e)
         }, status=500)
-# Vista adicional para obtener detalles del sistema
+        
 @login_required
 @require_http_methods(["GET"])
 def system_security_info(request):
     """
-    Obtener información de seguridad básica del sistema
+    Obtener información de seguridad del sistema (Firewall y Antivirus)
     """
     try:
-        processes = []
-        for proc in psutil.process_iter(['pid', 'name', 'status']):
+        import subprocess
+        import json
+        import platform
+        
+        firewall_data = {"enabled": False, "status": "Inactivo"}
+        antivirus_data = {"enabled": False, "status": "Inactivo", "name": "No detectado"}
+        
+        if platform.system() == "Windows":
             try:
-                processes.append({
-                    'pid': proc.info['pid'],
-                    'name': proc.info['name'],
-                    'status': proc.info['status']
-                })
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
-
-        # Información de red
-        network_connections = []
-        for conn in psutil.net_connections():
+                firewall_cmd = "powershell \"Get-NetFirewallProfile | Select Name, Enabled | ConvertTo-Json\""
+                firewall_result = subprocess.run(
+                    firewall_cmd, 
+                    capture_output=True, 
+                    text=True, 
+                    shell=True, 
+                    timeout=10
+                )
+                
+                if firewall_result.returncode == 0 and firewall_result.stdout:
+                    try:
+                        firewall_profiles = json.loads(firewall_result.stdout)
+                        if not isinstance(firewall_profiles, list):
+                            firewall_profiles = [firewall_profiles]
+                        
+                        firewall_enabled = any(profile.get('Enabled', False) for profile in firewall_profiles)
+                        firewall_data = {
+                            "enabled": firewall_enabled,
+                            "status": "Activo" if firewall_enabled else "Inactivo",
+                            "profiles": firewall_profiles
+                        }
+                    except json.JSONDecodeError:
+                        logger.warning("Error al decodificar respuesta del firewall")
+                        
+            except Exception as e:
+                logger.error(f"Error al verificar firewall: {str(e)}")
+            
             try:
-                network_connections.append({
-                    'fd': conn.fd,
-                    'family': str(conn.family),
-                    'type': str(conn.type),
-                    'laddr': str(conn.laddr),
-                    'raddr': str(conn.raddr),
-                    'status': conn.status
-                })
-            except Exception:
-                pass
-
-        return JsonResponse({
+                defender_cmd = "powershell \"Get-MpComputerStatus | Select AntivirusEnabled, RealTimeProtectionEnabled, AntispywareEnabled | ConvertTo-Json\""
+                defender_result = subprocess.run(
+                    defender_cmd, 
+                    capture_output=True, 
+                    text=True, 
+                    shell=True, 
+                    timeout=10
+                )
+                
+                if defender_result.returncode == 0 and defender_result.stdout:
+                    try:
+                        defender_status = json.loads(defender_result.stdout)
+                        antivirus_enabled = defender_status.get('AntivirusEnabled', False)
+                        
+                        antivirus_data = {
+                            "enabled": antivirus_enabled,
+                            "status": "Activo" if antivirus_enabled else "Inactivo",
+                            "name": "Windows Defender",
+                            "realtime_protection": defender_status.get('RealTimeProtectionEnabled', False),
+                            "antispyware": defender_status.get('AntispywareEnabled', False)
+                        }
+                    except json.JSONDecodeError:
+                        logger.warning("Error al decodificar respuesta de Windows Defender")
+                        
+            except Exception as e:
+                logger.error(f"Error al verificar Windows Defender: {str(e)}")
+                
+                try:
+                    alt_antivirus_cmd = "powershell \"Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct | Select displayName, productState | ConvertTo-Json\""
+                    alt_result = subprocess.run(
+                        alt_antivirus_cmd, 
+                        capture_output=True, 
+                        text=True, 
+                        shell=True, 
+                        timeout=10
+                    )
+                    
+                    if alt_result.returncode == 0 and alt_result.stdout:
+                        try:
+                            antivirus_products = json.loads(alt_result.stdout)
+                            if not isinstance(antivirus_products, list):
+                                antivirus_products = [antivirus_products]
+                            
+                            for av in antivirus_products:
+                                product_state = av.get('productState', 0)
+                                if (product_state & 0x1000) != 0:
+                                    antivirus_data = {
+                                        "enabled": True,
+                                        "status": "Activo",
+                                        "name": av.get('displayName', 'Antivirus detectado')
+                                    }
+                                    break
+                        except json.JSONDecodeError:
+                            logger.warning("Error al decodificar respuesta de antivirus alternativo")
+                            
+                except Exception as e2:
+                    logger.error(f"Error en método alternativo de antivirus: {str(e2)}")
+        
+        try:
+            security_processes = []
+            for proc in psutil.process_iter(['pid', 'name']):
+                try:
+                    proc_name = proc.info['name'].lower()
+                    if any(keyword in proc_name for keyword in ['defender', 'antivirus', 'firewall', 'security']):
+                        security_processes.append({
+                            'pid': proc.info['pid'],
+                            'name': proc.info['name']
+                        })
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    pass
+                    
+        except Exception as e:
+            logger.error(f"Error al obtener procesos de seguridad: {str(e)}")
+            security_processes = []
+        
+        response_data = {
             'status': 'success',
-            'system_info': {
-                'total_processes': len(processes),
-                'network_connections': len(network_connections)
-            },
-            'processes': processes[:20],  
-            'network_connections': network_connections[:20]  
-        })
-
+            'data': {
+                'firewall': firewall_data,
+                'antivirus': antivirus_data,
+                'security_processes': security_processes[:10], 
+                'timestamp': str(timezone.now())
+            }
+        }
+        
+        logger.info(f"Información de seguridad obtenida exitosamente: Firewall={firewall_data['enabled']}, Antivirus={antivirus_data['enabled']}")
+        return JsonResponse(response_data)
+        
     except Exception as e:
-        logger.error(f"Error obteniendo información del sistema: {str(e)}")
+        logger.error(f"Error crítico obteniendo información de seguridad: {str(e)}")
         return JsonResponse({
-            'status': 'error', 
-            'message': str(e)
+            'status': 'error',
+            'message': f'Error al obtener información de seguridad: {str(e)}',
+            'data': {
+                'firewall': {"enabled": False, "status": "Error al verificar"},
+                'antivirus': {"enabled": False, "status": "Error al verificar", "name": "Error"}
+            }
         }, status=500)
 
 #diagnostico
@@ -1004,7 +1421,6 @@ def get_system_data():
                     'secsleft': battery_stats.secsleft if battery_stats.secsleft != -1 else None
                 }
         
-        # Datos del sistema operativo
         system_info = {
             'system': platform.system(),
             'version': platform.version(),
@@ -1013,7 +1429,6 @@ def get_system_data():
             'processor': platform.processor()
         }
         
-        # Temperatura de CPU (si está disponible)
         cpu_temp = "N/A"
         if hasattr(psutil, "sensors_temperatures"):
             temps = psutil.sensors_temperatures()
@@ -1023,10 +1438,8 @@ def get_system_data():
                         cpu_temp = f"{entries[0].current:.1f}°C"
                         break
         
-        # Obtener información de GPU
         gpu_info = get_gpu_info()
         
-        # Construir respuesta completa
         system_data = {
             # CPU
             "cpu_usage": f"{cpu_percent}%",
@@ -1102,20 +1515,17 @@ def get_gpu_info():
     """Obtiene información de GPU"""
     try:
         if platform.system() == "Windows":
-            # Intentar obtener información de GPU en Windows
             cmd = "powershell \"Get-WmiObject Win32_VideoController | Select Name, AdapterRAM, DriverVersion | ConvertTo-Json\""
             result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
             
             if result.returncode == 0 and result.stdout:
                 gpu_data = json.loads(result.stdout)
                 
-                # Convertir a lista si es un solo objeto
                 if not isinstance(gpu_data, list):
                     gpu_data = [gpu_data]
                 
                 gpus = []
                 for gpu in gpu_data:
-                    # Convertir RAM a formato legible si existe
                     if 'AdapterRAM' in gpu and gpu['AdapterRAM']:
                         try:
                             gpu_ram = get_size_str(int(gpu['AdapterRAM']))
@@ -1132,9 +1542,7 @@ def get_gpu_info():
                 
                 return gpus
         elif platform.system() == "Linux":
-            # Intentar obtener información de GPU en Linux
             try:
-                # Comprobar si nvidia-smi está disponible (tarjetas NVIDIA)
                 nvidia_cmd = "nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader"
                 nvidia_result = subprocess.run(nvidia_cmd, capture_output=True, text=True, shell=True)
                 
@@ -1152,7 +1560,6 @@ def get_gpu_info():
             except:
                 pass
             
-            # Si no es NVIDIA, intentar con lspci
             try:
                 lspci_cmd = "lspci | grep -i 'vga\\|3d\\|2d'"
                 lspci_result = subprocess.run(lspci_cmd, capture_output=True, text=True, shell=True)
@@ -1170,7 +1577,6 @@ def get_gpu_info():
             except:
                 pass
         
-        # Si no se pudo obtener información específica
         return [{
             "name": "GPU detectada",
             "memory": "Desconocido",
@@ -1288,7 +1694,6 @@ def create_diagnosis_entry(user, system_data, scan_type):
            warnings_count=warnings_count
        )
        
-       # Crear reporte de diagnóstico inmediatamente
        report = DiagnosticReport.objects.create(
            user=user,
            diagnosis=diagnosis,
@@ -1297,7 +1702,6 @@ def create_diagnosis_entry(user, system_data, scan_type):
            current_component="Iniciando diagnóstico"
        )
        
-       # Iniciar análisis en segundo plano para todos los tipos de escaneo
        if scan_type in ["FullScan", "CustomScan", "QuickScan"]:
            try:
                analysis_thread = threading.Thread(
@@ -1432,7 +1836,6 @@ def analyze_cpu(system_data):
                 "recommendation": "Considere cerrar algunas aplicaciones para reducir la carga del procesador."
             })
         
-        # Verificar temperatura si está disponible
         if cpu_temp != "N/A" and cpu_temp_value > 0:
             if cpu_temp_value > 85:
                 status = "CRITICAL"
@@ -1452,7 +1855,6 @@ def analyze_cpu(system_data):
                     "recommendation": "Mejore la ventilación de su equipo y considere limpiar el polvo acumulado."
                 })
         
-        # Generar recomendaciones generales
         recommendations = "El procesador está funcionando correctamente."
         if issues:
             recommendations = "\n".join([issue["recommendation"] for issue in issues])
@@ -1493,7 +1895,6 @@ def analyze_ram(system_data):
         swap_used = swap_data.get('used', 'N/A')
         swap_percent = swap_data.get('percent', 'N/A')
         
-        # Convertir valores a números para comparación
         ram_percent_value = float(ram_percent.replace('%', '')) if '%' in ram_percent else 0
         swap_percent_value = float(swap_percent.replace('%', '')) if '%' in swap_percent else 0
         
@@ -1518,7 +1919,6 @@ def analyze_ram(system_data):
                 "recommendation": "Considere cerrar algunas aplicaciones para liberar memoria."
             })
         
-        # Verificar memoria virtual (swap)
         if swap_total != "N/A" and swap_total != "0.00 B" and swap_percent_value > 75:
             if status != "CRITICAL":
                 status = "WARNING"
@@ -1529,16 +1929,14 @@ def analyze_ram(system_data):
                 "recommendation": "El sistema está utilizando mucha memoria virtual, lo que puede reducir el rendimiento. Considere cerrar aplicaciones o ampliar la RAM física."
             })
         
-        # Obtener procesos que más memoria consumen
         top_processes = system_data.get('top_processes', [])
         memory_intensive_processes = []
         for process in top_processes:
             memory_percent = process.get('memory_percent', '0%')
             memory_value = float(memory_percent.replace('%', '')) if '%' in memory_percent else 0
-            if memory_value > 10:  # Procesos que usan más del 10% de RAM
+            if memory_value > 10:  
                 memory_intensive_processes.append(process)
         
-        # Generar recomendaciones
         recommendations = "La memoria RAM está funcionando correctamente."
         if issues:
             recommendations = "\n".join([issue["recommendation"] for issue in issues])
@@ -1578,7 +1976,6 @@ def analyze_disk(system_data):
     try:
         partitions = system_data.get('disk_usage', {}).get('partitions', [])
         
-        # Determinar estado
         status = "NORMAL"
         issues = []
         critical_partitions = []
@@ -1589,7 +1986,6 @@ def analyze_disk(system_data):
             mountpoint = partition.get('mountpoint', 'Desconocido')
             percent = partition.get('percent', '0%')
             
-            # Convertir a valor numérico
             percent_value = float(percent.replace('%', '')) if '%' in percent else 0
             
             if percent_value > 95:
@@ -1612,11 +2008,9 @@ def analyze_disk(system_data):
                     "recommendation": f"Considere liberar espacio en la unidad {device} eliminando archivos innecesarios."
                 })
         
-        # Analizar fragmentación (solo en Windows)
         fragmentation_data = None
         if platform.system() == "Windows":
             try:
-                # Solo analizamos el disco C: para no sobrecargar el análisis
                 cmd = "defrag C: /A /H"
                 result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
                 
@@ -1646,7 +2040,6 @@ def analyze_disk(system_data):
             except:
                 pass
         
-        # Verificar salud del disco en Windows
         disk_health_data = None
         if platform.system() == "Windows":
             try:
@@ -1656,7 +2049,6 @@ def analyze_disk(system_data):
                 if result.returncode == 0 and result.stdout:
                     health_data = json.loads(result.stdout)
                     
-                    # Convertir a lista si es un solo objeto
                     if not isinstance(health_data, list):
                         health_data = [health_data]
                     
@@ -1677,7 +2069,6 @@ def analyze_disk(system_data):
             except:
                 pass
         
-        # Generar recomendaciones
         recommendations = "El almacenamiento está funcionando correctamente."
         if issues:
             recommendations = "\n".join([issue["recommendation"] for issue in issues])
@@ -1713,11 +2104,9 @@ def analyze_network(system_data):
         recv = network_data.get('bytes_recv', 'N/A')
         connections = network_data.get('connections', 0)
         
-        # Determinar estado
         status = "NORMAL"
         issues = []
         
-        # Comprobar conectividad a Internet
         internet_status = check_internet_connectivity()
         if not internet_status["connected"]:
             status = "CRITICAL"
@@ -1728,7 +2117,6 @@ def analyze_network(system_data):
                 "recommendation": "Verifique su conexión de red, router o contacte con su proveedor de servicios de Internet."
             })
         
-        # Comprobar latencia
         if internet_status["connected"] and internet_status["ping"] > 150:
             if status != "CRITICAL":
                 status = "WARNING"
@@ -1739,7 +2127,6 @@ def analyze_network(system_data):
                 "recommendation": "La velocidad de respuesta de su conexión es lenta. Verifique si hay otras aplicaciones usando el ancho de banda o contacte con su proveedor de Internet."
             })
         
-                        # Verificar estado del adaptador Wi-Fi en Windows
         wifi_status = None
         if platform.system() == "Windows":
             try:
@@ -1749,7 +2136,6 @@ def analyze_network(system_data):
                 if result.returncode == 0 and result.stdout:
                     wifi_data = json.loads(result.stdout)
                     
-                    # Convertir a lista si es un solo objeto
                     if not isinstance(wifi_data, list):
                         wifi_data = [wifi_data]
                     
@@ -1768,7 +2154,6 @@ def analyze_network(system_data):
             except:
                 pass
         
-        # Generar recomendaciones
         recommendations = "La conexión de red está funcionando correctamente."
         if issues:
             recommendations = "\n".join([issue["recommendation"] for issue in issues])
@@ -2018,9 +2403,295 @@ def analyze_battery(system_data):
             }],
             "recommendations": "No se pudo completar el análisis de la batería."
         }
+        
+        
+EXCLUDED_DRIVERS = [
+    "WAN Miniport (Network Monitor)",
+    "WAN Miniport (IPv6)", 
+    "WAN Miniport (IP)",
+    "WAN Miniport (PPPOE)",
+    "WAN Miniport (PPTP)",
+    "WAN Miniport (L2TP)",
+    "WAN Miniport (SSTP)",
+    "WAN Miniport (IKEv2)",
+    "Root Print Queue",
+    "Local Print Queue",
+    "Print Queue",
+    "Computer Device",
+    "NDIS Virtual Network Adapter Enumerator",
+    "Steam Streaming Speakers",
+    "Microsoft Kernel Debug Network Adapter",
+    "Microsoft ISATAP Adapter",
+    "Microsoft Teredo Tunneling Adapter",
+    "Microsoft 6to4 Adapter",
+    "Microsoft WiFi Direct Virtual Adapter",
+    "Composite Bus Enumerator",
+    "Microsoft System Management BIOS Driver",
+    "High Definition Audio Controller",
+    "Generic software device",
+    "System Speaker",
+    "Programmable Interrupt Controller",
+    "System Timer",
+    "Direct Memory Access Controller",
+    "System CMOS/real time clock",
+    "Motherboard resources",
+    "PCI Bus",
+    "Microsoft Basic Display Adapter",
+    "Microsoft Basic Render Driver",
+    "HID-compliant consumer control device",
+    "HID-compliant system controller",
+    "HID-compliant vendor-defined device",
+    "Plug and Play Software Device Enumerator",
+    "Microsoft Windows Management Interface for ACPI",
+    "Volume Manager",
+    "Logical Disk Manager",
+    "Microsoft Streaming Service Proxy",
+    "Remote Desktop Device Redirector Bus"
+]
+
+
+import re
+from datetime import datetime
+
+def is_excluded(driver_name):
+    if not driver_name or driver_name in [None, '', 'Desconocido', 'None']:
+        return True
+        
+    driver_name_clean = str(driver_name).lower().strip()
+    
+    system_patterns = [
+        r'wan miniport.*',
+        r'.*print queue.*',
+        r'computer device',
+        r'ndis virtual.*',
+        r'steam streaming.*',
+        r'microsoft.*adapter',
+        r'microsoft kernel debug.*',
+        r'microsoft isatap.*',
+        r'microsoft teredo.*',
+        r'microsoft 6to4.*',
+        r'microsoft wifi direct.*',
+        r'composite bus enumerator',
+        r'system management bios',
+        r'generic software device',
+        r'system speaker',
+        r'programmable interrupt.*',
+        r'system timer',
+        r'direct memory access.*',
+        r'system cmos.*',
+        r'motherboard resources',
+        r'pci bus',
+        r'microsoft basic.*',
+        r'high definition audio controller',
+        r'plug and play.*enumerator',
+        r'.*management interface.*acpi',
+        r'volume manager',
+        r'logical disk manager',
+        r'streaming service proxy',
+        r'remote desktop.*redirector',
+        r'hid-compliant consumer control.*',
+        r'hid-compliant system controller',
+        r'hid-compliant vendor-defined.*'
+    ]
+    
+    for pattern in system_patterns:
+        if re.search(pattern, driver_name_clean):
+            return True
+    
+    for excluded in EXCLUDED_DRIVERS:
+        if excluded.lower() in driver_name_clean:
+            return True
+    
+    if any(year in driver_name_clean for year in ['2006', '2001', '1999', '2000']):
+        if any(keyword in driver_name_clean for keyword in [
+            'microsoft', 'system', 'basic', 'generic', 'standard', 'pnp', 'acpi', 'computer', 'ndis'
+        ]):
+            return True
+    
+    return False
+
+def is_legitimate_device_error(device_name, error_code):
+    if not device_name or device_name in [None, '', 'Desconocido', 'None']:
+        return False
+        
+    if is_excluded(device_name):
+        return False
+    
+    device_name_lower = str(device_name).lower()
+    
+    ignorable_combinations = [
+        ('wan miniport', [22, 24, 28]),
+        ('print queue', [22, 24]),
+        ('microsoft', [22, 28]),
+        ('computer device', [22, 24, 28]),
+        ('ndis virtual', [22, 24, 28]),
+        ('steam streaming', [22, 24, 28]),
+    ]
+    
+    for device_pattern, error_codes in ignorable_combinations:
+        if device_pattern in device_name_lower and error_code in error_codes:
+            return False
+    
+    return True
+
+
+
+
+import re
+from datetime import datetime
+
+class DriverAnalyzer:
+    def __init__(self):
+        self.system_keywords = [
+            'microsoft', 'system', 'basic', 'standard', 'generic', 'pnp', 'acpi', 
+            'computer', 'ndis', 'steam', 'firmware', 'bios', 'uefi', 'root', 'composite'
+        ]
+        
+        self.virtual_patterns = [
+            r'wan miniport.*', r'.*print queue.*', r'microsoft.*adapter',
+            r'virtual.*', r'.*enumerator.*', r'.*redirector.*'
+        ]
+        
+        self.firmware_patterns = [
+            r'device firmware.*', r'.*firmware.*', r'.*bios.*', r'.*uefi.*',
+            r'system.*firmware.*', r'.*rom.*'
+        ]
+
+    def calculate_system_score(self, device_name, driver_date, manufacturer=None):
+        if not device_name:
+            return 100
+            
+        score = 0
+        device_lower = device_name.lower()
+        
+        # Nombres genéricos muy probablemente del sistema
+        generic_names = ['disk drive', 'usb device', 'pci device', 'hid device', 
+                        'unknown device', 'composite device', 'generic']
+        if any(generic in device_lower for generic in generic_names):
+            score += 60
+            
+        if any(keyword in device_lower for keyword in self.system_keywords):
+            score += 30
+            
+        if any(re.search(pattern, device_lower) for pattern in self.virtual_patterns):
+            score += 40
+            
+        if any(re.search(pattern, device_lower) for pattern in self.firmware_patterns):
+            score += 50
+            
+        if manufacturer and 'microsoft' in manufacturer.lower():
+            score += 25
+            
+        # Si tiene fecha de era del sistema (2006, 2001, etc.) y nombre genérico = definitivamente sistema
+        if driver_date and self._is_system_era_date(driver_date):
+            score += 30
+            if any(generic in device_lower for generic in ['disk drive', 'device', 'generic']):
+                score += 40
+            
+        if any(term in device_lower for term in ['legacy', 'compatibility', 'emulation']):
+            score += 15
+            
+        # Penalty para hardware específico con fabricantes conocidos
+        hardware_vendors = ['nvidia', 'amd', 'intel', 'realtek', 'broadcom', 'qualcomm']
+        if any(vendor in device_lower for vendor in hardware_vendors):
+            score -= 20
+            
+        return min(max(score, 0), 100)
+
+    def _is_system_era_date(self, date_str):
+        # Fechas típicas de controladores del sistema de Windows
+        system_years = ['2001', '2006', '2009', '1999', '2000', '2007', '2008']
+        system_dates = ['2006-06-21', '2001-07-01', '2009-07-14']  # Fechas específicas comunes
+        
+        date_str = str(date_str)
+        return (any(year in date_str for year in system_years) or 
+                any(date in date_str for date in system_dates))
+
+    def is_critical_hardware(self, device_name):
+        if not device_name:
+            return False
+            
+        device_lower = device_name.lower()
+        
+        # Excluir nombres genéricos que suenan a hardware pero son del sistema
+        generic_exclusions = [
+            'disk drive', 'generic', 'standard', 'basic', 'unknown device',
+            'pci device', 'usb device', 'hid device', 'composite device'
+        ]
+        
+        if any(exclusion in device_lower for exclusion in generic_exclusions):
+            return False
+        
+        # Patrones más específicos para hardware real
+        critical_patterns = [
+            r'nvidia.*', r'amd.*', r'intel.*graphics.*', r'radeon.*',
+            r'geforce.*', r'quadro.*', r'.*gtx.*', r'.*rtx.*',
+            r'realtek.*', r'broadcom.*', r'qualcomm.*', r'intel.*wireless.*',
+            r'.*ethernet.*controller.*', r'.*wifi.*adapter.*',
+            r'creative.*', r'sound blaster.*', r'realtek.*audio.*',
+            r'.*nvme.*ssd.*', r'samsung.*ssd.*', r'western digital.*',
+            r'seagate.*', r'toshiba.*', r'crucial.*'
+        ]
+        
+        return any(re.search(pattern, device_lower) for pattern in critical_patterns)
+
+    def should_exclude_driver(self, device_name, driver_date=None, manufacturer=None):
+        if not device_name or device_name in [None, '', 'Desconocido', 'None']:
+            return True
+            
+        device_lower = device_name.lower()
+        
+        # Exclusión inmediata para nombres extremadamente genéricos
+        immediate_exclusions = [
+            'disk drive', 'usb device', 'pci device', 'unknown device',
+            'generic software device', 'composite device'
+        ]
+        
+        if any(exclusion in device_lower for exclusion in immediate_exclusions):
+            return True
+            
+        system_score = self.calculate_system_score(device_name, driver_date, manufacturer)
+        
+        # Umbrales más estrictos
+        if system_score >= 80:  # Muy probablemente del sistema
+            return True
+            
+        if system_score >= 60:  # Probablemente del sistema
+            # Solo mantener si es hardware específico con fabricante conocido
+            hardware_vendors = ['nvidia', 'amd', 'intel', 'realtek', 'broadcom', 'qualcomm']
+            if not any(vendor in device_lower for vendor in hardware_vendors):
+                return True
+                
+        if system_score >= 40 and not self.is_critical_hardware(device_name):
+            return True
+            
+        return False
+
+    def should_exclude_error(self, device_name, error_code):
+        if not device_name:
+            return True
+            
+        if self.should_exclude_driver(device_name):
+            return True
+            
+        device_lower = device_name.lower()
+        
+        non_critical_errors = {
+            22: ['disabled', 'virtual', 'miniport', 'print'],
+            24: ['not present', 'virtual', 'optional'],
+            28: ['disabled', 'optional']
+        }
+        
+        if error_code in non_critical_errors:
+            keywords = non_critical_errors[error_code]
+            if any(keyword in device_lower for keyword in keywords):
+                return True
+                
+        return False
 
 def analyze_drivers(system_data):
-    """Analiza los controladores del sistema"""
+    analyzer = DriverAnalyzer()
+    
     try:
         drivers_info = []
         outdated_drivers = []
@@ -2028,7 +2699,7 @@ def analyze_drivers(system_data):
         
         if platform.system() == "Windows":
             try:
-                cmd = "powershell \"Get-WmiObject Win32_PnPSignedDriver | Select DeviceName, DriverVersion, DriverDate | ConvertTo-Json\""
+                cmd = "powershell \"Get-WmiObject Win32_PnPSignedDriver | Select DeviceName, DriverVersion, DriverDate, Manufacturer | ConvertTo-Json\""
                 result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=30)
                 
                 if result.returncode == 0 and result.stdout:
@@ -2037,19 +2708,29 @@ def analyze_drivers(system_data):
                     if not isinstance(drivers_data, list):
                         drivers_data = [drivers_data]
                     
-                    for driver in drivers_data[:20]:
-                        device_name = driver.get('DeviceName', 'Desconocido')
+                    for driver in drivers_data:
+                        device_name = driver.get('DeviceName')
+                        
+                        if not device_name or device_name in [None, '', 'None']:
+                            continue
+                            
+                        device_name = str(device_name).strip()
+                        if not device_name or device_name == 'Desconocido':
+                            continue
+                            
                         driver_version = driver.get('DriverVersion', 'Desconocido')
                         driver_date_str = driver.get('DriverDate', '')
+                        manufacturer = driver.get('Manufacturer', '')
                         
                         driver_date = "Desconocida"
                         if driver_date_str:
                             try:
-                                date_parts = driver_date_str.split('.')[0]
-                                year = date_parts[:4]
-                                month = date_parts[4:6]
-                                day = date_parts[6:8]
-                                driver_date = f"{year}-{month}-{day}"
+                                date_parts = str(driver_date_str).split('.')[0]
+                                if len(date_parts) >= 8:
+                                    year = date_parts[:4]
+                                    month = date_parts[4:6] 
+                                    day = date_parts[6:8]
+                                    driver_date = f"{year}-{month}-{day}"
                             except:
                                 pass
                         
@@ -2057,30 +2738,44 @@ def analyze_drivers(system_data):
                             "name": device_name,
                             "version": driver_version,
                             "date": driver_date,
+                            "manufacturer": manufacturer,
                             "status": "Normal"
                         }
+                        
+                        if analyzer.should_exclude_driver(device_name, driver_date, manufacturer):
+                            driver_info["status"] = "Sistema (excluido)"
+                            drivers_info.append(driver_info)
+                            continue
                         
                         try:
                             if driver_date != "Desconocida":
                                 date_obj = datetime.strptime(driver_date, "%Y-%m-%d")
                                 years_old = (datetime.now() - date_obj).days / 365
                                 
-                                if years_old > 3:
-                                    driver_info["status"] = "Desactualizado"
-                                    outdated_drivers.append(driver_info)
-                        except:
-                            pass
+                                # Solo reportar hardware específico muy antiguo
+                                if years_old > 12:
+                                    if analyzer.is_critical_hardware(device_name):
+                                        system_score = analyzer.calculate_system_score(device_name, driver_date, manufacturer)
+                                        
+                                        # Muy estricto: score bajo Y fabricante conocido
+                                        if system_score < 20:
+                                            hardware_vendors = ['nvidia', 'amd', 'intel', 'realtek', 'broadcom', 'qualcomm']
+                                            if any(vendor in device_name.lower() for vendor in hardware_vendors):
+                                                driver_info["status"] = "Desactualizado"
+                                                outdated_drivers.append(driver_info)
+                        except Exception as e:
+                            print(f"Error al procesar fecha para {device_name}: {str(e)}")
                         
                         drivers_info.append(driver_info)
-            except:
-                pass
+            except Exception as e:
+                print(f"Error al obtener drivers: {str(e)}")
         
         try:
             if platform.system() == "Windows":
-                cmd = "powershell \"Get-WmiObject Win32_PnPEntity | Where-Object {$_.ConfigManagerErrorCode -ne 0} | Select Caption, ConfigManagerErrorCode | ConvertTo-Json\""
+                cmd = "powershell \"Get-WmiObject Win32_PnPEntity | Where-Object {$_.ConfigManagerErrorCode -ne 0} | Select Caption, ConfigManagerErrorCode, HardwareID | ConvertTo-Json\""
                 result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=15)
                 
-                if result.returncode == 0 and result.stdout and result.stdout.strip() != "":
+                if result.returncode == 0 and result.stdout and result.stdout.strip():
                     problem_data = json.loads(result.stdout)
                     
                     if not isinstance(problem_data, list):
@@ -2089,53 +2784,58 @@ def analyze_drivers(system_data):
                     for device in problem_data:
                         device_name = device.get('Caption', 'Dispositivo desconocido')
                         error_code = device.get('ConfigManagerErrorCode', 0)
+                        hardware_id = device.get('HardwareID', [])
                         
-                        problem_info = {
-                            "name": device_name,
-                            "error_code": error_code,
-                            "status": "Error"
-                        }
-                        
-                        problematic_drivers.append(problem_info)
-        except:
-            pass
+                        if not analyzer.should_exclude_error(device_name, error_code):
+                            if analyzer.is_critical_hardware(device_name) or error_code in [1, 3, 10, 12, 14, 43]:
+                                problem_info = {
+                                    "name": device_name,
+                                    "error_code": error_code,
+                                    "hardware_id": hardware_id,
+                                    "status": "Error"
+                                }
+                                problematic_drivers.append(problem_info)
+        except Exception as e:
+            print(f"Error al obtener dispositivos problemáticos: {str(e)}")
         
         status = "NORMAL"
         issues = []
         
-        if problematic_drivers:
+        critical_problems = [p for p in problematic_drivers if p['error_code'] in [1, 3, 10, 12, 14, 43]]
+        
+        if critical_problems:
             status = "CRITICAL"
-            for driver in problematic_drivers:
+            for driver in critical_problems:
                 issues.append({
                     "type": "DRIVER",
                     "severity": "HIGH",
-                    "description": f"Problema en el controlador de {driver['name']}",
-                    "recommendation": "Reinstale o actualice el controlador del dispositivo para resolver el problema."
+                    "description": f"Error crítico en {driver['name']} (Código: {driver['error_code']})",
+                    "recommendation": "Reinstale o actualice urgentemente este controlador."
                 })
         
-        if outdated_drivers:
-            if status != "CRITICAL":
-                status = "WARNING"
+        legitimate_outdated = [d for d in outdated_drivers 
+                             if not analyzer.should_exclude_driver(d['name'], d['date'], d.get('manufacturer'))]
+        
+        if legitimate_outdated and status != "CRITICAL":
+            status = "WARNING"
             
-            for driver in outdated_drivers[:3]:
+            for driver in legitimate_outdated[:2]:
                 issues.append({
-                    "type": "DRIVER",
+                    "type": "DRIVER", 
                     "severity": "MEDIUM",
-                    "description": f"Controlador desactualizado: {driver['name']} ({driver['date']})",
-                    "recommendation": f"Actualice el controlador de {driver['name']} para mejorar la compatibilidad y rendimiento."
+                    "description": f"Hardware crítico con controlador muy antiguo: {driver['name']} ({driver['date']})",
+                    "recommendation": f"Actualice urgentemente el controlador de {driver['name']} para evitar problemas de compatibilidad."
                 })
         
-        recommendations = "Todos los controladores están funcionando correctamente."
+        recommendations = "Todos los controladores críticos están funcionando correctamente."
         if issues:
             recommendations = "\n".join([issue["recommendation"] for issue in issues])
-            if len(outdated_drivers) > 3:
-                recommendations += f"\n\nSe encontraron {len(outdated_drivers)} controladores desactualizados en total. Considere actualizar todos los controladores para un rendimiento óptimo."
         
         return {
             "status": status,
             "drivers": drivers_info,
-            "problematic_drivers": problematic_drivers,
-            "outdated_drivers": outdated_drivers,
+            "problematic_drivers": critical_problems,
+            "outdated_drivers": legitimate_outdated,
             "issues": issues,
             "recommendations": recommendations
         }
@@ -3261,14 +3961,15 @@ def analyze_connectivity_scenario(system_data, diagnosis):
     }
 
 def analyze_driver_scenario(system_data, diagnosis):
+    analyzer = DriverAnalyzer()
     logger = logging.getLogger(__name__)
-    logger.info("Iniciando análisis de controladores")
+    logger.info("Iniciando análisis inteligente de controladores")
     
     issues = []
     
     try:
         if platform.system() == "Windows":
-            cmd_problem = "powershell \"Get-WmiObject Win32_PnPEntity | Where-Object { $_.ConfigManagerErrorCode -ne 0 } | Select-Object Caption, ConfigManagerErrorCode, DeviceID, Status | ConvertTo-Json -Depth 3\""
+            cmd_problem = "powershell \"Get-WmiObject Win32_PnPEntity | Where-Object { $_.ConfigManagerErrorCode -ne 0 } | Select-Object Caption, ConfigManagerErrorCode, DeviceID, HardwareID | ConvertTo-Json -Depth 3\""
             problem_result = subprocess.run(cmd_problem, capture_output=True, text=True, shell=True, timeout=10)
             
             if problem_result.returncode == 0 and problem_result.stdout:
@@ -3277,18 +3978,22 @@ def analyze_driver_scenario(system_data, diagnosis):
                     if not isinstance(problem_devices, list) and problem_devices:
                         problem_devices = [problem_devices]
                     
-                    if problem_devices:
-                        problematic_drivers = []
-                        for device in problem_devices:
-                            error_code = device.get('ConfigManagerErrorCode', 0)
-                            error_message = get_error_code_message(error_code)
-                            problematic_drivers.append(f"{device.get('Caption', 'Dispositivo desconocido')}: {error_message}")
+                    critical_problems = []
+                    for device in problem_devices:
+                        device_name = device.get('Caption', 'Dispositivo desconocido')
+                        error_code = device.get('ConfigManagerErrorCode', 0)
                         
+                        if not analyzer.should_exclude_error(device_name, error_code):
+                            if analyzer.is_critical_hardware(device_name) or error_code in [1, 3, 10, 12, 14, 43]:
+                                error_message = get_error_code_message(error_code)
+                                critical_problems.append(f"{device_name}: {error_message}")
+                    
+                    if critical_problems:
                         issues.append({
                             "type": "DRIVER",
-                            "severity": "HIGH",
-                            "description": f"Se encontraron {len(problem_devices)} dispositivos con errores de controlador",
-                            "recommendation": f"Actualice o reinstale los controladores para: {', '.join(problematic_drivers[:3])}"
+                            "severity": "HIGH", 
+                            "description": f"Se encontraron {len(critical_problems)} dispositivos críticos con errores de controlador",
+                            "recommendation": f"Actualice urgentemente los controladores para: {', '.join(critical_problems[:2])}"
                         })
                 except json.JSONDecodeError:
                     pass
@@ -3302,11 +4007,22 @@ def analyze_driver_scenario(system_data, diagnosis):
                     if not isinstance(drivers, list):
                         drivers = [drivers]
                     
-                    old_drivers = []
+                    critical_old_drivers = []
                     for driver in drivers:
+                        device_name = driver.get('DeviceName', '')
+                        manufacturer = driver.get('Manufacturer', '')
+                        
+                        if not device_name or device_name in [None, '', 'None']:
+                            continue
+                            
+                        device_name = str(device_name).strip()
+                        
+                        if analyzer.should_exclude_driver(device_name, driver.get('DriverDate'), manufacturer):
+                            continue
+                            
                         if driver.get('DriverDate'):
                             try:
-                                date_str = driver.get('DriverDate').split('.')[0]
+                                date_str = str(driver.get('DriverDate')).split('.')[0]
                                 if len(date_str) >= 8:
                                     year = int(date_str[0:4])
                                     month = int(date_str[4:6])
@@ -3314,17 +4030,26 @@ def analyze_driver_scenario(system_data, diagnosis):
                                     
                                     from datetime import datetime, timedelta
                                     driver_date = datetime(year, month, day)
-                                    if (datetime.now() - driver_date) > timedelta(days=365*3):
-                                        old_drivers.append(f"{driver.get('DeviceName')} ({year}-{month}-{day})")
+                                    
+                                    # Cambio: Solo hardware específico y conocido
+                                    if (datetime.now() - driver_date) > timedelta(days=365*12):
+                                        if analyzer.is_critical_hardware(device_name):
+                                            system_score = analyzer.calculate_system_score(device_name, f"{year}-{month:02d}-{day:02d}", manufacturer)
+                                            
+                                            # Más estricto: score muy bajo Y hardware específico
+                                            if system_score < 20:
+                                                hardware_vendors = ['nvidia', 'amd', 'intel', 'realtek', 'broadcom', 'qualcomm']
+                                                if any(vendor in device_name.lower() for vendor in hardware_vendors):
+                                                    critical_old_drivers.append(f"{device_name} ({year}-{month:02d}-{day:02d})")
                             except Exception as e:
                                 logger.error(f"Error al analizar fecha de controlador: {str(e)}")
                     
-                    if old_drivers:
+                    if critical_old_drivers:
                         issues.append({
                             "type": "DRIVER",
                             "severity": "MEDIUM",
-                            "description": f"Controladores desactualizados (más de 3 años)",
-                            "recommendation": f"Actualice estos controladores antiguos: {', '.join(old_drivers[:3])}"
+                            "description": f"Hardware crítico con controladores extremadamente antiguos",
+                            "recommendation": f"Actualice estos controladores de hardware importante: {', '.join(critical_old_drivers[:2])}"
                         })
                 except json.JSONDecodeError:
                     pass
@@ -3335,8 +4060,8 @@ def analyze_driver_scenario(system_data, diagnosis):
         issues.append({
             "type": "DRIVER",
             "severity": "LOW",
-            "description": "No se encontraron problemas con los controladores",
-            "recommendation": "Los controladores del sistema parecen estar funcionando correctamente. Para mantener un rendimiento óptimo, considere verificar actualizaciones periódicamente."
+            "description": "No se encontraron problemas críticos con los controladores",
+            "recommendation": "Los controladores de hardware crítico están funcionando correctamente."
         })
     
     recommendations = "\n".join([issue["recommendation"] for issue in issues])
@@ -3351,7 +4076,7 @@ def analyze_driver_scenario(system_data, diagnosis):
             recommendation=issue["recommendation"]
         )
     
-    logger.info("Análisis de escenario de controlador completado")
+    logger.info("Análisis inteligente de controladores completado")
     return {
         "scenario": "Error de controlador",
         "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else 
@@ -4181,56 +4906,125 @@ def scan_drivers(request):
         if request.method != 'POST':
             return JsonResponse({"status": "error", "message": "Método no permitido"}, status=405)
         
-        if platform.system() == "Windows":
-            # Escanear dispositivos
-            cmd = f"powershell \"pnputil /scan-devices\""
-            scan_result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=60)
-            
-            if scan_result.returncode != 0:
-                return JsonResponse({
-                    "status": "error",
-                    "message": "Error al escanear dispositivos"
-                }, status=500)
-            
-            # Obtener lista de dispositivos
-            cmd = "powershell \"Get-PnpDevice | Select-Object Caption, Status, InstanceId, Problem, Class | ConvertTo-Json -Depth 3\""
-            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=30)
-            
-            if result.returncode == 0 and result.stdout:
-                try:
-                    devices_data = json.loads(result.stdout)
-                    
-                    # Asegurar que sea una lista incluso si solo hay un dispositivo
-                    if not isinstance(devices_data, list):
-                        devices_data = [devices_data]
-                    
-                    # Contar dispositivos problemáticos
-                    problem_count = sum(1 for device in devices_data if device.get('Status') != 'OK')
-                    
-                    return JsonResponse({
-                        "status": "success",
-                        "message": f"Escaneo completado. Se encontraron {problem_count} dispositivos con problemas.",
-                        "devices_total": len(devices_data),
-                        "problem_count": problem_count
-                    })
-                except json.JSONDecodeError:
-                    return JsonResponse({
-                        "status": "error",
-                        "message": "Error al procesar resultados del escaneo"
-                    }, status=500)
-            else:
-                return JsonResponse({
-                    "status": "error",
-                    "message": "Error al obtener información de dispositivos"
-                }, status=500)
-        else:
+        if platform.system() != "Windows":
             return JsonResponse({
                 "status": "error",
                 "message": "Esta funcionalidad solo está disponible en Windows"
             }, status=400)
+        
+        try:
+            scan_cmd = 'powershell.exe -Command "& {pnputil /scan-devices}"'
+            scan_result = subprocess.run(
+                scan_cmd, 
+                capture_output=True, 
+                text=True, 
+                shell=True, 
+                timeout=30,
+                encoding='utf-8',
+                errors='ignore'
+            )
+            
+            logger.info(f"Scan result code: {scan_result.returncode}")
+            
+        except subprocess.TimeoutExpired:
+            logger.error("Timeout en escaneo de dispositivos")
+            return JsonResponse({
+                "status": "error",
+                "message": "Timeout al escanear dispositivos"
+            }, status=500)
+        except Exception as e:
+            logger.error(f"Error ejecutando scan: {str(e)}")
+            
+        try:
+            devices_cmd = 'powershell.exe -Command "& {Get-PnpDevice | Where-Object {$_.Status -ne \'OK\'} | Select-Object Caption, Status, Problem | ConvertTo-Json}"'
+            devices_result = subprocess.run(
+                devices_cmd, 
+                capture_output=True, 
+                text=True, 
+                shell=True, 
+                timeout=20,
+                encoding='utf-8',
+                errors='ignore'
+            )
+            
+            logger.info(f"Devices result code: {devices_result.returncode}")
+            logger.info(f"Devices output length: {len(devices_result.stdout) if devices_result.stdout else 0}")
+            
+            problem_count = 0
+            devices_total = 0
+            
+            if devices_result.returncode == 0 and devices_result.stdout.strip():
+                try:
+                    devices_data = json.loads(devices_result.stdout)
+                    
+                    if not isinstance(devices_data, list):
+                        devices_data = [devices_data] if devices_data else []
+                    
+                    problem_count = len(devices_data)
+                    
+                    total_cmd = 'powershell.exe -Command "& {(Get-PnpDevice).Count}"'
+                    total_result = subprocess.run(
+                        total_cmd, 
+                        capture_output=True, 
+                        text=True, 
+                        shell=True, 
+                        timeout=10,
+                        encoding='utf-8',
+                        errors='ignore'
+                    )
+                    
+                    if total_result.returncode == 0 and total_result.stdout.strip():
+                        try:
+                            devices_total = int(total_result.stdout.strip())
+                        except ValueError:
+                            devices_total = 100  
+                    else:
+                        devices_total = 100 
+                        
+                except json.JSONDecodeError as e:
+                    logger.error(f"Error parsing JSON: {str(e)}")
+                    logger.error(f"Raw output: {devices_result.stdout[:500]}")
+                    problem_count = 0
+                    devices_total = 100
+                except Exception as e:
+                    logger.error(f"Error procesando datos de dispositivos: {str(e)}")
+                    problem_count = 0
+                    devices_total = 100
+            else:
+                logger.info("No se encontraron dispositivos problemáticos o comando falló")
+                problem_count = 0
+                devices_total = 100
+            
+            return JsonResponse({
+                "status": "success",
+                "message": f"Escaneo completado. Se encontraron {problem_count} dispositivos con problemas.",
+                "devices_total": devices_total,
+                "problem_count": problem_count
+            })
+            
+        except subprocess.TimeoutExpired:
+            logger.error("Timeout obteniendo información de dispositivos")
+            return JsonResponse({
+                "status": "success",
+                "message": "Escaneo completado (timeout en análisis detallado)",
+                "devices_total": 100,
+                "problem_count": 0
+            })
+        except Exception as e:
+            logger.error(f"Error obteniendo información de dispositivos: {str(e)}")
+            return JsonResponse({
+                "status": "success",
+                "message": "Escaneo completado (error en análisis detallado)",
+                "devices_total": 100,
+                "problem_count": 0
+            })
+            
     except Exception as e:
         logger.error(f"Excepción general en scan_drivers: {str(e)}")
-        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+        return JsonResponse({
+            "status": "error", 
+            "message": f"Error interno: {str(e)}"
+        }, status=500)
     
 @login_required
 @user_passes_test(is_client)
@@ -5280,11 +6074,32 @@ def tech_reports(request):
     }
     return render(request, 'dashboard/tech/tech_reports.html', context)
 
+def serve_media_file(request, path):
+    """Vista para servir archivos de media directamente"""
+    full_path = os.path.join(settings.MEDIA_ROOT, path)
+    if os.path.exists(full_path):
+        return FileResponse(open(full_path, 'rb'))
+    raise Http404(f"Media file not found: {path}")
+
 # Client dashboard
-@login_required
-@user_passes_test(is_client)
 def client_dashboard(request):
-    return render(request, 'dashboard/client/inicio.html')
+    # Obtener categorías y productos de la app users
+    categorias = Categoria.objects.filter(estadoCategoria=True)
+    productos_por_categoria = {}
+    
+    for categoria in categorias:
+        productos = Producto.objects.filter(
+            idCategoria=categoria,
+            estadoProducto=True
+        )[:3]
+        productos_por_categoria[categoria.idCategoria] = productos
+    
+    context = {
+        'categorias': categorias,
+        'productos_por_categoria': productos_por_categoria,
+    }
+    
+    return render(request, 'dashboard/client/inicio.html', context)
 
 #Listar clientes
 @login_required

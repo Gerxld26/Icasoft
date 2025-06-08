@@ -24,15 +24,13 @@ def get_csrf_token(request):
 
 def user_login(request):
     if request.method == 'POST':
-        username = request.POST.get('username')  # Puede ser correo o nombre de usuario
+        username = request.POST.get('username') 
         password = request.POST.get('password')
 
-        # Autentica al usuario
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
 
-            # Redirigir según el rol del usuario
             if user.role == 'admin':
                 return redirect('admin_inicio')
             elif user.role == 'tech':
