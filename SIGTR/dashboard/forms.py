@@ -1,5 +1,6 @@
 from django import forms
 from users.models import User, UserProfile
+from django.contrib.auth.forms import UserCreationForm
 from .models import LearningVideo
 from tickets.models import Ticket
 import re
@@ -69,7 +70,6 @@ class CreateTechForm(forms.ModelForm):
 
 
 # FORMULARIO PARA ADMINISTRADORES
-
 class CreateAdminForm(forms.ModelForm):
     full_name = forms.CharField(required=True, widget=forms.TextInput(attrs={'class': 'form-control'}), label="Nombre Completo")
     phone_number = forms.CharField(required=True, widget=forms.TextInput(attrs={'class': 'form-control'}), label="Número de Teléfono")
@@ -116,7 +116,33 @@ class CreateAdminForm(forms.ModelForm):
 
         return user
 
+# FORMULARIO PARA CLIENTES
+class CustomUserCreationForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput, label="Contraseña", required=True)
+    email = forms.EmailField(required=True, label="Correo Electrónico")
+    username = forms.CharField(required=True,  widget=forms.TextInput(attrs={'autocomplete': 'off'}))
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'telefono', 'password']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control' 
+            field.widget.attrs['autocomplete'] = 'off'
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password']) 
+        user.email = self.cleaned_data['email']
+        user.telefono = self.cleaned_data['telefono']
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        user.role = 'client'
+        if commit:
+            user.save()
+        return user
+    
 # FORMULARIO PARA VIDEOS DE APRENDIZAJE
 
 class LearningVideoForm(forms.ModelForm):

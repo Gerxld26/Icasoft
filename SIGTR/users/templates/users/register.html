@@ -51,10 +51,13 @@
                     <input 
                         type="text" 
                         name="telefono" 
-                        placeholder="Número de celular" 
+                        placeholder="999 999 999" 
                         value="{{ form.telefono.value|default:'' }}" 
                         class="{% if form.telefono.errors %}is-invalid{% endif %}" 
-                        required>
+                        id="telefonoRegister"
+                        minlength="9" maxlength="9"
+                        required
+                    >
                 </div>
                 {% for error in form.telefono.errors %}
                     <small class="text-danger">{{ error }}</small>
@@ -68,7 +71,7 @@
                         name="password1" 
                         placeholder="Contraseña" 
                         class="{% if form.password1.errors %}is-invalid{% endif %}" 
-                        required>
+                        >
                 </div>
                 {% for error in form.password1.errors %}
                     <small class="text-danger">{{ error }}</small>
@@ -82,7 +85,7 @@
                         name="password2" 
                         placeholder="Confirmar Contraseña" 
                         class="{% if form.password2.errors %}is-invalid{% endif %}" 
-                        required>
+                        >
                 </div>
                 {% for error in form.password2.errors %}
                     <small class="text-danger">{{ error }}</small>
@@ -109,5 +112,6 @@
         ]
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'users/js/user.js' %}"></script>
 </body>
 </html>

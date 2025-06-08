@@ -322,30 +322,4 @@
 </div>
 <!-- Alertas con SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const successMessage = document.getElementById("success-message");
-    const errorMessage = document.getElementById("error-message");
-
-    if (successMessage) {
-        Swal.fire({
-            icon: 'success',
-            title: '¡Éxito!',
-            text: successMessage.getAttribute("data-message"),
-            timer: 3000,
-            showConfirmButton: false
-        });
-    }
-
-    if (errorMessage) {
-        Swal.fire({
-            icon: 'error',
-            title: '¡Error!',
-            text: errorMessage.getAttribute("data-message"),
-            timer: 3000,
-            showConfirmButton: false
-        });
-    }
-});
-</script>
 

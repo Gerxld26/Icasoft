@@ -42,6 +42,7 @@ import subprocess
 import json
 import GPUtil 
 from users.models import UserProfile
+from .forms import CustomUserCreationForm
 from .forms import UserProfileForm
 from .forms import TicketStatusForm
 from django.core.exceptions import PermissionDenied
@@ -5286,31 +5287,86 @@ def client_dashboard(request):
     return render(request, 'dashboard/client/inicio.html')
 
 #Listar clientes
-# Listar técnicos
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
 def read_client(request):
     """Vista para gestionar usuarios con búsqueda y paginación."""
     query = request.GET.get('q', '')
     current_user = request.user  # Obtener el usuario logueado
-    users = User.objects.filter(role='client').exclude(id=current_user.id)
+    users = User.objects.filter(role='client', is_active=True).exclude(id=current_user.id)
     if query:
         users = users.filter(username__icontains=query) | users.filter(email__icontains=query)
-
-    paginator = Paginator(users, 10)  # 10 usuarios por página
+    users = users.order_by('id')
+    paginator = Paginator(users, 7)  # 7 usuarios por página
+    form = CustomUserCreationForm()
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    context = {'page_obj': page_obj, 'query': query}
+    context = {'page_obj': page_obj, 'query': query, 'form': form}
     return render(request, 'dashboard/admin/read_client.html', context)
 
-# Listar técnicos:
+# Agregar cliente
+@user_passes_test(lambda u: u.role == 'admin')
+def add_client(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.role = 'client'  # Asigna el rol si corresponde
+            user.save()
+
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'message': 'Cliente agregado exitosamente.'})
+            else:
+                messages.success(request, 'Cliente agregado exitosamente.')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                errors = form.errors.as_json()
+                return JsonResponse({'errors': errors}, status=400)
+            else:
+                messages.error(request, 'Hubo errores en el formulario. Corrígelos e intenta de nuevo.')
+                return redirect('read_client')
+    return redirect('read_client')
+
+#Actualizar clientes
+@user_passes_test(lambda u: u.role == 'admin')
+def update_client(request, pk):
+    user = get_object_or_404(User, pk=pk, role='client')
+
+    # Petición GET vía AJAX para llenar el formulario
+    if request.method == 'GET' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'username': user.username,
+            'email': user.email,
+            'telefono': user.telefono,
+        })
+
+    # Petición POST para guardar
+    elif request.method == 'POST':
+        form = CustomUserCreationForm(request.POST, instance=user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.role = 'client'
+            user.first_name = form.cleaned_data.get('first_name')
+            user.last_name = form.cleaned_data.get('last_name')
+            user.username = form.cleaned_data.get('username')
+            user.email = form.cleaned_data.get('email')
+            user.telefono = form.cleaned_data.get('telefono')
+            user.save()
+            return JsonResponse({'message': 'Cliente actualizado exitosamente.'})
+        else:
+            return JsonResponse({'errors': form.errors}, status=400)
+
+    return HttpResponseBadRequest('Método no soportado o petición no válida')
+# Listar técnicos tabla:
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
 def read_technician(request):
     query = request.GET.get('q', '')
     current_user = request.user
-    users = User.objects.filter(role='tech').exclude(id=current_user.id)
+    users = User.objects.filter(role='tech', is_active=True).exclude(id=current_user.id).order_by('-date_joined')
 
     if query:
         users = users.filter(username__icontains=query) | users.filter(email__icontains=query)
@@ -5452,6 +5508,66 @@ def update_technician(request, pk):
         return JsonResponse(data)
 
     return HttpResponseBadRequest("Solicitud inválida.")
+
+# Conteo Técnicos Disponibles - Asignados
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def count_tech(request):
+    try:
+        count_TechDisponible = UserProfile.objects.filter(estado_conexion='online',user__is_active=True).count() #filtra cuyo usuario relacionado (user) esté activo (is_active=True)
+        count_TechAsignado = UserProfile.objects.filter(estado_conexion='offline',user__is_active=True).count()
+        #equivalente a :SELECT * FROM soporte_tecnico_v3.users_user ta inner join soporte_tecnico_v3.users_userprofile t on ta.id = t.user_id WHERE ta.is_active= 1;
+        data = {
+            'tech_Disp': count_TechDisponible,
+            'tech_Asig': count_TechAsignado,
+        }
+        return JsonResponse(data)
+
+    except Exception as e:
+        return JsonResponse({'error': 'Ocurrió un error al contar los técnicos', 'detalle': str(e)}, status=500)
+
+# Listar técnicos:
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def list_technician(request):
+    try:
+        list_tech = User.objects.filter(role='tech', is_active=True).order_by('-date_joined').values('id', 'username') # Ordenar por fecha de creación (más reciente primero)
+        return JsonResponse({'listaTech':list(list_tech)})
+    except Exception as e:
+        return JsonResponse({'error': 'Ocurrió un error al listar los técnicos', 'detalle': str(e)}, status=500)
+    
+# Estado de tickets
+@login_required
+@user_passes_test(lambda u: u.role == 'admin')
+def status_tickets(request, idTech=None):
+    try:
+        count_tickets_client = Ticket.objects.filter(status__in=['open', 'in_progress']).count()
+        count_clientes = User.objects.filter(role='client', is_active=True).count()
+      # Con id
+        if idTech:
+            count_pendiente = Ticket.objects.filter(assigned_to_id=idTech, status='open').count() 
+            count_progreso = Ticket.objects.filter(assigned_to_id=idTech, status='in_progress').count()
+            count_resuelto = Ticket.objects.filter(assigned_to_id=idTech, status='resolved').count()
+        #Sin id
+        else:
+            count_pendiente = Ticket.objects.filter(status='open').count()
+            count_progreso = Ticket.objects.filter(status='in_progress').count()
+            count_resuelto = Ticket.objects.filter(status='resolved').count()
+
+        status_data = {
+            'count_pendiente': count_pendiente,
+            'count_progreso': count_progreso,
+            'count_resuelto': count_resuelto,
+            'count_ticketsTotal': count_tickets_client,
+            'count_clientes': count_clientes,
+        }
+        return JsonResponse(status_data)
+
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Ocurrió un error al obtener el estado de los tickets',
+            'detalle': str(e)
+        }, status=500)
 # Add admin 
 @login_required
 @user_passes_test(is_admin)

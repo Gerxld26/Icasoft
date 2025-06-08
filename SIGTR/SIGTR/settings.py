@@ -180,7 +180,7 @@ LOGIN_REDIRECT_URL = "/"
 
 
 
-LANGUAGE_CODE = 'en-es'
+LANGUAGE_CODE = 'es'
 
 TIME_ZONE = 'America/Lima'
 

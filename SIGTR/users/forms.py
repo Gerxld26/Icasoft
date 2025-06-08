@@ -12,6 +12,7 @@ class CustomUserCreationForm(UserCreationForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
+        user.telefono = self.cleaned_data['telefono']
         user.role = 'client'  
         if commit:
             user.save()

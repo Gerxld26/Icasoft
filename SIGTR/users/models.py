@@ -41,7 +41,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=150, unique=True) # va a jalar de la bd esto, obtener los valores de la bd
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
-    telefono = models.CharField(max_length=9, null=True)
+    telefono = models.CharField(
+        max_length=9,
+        null=True,
+        blank=True,
+    )
     role = models.CharField(max_length=10, choices=ROLES, default='client')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -56,7 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['username', 'telefono']
 
     def __str__(self):
-        return self.email
+        return self.email #esto es lo que retorna
 
 # Extended Profile Model
 class UserProfile(models.Model):

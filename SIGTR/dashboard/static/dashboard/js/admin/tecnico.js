@@ -10,7 +10,33 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     addTech();
     tooltips();
+    response();
 });
+
+function response(){
+    const successMessage = document.getElementById("success-message");
+    const errorMessage = document.getElementById("error-message");
+
+    if (successMessage) {
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: successMessage.getAttribute("data-message"),
+            timer: 3000,
+            showConfirmButton: false
+        });
+    }
+
+    if (errorMessage) {
+        Swal.fire({
+            icon: 'error',
+            title: '¡Error!',
+            text: errorMessage.getAttribute("data-message"),
+            timer: 3000,
+            showConfirmButton: false
+        });
+    }
+}
 function tooltips(){
     // Tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -197,9 +223,9 @@ function getCSRFToken() {
 }
 
 // Función para confirmar activación/desactivación de usuario
-function confirmToggleUserStatus(userId, isActive) {
+function confirmToggleUserStatus(userId) {
     Swal.fire({
-        title: isActive === 'true' ? '¿Estás seguro de desactivar este usuario?' : '¿Estás seguro de activar este usuario?',
+        title: '¿Estás seguro de eliminar este técnico?',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
@@ -231,7 +257,7 @@ function toggleUserStatus(userId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        Swal.fire('Error', 'Ocurrió un error al cambiar el estado.', 'error');
+        Swal.fire('Error', 'Ocurrió un error al eliminar al técnico.', 'error');
     });
 }
 

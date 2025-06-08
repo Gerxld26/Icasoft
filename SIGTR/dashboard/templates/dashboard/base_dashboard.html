@@ -158,8 +158,8 @@
                 </li>
 
                 {% elif request.user.role == 'tech' %}
-                 <!-- Technician Navigation -->
-                 <li class="nav-item">
+                <!-- Technician Navigation -->
+                <li class="nav-item">
                     <a class="nav-link text-white {% if request.resolver_match.url_name == 'tech_cases' %}active{% endif %}"
                         href="{% url 'tech_cases' %}">
                         <i class="fas fa-briefcase me-2"></i> Casos Asignados
@@ -184,24 +184,27 @@
                     </a>
                 </li>
                 {% endif %}
-                <li class="nav-item mt-auto">
-                    <a class="nav-link text-danger" href="{% url 'users:logout' %}">
-                        <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
-                    </a>
-                </li>
             </ul>
         </nav>
         <!-- Content -->
         <div id="content" class="content w-100">
-            <header id="header-dashboard" class="d-flex justify-content-between align-items-center mx-4 my-4"> <!--mx: margin left y right -->
+            <header id="header-dashboard" class="d-flex justify-content-between align-items-center mx-4 my-4">
+                <!--mx: margin left y right -->
                 <div style="font-weight: 600;">Hola, {{ request.user.username }}</div>
                 <div class="d-flex">
-                    <div>
+                    <div class="d-flex align-items-center">
                         <i class="bi bi-bell-fill px-4"></i>
                     </div>
-                    <div>
-                        <i class="bi bi-person-circle sesion"></i>
-                        <i class="bi bi-caret-down-fill" style="font-size: medium;"></i>
+
+                    <div class="dropdown">
+                        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-circle sesion"></i>
+                        </a>
+
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'users:logout' %}" style="color: brown;">Cerrar Sesión <i class="fa-solid fa-right-from-bracket"></i></a></li>
+                        </ul>
                     </div>
                 </div>
             </header>
@@ -215,7 +218,7 @@
 
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <!-- Footer Scripts -->
     {% if request.user.role == 'admin' %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

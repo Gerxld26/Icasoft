@@ -31,7 +31,16 @@ body {
 .card {
     margin: 20px;
 }
-
+/*encabezado*/
+a.btn.btn-secondary.dropdown-toggle {
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+}
+.sesion{
+    font-size: xx-large;
+}
 /*tecnico*/
 #read_tecnico,
 #read_client {

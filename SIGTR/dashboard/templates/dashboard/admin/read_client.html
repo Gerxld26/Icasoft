@@ -11,7 +11,7 @@
         </form>
         </div>
        <div class="contentAddTech">
-            <button type="button" id="btnAddClient" class="btn btn-sm accionTecnicoAdd px-2" data-bs-toggle="modal" data-bs-target="#addTechnicianModal" data-bs-title="Agregar">
+            <button type="button" id="btnAddClient" class="btn btn-sm accionTecnicoAdd px-2" data-bs-toggle="modal" data-bs-target="#addClientModal" data-bs-title="Agregar"> <!--el #addClientModal es el que lda propiedades para que se abra el modal-->
                 <i id="newClient" class="fa-solid fa-user-plus"></i>  Agregar
        </div>
    </div>
@@ -24,6 +24,7 @@
             <tr>
                 <th>Nombre</th>
                 <th>Correo</th>
+                <th>Teléfono</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -32,17 +33,15 @@
             <tr>
                 <td>{{ user.username }}</td>
                 <td>{{ user.email }}</td>
+                <td>{{user.telefono}}</td>
                 <td>
-                    <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editar">
+                    <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                     data-bs-title="Editar" onclick="editClient('{{user.id}}')">
                         <i id="editClient" class="bi bi-pencil-square iaccionTecnico"></i>
                     </button>
                     <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Eliminar"
-                    onclick="confirmToggleClientStatus('{{ user.id }}', '{{ user.is_active }}')">
-                        {% if user.is_active %}
+                    onclick="confirmToggleClientStatus('{{ user.id }}')">
                             <i id="deleteClient" class="bi bi-trash3-fill iaccionTecnico"></i>
-                        {% else %}
-                            Activar
-                        {% endif %}
                     </button>
                 </td>
             </tr>
@@ -71,4 +70,5 @@
         </ul>
     </nav>
 </div>
+{% include "dashboard/admin/crud_client.html" %}
 {% endblock %}

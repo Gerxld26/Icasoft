@@ -37,12 +37,8 @@
                         <i id="editTech" class="bi bi-pencil-square iaccionTecnico"></i>
                     </button>
                     <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Eliminar"
-                    onclick="confirmToggleUserStatus('{{ user.id }}', '{{ user.is_active }}')">
-                        {% if user.is_active %}
-                            <i id="deleteTech" class="bi bi-trash3-fill iaccionTecnico"></i>
-                        {% else %}
-                            Activar
-                        {% endif %}
+                    onclick="confirmToggleUserStatus('{{ user.id }}')">
+                        <i id="deleteTech" class="bi bi-trash3-fill iaccionTecnico"></i>
                     </button>
                 </td>
             </tr>

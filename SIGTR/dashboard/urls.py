@@ -9,10 +9,17 @@ from .views import (
 
     # Admin-specific views
     add_admin,
+    
+    # Técnico - CRUD
     read_technician,
     add_technician,
     update_technician,
+    count_tech,
+    list_technician,
+    # Client-crud
+    add_client,
     read_client, 
+    update_client,
     #manage_users, #borrar
     inactive_users,
     deactivate_user,
@@ -20,6 +27,9 @@ from .views import (
     delete_user,
     delete_inactive_user,
 
+    # Tickets
+    status_tickets,
+    
     # Location-related views
     load_countries,
     load_departments,
@@ -112,15 +122,24 @@ urlpatterns = [
     # Admin routes
     path("tecnicos/", read_technician, name = "read_technician"),
     path("add-admin/", add_admin, name="add_admin"),
-    path("clientes/", read_client, name="read_client"),
-    path("tecnicos/agregar/", add_technician, name = "add_technician"),
-    path('tecnicos/update/<int:pk>/', update_technician, name='update_technician'),
-    #path("manage-users/", manage_users, name="manage_users"), #borrar
     path("inactive-users/", inactive_users, name="inactive_users"),
     path("deactivate-user/<int:user_id>/", deactivate_user, name="deactivate_user"),
     path("toggle-user-status/<int:user_id>/", toggle_user_status, name="toggle_user_status"),
     path("delete-user/<int:user_id>/", delete_user, name="delete_user"),
     path("delete-inactive-user/<int:user_id>/", delete_inactive_user, name="delete_inactive_user"),
+    # Clientes
+    path("clientes/", read_client, name="read_client"),
+    path("clientes/agregar/", add_client, name = "add_client"),
+    path('clientes/update/<int:pk>/', update_client, name='update_client'),
+    #Técnicos
+    path('tecnicos/listar/', list_technician, name='list_technician'),
+    path("tecnicos/agregar/", add_technician, name = "add_technician"),
+    path('tecnicos/update/<int:pk>/', update_technician, name='update_technician'),
+    path('tecnicos/conteo/',count_tech, name = "count_tech"),
+    #Tickets
+    path("tickets/conteo/<int:idTech>/", status_tickets, name="status_tickets"), 
+    path('tickets/conteo/', status_tickets, name='status_tickets_general'),
+    #path("manage-users/", manage_users, name="manage_users"), #borrar
 
     # Location routes
     path("load-countries/", load_countries, name="load_countries"),

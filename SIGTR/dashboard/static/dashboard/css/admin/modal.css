@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+:root {
+    --fondoDiv: linear-gradient(180deg, rgb(37, 36, 36), rgb(43, 67, 84), rgb(37, 36, 36));
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    filter: drop-shadow(6px 6px 10px rgb(28, 29, 29));
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: var(--fondoDiv);
+    padding: 20px;
+    border-radius: 15px;
+    width: 80%;
+    height: 80%;
+    max-width: 800px;
+    max-height: 500px;
+    position: relative;
+    border: 2px solid rgb(4, 90, 152);
+    box-shadow: 0 0 25px rgba(3, 101, 140, 0.9);
+    color: #ffffff;
+    border-radius: 30px;
+    animation: modalopen 0.5s;
+}
+
+.modal .modal-content::before {
+    content: '';
+    background: linear-gradient(45deg, rgb(29, 46, 87), rgb(17, 115, 172), rgb(58, 58, 58), rgb(76, 136, 239));
+    background-size: 800%;
+    /* Cambia el tamaño del fondo */
+    filter: blur(15px);
+    /* Cambia el desenfoque */
+    animation: glowing 20s linear infinite;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    /* para que esté detrás del div */
+    width: 100%;
+    height: 100%;
+    border-radius: 30px;
+}
+
+@keyframes modalopen {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.headerModal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.headerModal .textHW {
+    font-size: x-large;
+}
+
+.close {
+    position: absolute;
+    right: 10px;
+    top: 0;
+    font-size: 34px;
+    cursor: pointer;
+    color: azure;
+    font-weight: 800;
+    transition: color 0.3s;
+}
+
+.close:hover {
+    color: #03a9f4;
+    text-shadow: 0 0 10px rgba(3, 169, 244, 0.8);
+}
+
+@keyframes glowing {
+
+    /*creación de la animación glowing*/
+    0% {
+        background-position: 0% 0%;
+    }
+
+    /*posición 0*/
+    50% {
+        background-position: 400% 0%;
+    }
+
+    /*el 400 es del eje x*/
+    100% {
+        background-position: 0% 0%;
+    }
+
+    /*regresa a la posición 0 cuando termina*/
+}
+
+/*MODAL DE TICKET*/
+#modalTicket .detalleModal {
+    display: grid;
+    grid-template-rows: 10% auto;
+    gap:5px
+}
+#modalTicket canvas#donutsTicketsDet {
+    width: 100%;
+    height: 350px !important;
+}

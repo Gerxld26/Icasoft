@@ -11,6 +11,7 @@
 :root {
     --principal-color: rgb(42, 76, 89);
     --secundary-color: rgb(1, 1, 1);
+    --text-color: white;
     --relleno-color: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
     --card-style: 5px 10px 10px -3px var(--secundary-color);
     --card-borde: 3px solid var(--principal-color);
@@ -51,7 +52,7 @@ body {
         "logo"
         "cuadroFunctions"
         "SWvendidos";
-    grid-template-rows: 18% auto auto;
+    grid-template-rows: 15% auto auto;
     gap: 10px;
 }
 
@@ -81,18 +82,14 @@ body {
 
 .cuadroFunctions {
     display: grid;
-    grid-template-areas:
-        "function"
-        "function"
-        "function"
-        "function"
-        "function";
     border: var(--card-borde);
     box-shadow: var(--card-style);
     background: var(--relleno-color);
     border-radius: 30px;
     justify-items: center;
     align-items: center;
+    gap:5px;
+    padding: 10px 0px 10px 0px;
 }
 
 .function {
@@ -113,7 +110,9 @@ body {
 .cantidad {
     width: -webkit-fill-available;
 }
-
+.textFunction{
+    font-weight: 500;
+}
 .btnFunction:hover {
     color: rgb(3, 101, 140);
     ;
@@ -247,16 +246,27 @@ body {
 .userTickets {
     width: 100%;
     display: grid;
-    justify-content: center;
-    row-gap: 10px;
-    /* column-gap: 10px; */
+    grid-template-columns: 40% auto;
+    column-gap: 5px;
 }
 
 .usuariosLinea {
     align-items: center;
-    gap: 20px;
 }
-
+#clientTotal{
+    display: grid;
+    gap: 5px;
+}
+.iconClient{
+    font-size: xxx-large;
+    color: rgb(54, 162, 235);
+}
+#contentClient{
+    display: grid;
+    grid-template-columns: 50% auto;
+    align-items: center;
+    justify-items: center;
+}
 .userDispTicket {
     width: 100%;
     display: grid;
@@ -290,13 +300,9 @@ div#usuarios {
         "userTickets";
     gap: 10px;
 }
-
-.usuariosLinea .iconFunction {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+.iconFunction{
+    font-size: larger;
 }
-
 /*contenedor derecho*/
 .notifications {
     align-content: center;
@@ -407,7 +413,7 @@ div#usuarios {
     grid-template-areas: "ubiTecnicos" "lugares";
     gap: 10px;
 }
-
+/*encabezado de filtros*/
 .ubiTecnicos {
     display: grid;
     grid-template-areas:
@@ -418,15 +424,21 @@ div#usuarios {
 }
 
 .textUbicacion {
-    border: 3px solid var(--principal-color);
-    box-shadow: var(--card-style);
-    background: var(--relleno-color);
-    border-radius: 30px;
-    display: grid;
+    display: flex;
     align-items: center;
-    font-size: x-large;
+    justify-content: space-between;
+    gap:15px;
 }
-
+.filtro{
+    border-radius: 10px;
+    background: var(--relleno-color);
+    border: var(--card-borde);
+    color: white;
+    padding: 5px;
+}
+.list{
+    background: rgb(54, 56, 57);
+}
 .dataMapa {
     display: flex;
     border: 3px solid var(--principal-color);
