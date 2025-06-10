@@ -786,6 +786,40 @@ class ConversationManager:
 conversation_manager = ConversationManager()
     
 #CHAT IA
+def clean_response_for_speech(text):
+    """
+    Limpia el texto de la respuesta para síntesis de voz
+    """
+    if not text:
+        return text
+    
+    text = re.sub(r'\*\*\*(.*?)\*\*\*', r'\1', text)  
+    text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)      
+    text = re.sub(r'\*(.*?)\*', r'\1', text)         
+    
+    text = re.sub(r'_(.*?)_', r'\1', text)          
+    
+    text = re.sub(r'~~(.*?)~~', r'\1', text)         
+    
+    text = re.sub(r'`(.*?)`', r'\1', text)         
+    
+    text = re.sub(r'[#\-\+\[\]]+', '', text)
+    
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    return text
+
+def format_response_for_display(text):
+    """
+    Formatea el texto para mejor visualización
+    Esta función es opcional - se puede hacer completamente en el frontend
+    """
+    if not text:
+        return text
+
+    
+    return text
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def chatIA(request):
@@ -795,24 +829,32 @@ def chatIA(request):
 
         if not user_input:
             return JsonResponse({
-                'response': 'Por favor, escribe tu consulta.'
+                'response': 'Por favor, escribe tu consulta.',
+                'speech_text': 'Por favor, escribe tu consulta.'
             })
 
         response = conversation_manager.generate_response(user_input)
         
+        
         return JsonResponse({
-            'response': response
+            'response': response,
+            'speech_text': clean_response_for_speech(response),
+            'has_formatting': bool(re.search(r'[\*_~`#]', response))
         })
 
     except json.JSONDecodeError:
+        error_msg = 'Hubo un problema al procesar tu solicitud.'
         return JsonResponse({
-            'response': 'Hubo un problema al procesar tu solicitud.'
+            'response': error_msg,
+            'speech_text': error_msg
         }, status=400)
     
     except Exception as e:
         print(f"Error en chatIA: {str(e)}")
+        error_msg = 'Te recomendamos contactar a Asistencia Técnica de ICASOFT IA.'
         return JsonResponse({
-            'response': 'Te recomendamos contactar a Asistencia Técnica de ICASOFT IA.'
+            'response': error_msg,
+            'speech_text': error_msg
         }, status=500)
     
     
