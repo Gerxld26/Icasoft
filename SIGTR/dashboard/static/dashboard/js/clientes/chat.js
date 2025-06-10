@@ -8,26 +8,25 @@ $(document).ready(function () {
     const sendChat = document.getElementById('sendChat');
     const audioSend = document.getElementById('audioSend');
 
+    const mensajeIA = document.getElementById('mensajeIA');
     const divChatAudio = document.getElementById('contentFooterAudio');
     const divChatText = document.getElementById('contentFootertext');
-    const $mostrarChat = $('#mostrarChat');
     const imgIa = document.getElementById('robotimg');
     const videoHablando = document.getElementById('video-container');
+    const videoOjos = document.getElementById('video-container2');
     const robotGIF = document.getElementById('robotGIF');
+    const robotGIFOjos = document.getElementById('robotGIFOjos');
+
+    const $mostrarChat = $('#mostrarChat');
     const $cerrarChat = $('#cerrarChat');
+
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
-    let isExpanded = false;
-    
-    $(document).on('click', function() {
-        $asistenteSoporte.addClass('modo-chat-activo');
-        //$(this).removeClass('fa-compress').addClass('fa-expand');
-    });
-    
+
     function formatMarkdownToHTML(text) {
         if (!text) return text;
-        
+
         return text
             .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -37,10 +36,10 @@ $(document).ready(function () {
             .replace(/`(.*?)`/g, '<code>$1</code>')
             .replace(/\n/g, '<br>');
     }
-    
+
     function cleanTextForSpeech(text) {
         if (!text) return text;
-        
+
         return text
             .replace(/\*\*\*(.*?)\*\*\*/g, '$1')
             .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -52,39 +51,56 @@ $(document).ready(function () {
             .replace(/\s+/g, ' ')
             .trim();
     }
-    
+
     function speakText(text) {
         const cleanedText = cleanTextForSpeech(text);
-        
-        function loadAndSpeak() {
-            const voices = speechSynthesis.getVoices();
-            const selectedVoice = voices.find(v => 
-                v.name.includes("Google español") || 
-                v.name.includes("Microsoft Sabina") ||
-                v.name.includes("es-ES") && v.gender === "female" 
-            );
+
+        // Si el chat está en modo activo, no hablar
+        if ($asistenteSoporte.hasClass('modo-chat-activo')) {
+            return;
+        }
+
         function loadAndSpeak() {
             const voices = speechSynthesis.getVoices();
             const selectedVoice = voices.find(v =>
                 v.name.includes("Google español") ||
                 v.name.includes("Microsoft Sabina") ||
-                (v.lang.includes("es") && v.gender === "female")
+                v.name.includes("es-ES") && v.gender === "female"
             );
 
             const utterance = new SpeechSynthesisUtterance(cleanedText);
-            utterance.voice = selectedVoice || voices[0]; 
+            utterance.voice = selectedVoice || voices[0];
             utterance.lang = "es-ES";
             utterance.rate = 1.1;
             utterance.pitch = 1.3;
-            speechSynthesis.speak(utterance);
+
+            // Mostrar y reproducir el video mientras habla
+            videoHablando.style.display = 'flex';
+            imgIa.style.display = 'none';
+
+            robotGIF.currentTime = 0;
+            robotGIF.muted = true;
+            robotGIF.play().catch(e => {
+                console.warn("No se pudo reproducir el video:", e);
+            });
+
+            utterance.onend = () => {
+                robotGIF.pause();
+                robotGIF.currentTime = 0;
+                videoHablando.style.display = 'none';
+                imgIa.style.display = 'none';
+
+                videoOjos.style.display = 'flex';
+                robotGIFOjos.currentTime = 0;
+                robotGIFOjos.muted = true;
+                robotGIFOjos.play().catch(e => {
+                    console.warn("No se pudo reproducir el video:", e);
+                });
+            };
+
+            speechSynthesis.speak(utterance); // Solo se habla si no está en modo-chat-activo
         }
 
-        if (speechSynthesis.getVoices().length === 0) {
-            speechSynthesis.onvoiceschanged = loadAndSpeak;
-        } else {
-            loadAndSpeak();
-        }
-    }
         if (speechSynthesis.getVoices().length === 0) {
             speechSynthesis.onvoiceschanged = loadAndSpeak;
         } else {
@@ -94,21 +110,21 @@ $(document).ready(function () {
 
     function addMessage(message, type = 'user') {
         let displayMessage = message;
-        
+
         if (type === 'assistant') {
             displayMessage = formatMarkdownToHTML(message);
         }
-        
+
         const messageElement = $('<div>', {
             class: `mensaje ${type === 'user' ? 'mensaje-usuario userRequest' : 'mensaje-asistente iaResponse'}`
         });
-        
+
         if (type === 'assistant') {
             messageElement.html(displayMessage);
         } else {
             messageElement.text(displayMessage);
         }
-        
+
         $bodyChat.append(messageElement);
         scrollToBottom();
         return messageElement;
@@ -152,31 +168,32 @@ $(document).ready(function () {
 
     $cerrarChat.on('click', function () {
         $asistenteSoporte.removeClass('modo-chat-activo');
+        imgIa.style.display = 'flex';
+        videoHablando.style.display = 'none';
+        videoOjos.style.display = 'none';
         sendChat.style.display = 'none';
         audioSend.style.display = 'inline';
+        speechSynthesis.cancel();
     });
+
     $mostrarChat.on('click', function () {
+        speechSynthesis.cancel(); // Detener voz activa
         $asistenteSoporte.addClass('modo-chat-activo');
         divChatAudio.style.display = 'none';
         divChatText.style.display = 'grid';
+        mensajeIA.style.background = 'linear-gradient(180deg, #85c9df, rgb(2 147 205), #b6e1ef)';
     });
+
     $sendButton.on('click', sendMessage);
 
     $textInput.on('input', function () {
         const mensaje = $(this).val().trim();
 
         if (mensaje === "") {
-            if (!isExpanded) {
-                $asistenteSoporte.removeClass('modo-chat-activo modo-chat-activoZoom');
-            }
             sendChat.style.display = 'none';
             audioSend.style.display = 'inline';
         } else {
-            if (isExpanded) {
-                $asistenteSoporte.removeClass('modo-chat-activo').addClass('modo-chat-activoZoom');
-            } else {
-                $asistenteSoporte.removeClass('modo-chat-activoZoom').addClass('modo-chat-activo');
-            }
+            $asistenteSoporte.addClass('modo-chat-activo');
             sendChat.style.display = 'grid';
             audioSend.style.display = 'none';
         }
@@ -225,9 +242,7 @@ $(document).ready(function () {
                 };
 
                 mediaRecorder.start();
-                // robotGIF.play();
-                // videoHablando.style.display = 'flex';
-                // imgIa.style.display = 'none';
+
                 setTimeout(() => {
                     if (isRecording) {
                         stopRecording();
@@ -306,6 +321,7 @@ $(document).ready(function () {
                             $textInput.val(data.text);
                             divChatAudio.style.display = 'flex';
                             divChatText.style.display = 'none';
+                            mensajeIA.style.background = 'none';
                             imgIa.style.display = 'none';
                             videoHablando.style.display = 'flex';
                             setTimeout(() => {

@@ -461,14 +461,19 @@ body {
     filter: drop-shadow(1px 1px 15px rgba(42, 147, 189, 0.8));
 }
 
-#video-container {
+#video-container, #video-container2 {
     width: 100%;
     position: relative;
     display: none;
     justify-content: center;
     filter: drop-shadow(1px 1px 15px rgba(42, 147, 189, 0.8));
 }
-
+#video-container2 {
+    width: 100%;
+    position: relative;
+    justify-content: center;
+    filter: drop-shadow(1px 1px 15px rgba(42, 147, 189, 0.8));
+}
 #robotGIF {
     display: flex;
     clip-path: circle(50% at 50% 50%);
@@ -805,7 +810,6 @@ body {
     flex-direction: row;
     justify-content: center;
     height: 100%;
-    background: #1d1d1d;
 }
 
 #contentFooterAudio .textIACont {
