@@ -1,5 +1,4 @@
 $(document).ready(function () {
-    // Elementos del DOM
     const $textInput = $('#textIAID');
     const $sendButton = $('#sendChat');
     const $bodyChat = $('#body-chat');
@@ -19,8 +18,51 @@ $(document).ready(function () {
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
-
+    let isExpanded = false;
+    
+    $(document).on('click', function() {
+        $asistenteSoporte.addClass('modo-chat-activo');
+        //$(this).removeClass('fa-compress').addClass('fa-expand');
+    });
+    
+    function formatMarkdownToHTML(text) {
+        if (!text) return text;
+        
+        return text
+            .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/_(.*?)_/g, '<u>$1</u>')
+            .replace(/~~(.*?)~~/g, '<del>$1</del>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
+    }
+    
+    function cleanTextForSpeech(text) {
+        if (!text) return text;
+        
+        return text
+            .replace(/\*\*\*(.*?)\*\*\*/g, '$1')
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/\*(.*?)\*/g, '$1')
+            .replace(/_(.*?)_/g, '$1')
+            .replace(/~~(.*?)~~/g, '$1')
+            .replace(/`(.*?)`/g, '$1')
+            .replace(/[#\-\+\[\]]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+    
     function speakText(text) {
+        const cleanedText = cleanTextForSpeech(text);
+        
+        function loadAndSpeak() {
+            const voices = speechSynthesis.getVoices();
+            const selectedVoice = voices.find(v => 
+                v.name.includes("Google español") || 
+                v.name.includes("Microsoft Sabina") ||
+                v.name.includes("es-ES") && v.gender === "female" 
+            );
         function loadAndSpeak() {
             const voices = speechSynthesis.getVoices();
             const selectedVoice = voices.find(v =>
@@ -29,30 +71,11 @@ $(document).ready(function () {
                 (v.lang.includes("es") && v.gender === "female")
             );
 
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.voice = selectedVoice || voices[0];
+            const utterance = new SpeechSynthesisUtterance(cleanedText);
+            utterance.voice = selectedVoice || voices[0]; 
             utterance.lang = "es-ES";
             utterance.rate = 1.1;
             utterance.pitch = 1.3;
-
-            // Mostrar y reproducir el video mientras habla
-            videoHablando.style.display = 'flex';
-            imgIa.style.display = 'none';
-
-            robotGIF.currentTime = 0;
-            robotGIF.muted = true;
-            robotGIF.play().catch(e => {
-                console.warn("No se pudo reproducir el video:", e);
-            });
-
-            utterance.onend = () => {
-                // Cuando termina de hablar, detener el video
-                robotGIF.pause();
-                robotGIF.currentTime = 0;
-                videoHablando.style.display = 'none';
-                imgIa.style.display = 'flex';
-            };
-
             speechSynthesis.speak(utterance);
         }
 
@@ -62,13 +85,30 @@ $(document).ready(function () {
             loadAndSpeak();
         }
     }
+        if (speechSynthesis.getVoices().length === 0) {
+            speechSynthesis.onvoiceschanged = loadAndSpeak;
+        } else {
+            loadAndSpeak();
+        }
+    }
 
     function addMessage(message, type = 'user') {
+        let displayMessage = message;
+        
+        if (type === 'assistant') {
+            displayMessage = formatMarkdownToHTML(message);
+        }
+        
         const messageElement = $('<div>', {
-            class: `mensaje ${type === 'user' ? 'mensaje-usuario userRequest' : 'mensaje-asistente iaResponse'}`,
-            text: message
+            class: `mensaje ${type === 'user' ? 'mensaje-usuario userRequest' : 'mensaje-asistente iaResponse'}`
         });
-
+        
+        if (type === 'assistant') {
+            messageElement.html(displayMessage);
+        } else {
+            messageElement.text(displayMessage);
+        }
+        
         $bodyChat.append(messageElement);
         scrollToBottom();
         return messageElement;
@@ -93,7 +133,9 @@ $(document).ready(function () {
                 }, 500);
             },
             error: function () {
-                addMessage('Hubo un problema al procesar tu solicitud.', 'assistant');
+                const errorMessage = 'Hubo un problema al procesar tu solicitud.';
+                addMessage(errorMessage, 'assistant');
+                speakText(errorMessage);
             }
         });
     }
@@ -124,11 +166,17 @@ $(document).ready(function () {
         const mensaje = $(this).val().trim();
 
         if (mensaje === "") {
-            $asistenteSoporte.removeClass('modo-chat-activo');
+            if (!isExpanded) {
+                $asistenteSoporte.removeClass('modo-chat-activo modo-chat-activoZoom');
+            }
             sendChat.style.display = 'none';
             audioSend.style.display = 'inline';
         } else {
-            $asistenteSoporte.addClass('modo-chat-activo');
+            if (isExpanded) {
+                $asistenteSoporte.removeClass('modo-chat-activo').addClass('modo-chat-activoZoom');
+            } else {
+                $asistenteSoporte.removeClass('modo-chat-activoZoom').addClass('modo-chat-activo');
+            }
             sendChat.style.display = 'grid';
             audioSend.style.display = 'none';
         }

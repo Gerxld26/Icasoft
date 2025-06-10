@@ -402,7 +402,7 @@ body {
     margin-bottom: 6%;
 
 }
-
+/*CHAT IA*/
 /*tercera columna:*/
 .asistenteSoporte {
     grid-area: asistenteSoporte;
@@ -565,10 +565,79 @@ body {
     box-shadow: -3px 4px 4px 0px rgba(47, 49, 50, 0.3);
 }
 
+.mensaje-asistente.iaResponse {
+    line-height: 1.5;
+    word-wrap: break-word;
+    animation: fadeInFormat 0.3s ease-in;
+}
+
+.mensaje-asistente strong {
+    font-weight: 700;
+    color: inherit;
+}
+
+.mensaje-asistente em {
+    font-style: italic;
+    color: inherit;
+}
+
+.mensaje-asistente u {
+    text-decoration: underline;
+    color: inherit;
+}
+
+.mensaje-asistente del {
+    text-decoration: line-through;
+    color: #888;
+    opacity: 0.7;
+}
+
+.mensaje-asistente code {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 0.9em;
+    color: #e3f2fd;
+}
+
+.mensaje-asistente br {
+    line-height: 1.8;
+}
+
+.mensaje-asistente strong em,
+.mensaje-asistente em strong {
+    font-weight: 700;
+    font-style: italic;
+}
+
+.mensaje-asistente strong,
+.mensaje-asistente em,
+.mensaje-asistente u,
+.mensaje-asistente code {
+    margin: 0 1px;
+}
+
+.mensaje-asistente code:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.mensaje-asistente p {
+    margin: 0.5em 0;
+}
+
+.mensaje-asistente p:first-child {
+    margin-top: 0;
+}
+
+.mensaje-asistente p:last-child {
+    margin-bottom: 0;
+}
+
 .userRequest {
     display: flex;
     justify-content: flex-end;
-    /* width: 100%; */
 }
 
 .iaResponse {
@@ -722,6 +791,7 @@ body {
     width: 45%;
     display: none;
 }
+
 
 .modo-chat-activo #robotimg {
     display: none;
