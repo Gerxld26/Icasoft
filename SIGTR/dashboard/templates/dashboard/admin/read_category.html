@@ -1,0 +1,86 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<div class="main-container mx-4" id="read_category">
+    <h2 class="mb-4">Gestión de Categorías</h2>
+
+    <div class="addSearch">
+        <div class="contentSearchTech w-50">
+            <form method="get" action="" class="d-flex mb-3">
+                <input type="text" name="q" placeholder="Buscar categoría..." value="{{ query|default:'' }}" class="form-control inputSearch">
+                <button type="submit" class="searchTech">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </form>
+        </div>
+        <div class="contentAddTech">
+            <button type="button" id="btnAddCategory" class="btn btn-sm accionTecnicoAdd px-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal" data-bs-title="Agregar"> <!--el #addClientModal es el que lda propiedades para que se abra el modal-->
+                <i id="newCategory" class="fa-solid fa-user-plus"></i>  Agregar
+        </div>
+    </div>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Fecha de Creación</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for categoria in categorias %}
+            <tr>
+                <td>{{ categoria.nombreCategoria }}</td>
+                <td>
+                    {% if categoria.estadoCategoria %}
+                    <span class="badge bg-success">Activa</span>
+                    {% else %}
+                    <span class="badge bg-danger">Inactiva</span>
+                    {% endif %}
+                </td>
+                <td>{{ categoria.fechaCreacionCategoria|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                     data-bs-title="Editar" onclick="editCategory('{{ categoria.idCategoria }}')">
+                        <i id="editCategory" class="bi bi-pencil-square iaccionTecnico"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm accionTecnico px-2" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Eliminar"
+                    onclick="deleteCategory('{{ categoria.idCategoria }}')">
+                            <i id="deleteCategory" class="bi bi-trash3-fill iaccionTecnico"></i>
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No hay categorías disponibles</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if categorias.has_other_pages %}
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if categorias.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ categorias.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Anterior</a>
+            </li>
+            {% endif %}
+            {% for num in categorias.paginator.page_range %}
+            <li class="page-item {% if categorias.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if categorias.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ categorias.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Siguiente</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% include "dashboard/admin/crud_category.html" %}
+{% endblock %}

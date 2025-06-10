@@ -153,8 +153,8 @@ urlpatterns = [
     path('tecnicos/update/<int:pk>/', update_technician, name='update_technician'),
     path('tecnicos/conteo/',count_tech, name = "count_tech"),
     #Tickets
-    path("tickets/conteo/<int:idTech>/", status_tickets, name="status_tickets"), 
-    path('tickets/conteo/', status_tickets, name='status_tickets_general'),
+    path("tickets/conteo/<int:year>/<int:idTech>/", status_tickets, name="status_tickets"), 
+    path('tickets/conteo/<int:year>/', status_tickets, name='status_tickets_general'),
     #path("manage-users/", manage_users, name="manage_users"), #borrar
 
     # Location routes
@@ -248,7 +248,7 @@ urlpatterns = [
     path('categories/', category_list, name='category_list'),
     path('categories/create/', category_create, name='category_create'),
     path('categories/<int:pk>/update/', category_update, name='category_update'),
-    path('categories/<int:pk>/delete/', category_delete, name='category_delete'),
+    path('categories/delete/<int:pk>/', category_delete, name='category_delete'),
     
     # Reporte de ventas
     path('sales/report/', sales_report, name='sales_report'),

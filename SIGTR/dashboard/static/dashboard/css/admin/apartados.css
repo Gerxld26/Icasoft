@@ -42,7 +42,7 @@ a.btn.btn-secondary.dropdown-toggle {
     font-size: xx-large;
 }
 /*tecnico*/
-#read_tecnico,
+#read_tecnico, #read_category,
 #read_client {
     background: #0b2a3f92;
     color: white;
@@ -96,7 +96,7 @@ button.accionTecnicoAdd {
     padding-right: 10px;
 }
 
-#editTech,
+#editTech, #editCategory,
 #editClient {
     background: linear-gradient(65deg, #7a6b06, #cda110, #927f44);
     -webkit-background-clip: text;
@@ -104,7 +104,7 @@ button.accionTecnicoAdd {
     -webkit-text-fill-color: transparent;
 }
 
-#deleteTech,
+#deleteTech, #deleteCategory,
 #deleteClient {
     background: linear-gradient(65deg, #5d1010, #a71818, #853c3c);
     -webkit-background-clip: text;

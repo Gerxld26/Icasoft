@@ -1,0 +1,31 @@
+<!-- Modal para agregar categoría -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addCategoryModalLabel">Agregar Categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-category-form" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <!-- Información del usuario -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.nombreCategoria.id_for_label }}" class="form-label">Nombre de la Categoría</label>
+                                {{ form.nombreCategoria }}
+                                {% if form.nombreCategoria.errors %}
+                                <div class="text-danger">
+                                    {{ form.nombreCategoria.errors }}
+                                </div>
+                    {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3 w-100">Guardar Categoría</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

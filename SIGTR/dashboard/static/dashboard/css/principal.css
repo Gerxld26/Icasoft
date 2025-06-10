@@ -10,24 +10,36 @@
 }
 
 :root {
-    --fondoDiv: linear-gradient(180deg, rgb(37, 36, 36), rgb(43, 67, 84), rgb(37, 36, 36));
-    --fondoBotones: linear-gradient(180deg, rgb(54, 56, 57), rgb(42, 76, 89));
-    --sombrasContent: 5px 10px 10px -8px rgb(3, 101, 140);
-    --borde: rgb(3, 101, 140);
+    --fondoDiv: linear-gradient(180deg, rgb(37, 36, 36), #003f97, rgb(37, 36, 36));
+    --fondoBotones: linear-gradient(180deg, rgb(54, 56, 57), #003f97);
+    --sombrasContent: 5px 10px 10px -8px #003f97;
+    --borde: #003f97;
+    --borde-card: 3px solid #003072;
+    --color-texto:#003f97;
+    /*#003f97*/
 }
 
 body {
     min-height: 100vh;
-    background: rgb(29, 29, 29)
-        /*rgb(24, 23, 23)*/
-    ;
-    background-size: 600% 600%;
-    /* Hacemos que el gradiente sea más grande para poder moverlo */
+    background: radial-gradient(circle at center, #0b5ed2, rgb(29 29 29) 35%);
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    /* background-size: 100% 100%; */
+    animation: pulse 3s infinite ease-in-out;
     color: white;
     font-family: "Segoe UI";
     font-weight: bold;
     overflow-x: hidden;
-    /* Animación para mover el gradiente */
+}
+
+@keyframes pulse {
+    0%, 100% {
+        background-size: 100% 100%;
+    }
+    50% {
+        background-size: 180% 180%;
+    }
 }
 
 .contenedorPrincipal {
@@ -106,7 +118,7 @@ body {
     grid-area: logo;
     align-items: center;
     /* Centra verticalmente la imagen y el texto */
-    border: 3px solid rgb(42, 76, 89);
+    border: var(--borde-card);
     box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
     /*el primero izq. -derecha, el segundo es para la dirección arriba o abajo, el tercero la intensidad, el cuarto la intensidad del color*/
     border-radius: 30px;
@@ -122,7 +134,7 @@ body {
     justify-items: center;
     display: flex;
     justify-content: center;
-    height: 80px;
+    height: 70px;
 }
 
 #logoEmpresa {
@@ -151,11 +163,11 @@ body {
 
 .nombreUbi {
     grid-area: nombreUbi;
-    border: 2px solid rgb(42, 76, 89);
+    border: var(--borde-card);
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
     box-shadow: 5px 10px 10px -8px;
     border-radius: 30px;
-    color: rgb(3, 101, 140);
+    color: #003f97;
     text-align: center;
     align-content: center;
     font-family: "Segoe UI";
@@ -183,7 +195,7 @@ body {
 }
 
 .asistenciaButton {
-    border: 2px solid rgb(42, 76, 89);
+    border: var(--borde-card);
     background: none;
     box-shadow: 5px 10px 10px -8px black;
     border-radius: 30px;
@@ -216,7 +228,7 @@ body {
     width: 100%;
     text-align: center;
     font-size: medium;
-    text-shadow: 5px 1px 8px rgb(3, 101, 140);
+    text-shadow: 5px 1px 8px var(--color-texto);
     background: var(--fondoDiv);
 }
 
@@ -227,11 +239,12 @@ body {
     gap: 20px;
     display: flex;
 }
-
 .buttonAsist {
+    position: relative;
+    overflow: hidden;
     border-radius: 20px;
-    border: 1px solid skyblue;
-    background-color: rgb(3, 101, 140);
+    border: 2px solid white;
+    background-color: var(--color-texto);
     color: white;
     padding: 10px;
     box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
@@ -241,16 +254,46 @@ body {
     grid-template-columns: auto;
     width: 100%;
     cursor: pointer;
+    transition: all 0.3s ease;
+}
+#glitch {
+    animation: glitch 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+}
+
+#glitch:hover {
+    animation: glitch 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+    background: var(--color-texto);
+    color: white;
+    box-shadow: 0px 0px 15px 5px rgb(3, 55, 140);
+    border: var(--borde-card);
+    font-weight: 800;
+    text-shadow: 5px 1px 8px rgb(3, 101, 140);
+}
+
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-4px, 4px);
+  }
+  40% {
+    transform: translate(-4px, -4px);
+  }
+  60% {
+    transform: translate(4px, 4px);
+  }
+  80% {
+    transform: translate(4px, -4px);
+  }
+  100% {
+    transform: translate(0);
+  }
 }
 
 #cerrarSesion {
     border: 1px solid white;
     background-color: rgb(140, 12, 3);
-}
-
-.botonAsist button:hover {
-    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(29, 46, 46));
-    color: rgb(3, 101, 140);
 }
 
 #cerrarSesion:hover {
@@ -270,21 +313,19 @@ body {
     align-items: center;
 }
 
-.valorHW {}
-
 .temperaturaCPU {
     color: rgb(0, 123, 0);
     font-size: 50px;
 }
 
 .temperaturaRAM {
-    color: rgb(42, 76, 89);
+    color: var(--color-texto);
     font-size: 50px;
 }
 
 .recomendaciones {
     grid-area: recomendaciones;
-    border: 3px solid rgb(42, 76, 89);
+    border: var(--borde-card);
     box-shadow: 5px 10px 10px -3px rgb(1, 1, 1);
     border-radius: 30px;
     align-content: center;
@@ -294,7 +335,7 @@ body {
 }
 
 .nombreCatalogo {
-    border-bottom: 3px solid rgb(42, 76, 89);
+    border-bottom:  var(--borde-card);
 }
 
 .catalogo {
@@ -320,7 +361,7 @@ body {
     width: 80%;
     height: 30px;
     border-radius: 30px;
-    background: rgb(3, 101, 140);
+    background: var(--color-texto);
     color: white;
     cursor: pointer;
 }
@@ -348,11 +389,11 @@ body {
 }
 
 .botCentro {
-    border: 2px solid rgb(42, 76, 89);
+    border: var(--borde-card);
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
-    box-shadow: 5px 10px 10px -8px;
+    box-shadow: 5px 10px 10px -8px var(--color-texto);
     border-radius: 30px;
-    color: rgb(3, 101, 140);
+    color: white;
     text-align: center;
     align-content: center;
     padding: 7px;
@@ -393,15 +434,15 @@ body {
 
 @keyframes animacionLetra {
     0% {
-        text-shadow: 0 0 5px rgba(3, 101, 140, 0.8), 0 0 10px rgba(3, 101, 140, 0.8), 0 0 15px rgba(3, 101, 140, 0.8);
+        text-shadow: 0 0 5px var(--color-texto), 0 0 10px var(--color-texto), 0 0 15px var(--color-texto);
     }
 
     50% {
-        text-shadow: 0 0 20px rgba(3, 101, 140, 1), 0 0 30px rgba(3, 101, 140, 1), 0 0 40px rgba(3, 101, 140, 1);
+        text-shadow: 0 0 20px var(--color-texto), 0 0 30px var(--color-texto), 0 0 40px var(--color-texto);
     }
 
     100% {
-        text-shadow: 0 0 5px rgba(3, 101, 140, 0.8), 0 0 10px rgba(3, 101, 140, 0.8), 0 0 15px rgba(3, 101, 140, 0.8);
+        text-shadow: 0 0 5px var(--color-texto), 0 0 10px var(--color-texto), 0 0 15px var(--color-texto);
     }
 }
 
@@ -420,8 +461,7 @@ body {
     filter: drop-shadow(1px 1px 15px rgba(42, 147, 189, 0.8));
 }
 
-#video-container,
-#video-container2 {
+#video-container {
     width: 100%;
     position: relative;
     display: none;
@@ -471,7 +511,7 @@ body {
 }
 
 .body-chat {
-    width: 95%; 
+    width: 95%;
     display: none;
     flex-direction: column;
     max-height: 300px;
@@ -588,23 +628,17 @@ body {
     background: none;
 }
 
-.modo-chat-activoZoom #mensajeIA, .modo-chat-activo #mensajeIA {
+.modo-chat-activo #mensajeIA {
     background: linear-gradient(180deg, transparent, #349ac0);
 }
 
-.modo-chat-activoZoom #header-chat, .modo-chat-activo #header-chat {
+.modo-chat-activo #header-chat {
     display: grid;
     grid-template-columns: 80% auto;
     justify-items: center;
 }
-.modo-chat-activo #header-chat #expand,.modo-chat-activoZoom #header-chat #expand {
-    cursor: pointer;
-}
-.cerrarZoom {
-    color: #6d0610; 
-    font-size: x-large;
-}
-.modo-chat-activoZoom #body-chat, .modo-chat-activo #body-chat {
+
+.modo-chat-activo #body-chat {
     display: flex;
     overflow-y: auto;
     overflow-x: hidden;
@@ -612,23 +646,19 @@ body {
     font-size: large;
     border-radius: 10px;
 }
-.modo-chat-activoZoom #body-chat {
-    max-height: 500px;
-    font-size: larger;
-}
 
-.modo-chat-activoZoom #footer-chat ,.modo-chat-activo #footer-chat {
+.modo-chat-activo #footer-chat {
     width: 100%;
     height: 100%;
     display: grid;
     background: #358fb3;
     align-items: center;
     justify-items: center;
-    border-bottom-right-radius:30px;
+    border-bottom-right-radius: 30px;
     border-bottom-left-radius: 30px;
 }
 
-.modo-chat-activoZoom #footer-chat .contentFooter, .modo-chat-activo #footer-chat .contentFooter {
+.modo-chat-activo #footer-chat .contentFooter {
     width: 95%;
     grid-template-columns: 80% auto;
     gap: 8px;
@@ -637,41 +667,41 @@ body {
     height: 80%;
 }
 
-.modo-chat-activoZoom .contentFooter,.modo-chat-activo .contentFooter {
+.modo-chat-activo .contentFooter {
     width: 100%;
     height: 100%;
 }
 
-.modo-chat-activoZoom .iaResponse, .modo-chat-activo .iaResponse {
+.modo-chat-activo .iaResponse {
     margin-right: 10px;
     margin-top: 10px;
 }
 
-.modo-chat-activoZoom .userRequest, .modo-chat-activo .userRequest {
+.modo-chat-activo .userRequest {
     margin-right: 10px;
     margin-top: 10px;
 }
 
-.modo-chat-activoZoom .contentChatBtn, .modo-chat-activo .contentChatBtn {
+.modo-chat-activo .contentChatBtn {
     background: #0a3f54;
     justify-content: center;
     align-items: center;
 }
 
-.modo-chat-activoZoom .enviarMessage, .modo-chat-activo .enviarMessage {
+.modo-chat-activo .enviarMessage {
     font-size: x-large;
     color: white;
 }
 
-.modo-chat-activoZoom  #textAsistente, .modo-chat-activo #textAsistente {
+.modo-chat-activo #textAsistente {
     display: none;
 }
 
-.modo-chat-activoZoom #vozIA, .modo-chat-activo #vozIA {
+.modo-chat-activo #vozIA {
     display: none;
 }
 
-.modo-chat-activoZoom #mensajeIA, .modo-chat-activo #mensajeIA {
+.modo-chat-activo #mensajeIA {
     grid-template-areas: "header-chat" "body-chat" "footer-chat";
     grid-template-rows: 15% auto 15%;
     gap: 10px;
@@ -680,29 +710,47 @@ body {
 }
 
 .asistenteSoporte.modo-chat-activo {
-    grid-template-areas: "imagenIA" "mensajeIA";
-    grid-template-rows: auto 65%;
+    grid-template-areas: "mensajeIA";
 }
-.modo-chat-activo #video-container2 {
-    display: flex;
+
+.modo-chat-activo .imagenIA {
+    display: none;
+
 }
+
 .modo-chat-activo #robotGIFOjos {
     width: 45%;
-    display: flex;
+    display: none;
 }
+
 .modo-chat-activo #robotimg {
     display: none;
 }
-.modo-chat-activoZoom #video-container2, #robotGIFOjos, #robotimg{
-    display: none;
-}
-.asistenteSoporte.modo-chat-activoZoom {
-    grid-template-areas: "mensajeIA";
 
+.modo-chat-activo #cerrarChat {
+    cursor: pointer;
 }
-.modo-chat-activoZoom .imagenIA{
-    display: none;
-    
+
+#contentFooterAudio {
+    flex-direction: row;
+    justify-content: center;
+    height: 100%;
+    background: #1d1d1d;
+}
+
+#contentFooterAudio .textIACont {
+    /* background: white; */
+    height: 100%;
+    width: 100%;
+    background: none;
+    display: flex;
+    border-radius: 30px;
+    justify-content: space-around;
+}
+#contentFooterAudio .microfono {
+    /* background: white; */
+   font-size: xx-large;
+   padding: 10px 13px 10px 13px;
 }
 /*cuarta columna:*/
 .analisis {
@@ -748,7 +796,7 @@ body {
     text-shadow: 5px 1px 8px rgb(3, 101, 140);
     box-shadow: 5px 10px 10px -8px rgb(42, 76, 89);
     background: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
-    border: 2px solid rgb(42, 76, 89);
+    border: var(--borde-card);
     border-radius: 30px;
     align-content: center;
     cursor: pointer;
@@ -803,7 +851,7 @@ body {
 }
 
 .iconAnalisis {
-    color: rgb(0, 187, 255);
+    color: var(--color-texto);
 }
 
 /*quinta columna:*/
@@ -887,7 +935,7 @@ body {
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: rgb(42, 76, 89);
+    background: var(--color-texto);
     border-radius: 30px;
     z-index: -1;
 }
@@ -968,6 +1016,7 @@ body {
         /* el / significa que después de eso se determina el tamaño del ancho de cada columna */
         gap: 25px;
     }
+
     /*primera columna:*/
     .primero {
         grid-template-rows: 15% 70% auto !important;
@@ -1029,10 +1078,10 @@ body {
         width: 100%;
         text-align: center;
         font-size: 20px;
-        text-shadow: 5px 1px 8px rgb(3, 101, 140);
+        text-shadow: 5px 1px 8px var(--color-texto);
         border-radius: 30px;
         align-content: center;
-        border: 3px solid rgb(42, 76, 89);
+        border: var(--borde-card);
         background: none;
         box-shadow: 5px 10px 10px -8px black;
     }
@@ -1139,17 +1188,17 @@ body {
     .microfono {
         padding: 8px 10px 8px 10px;
         border-radius: 100%;
-        border: 3px solid #007ea7;
-        background-color: #007ea7;
+        border: 3px solid var(--color-texto);
+        background-color: var(--color-texto);
         color: white;
         font-size: x-large;
     }
 
     .microfono:hover {
         background-color: white;
-        border: 3px solid #007ea7;
-        box-shadow: 3px 2px 10px #007ea7;
-        color: #007ea7;
+        border: var(--borde-card);
+        box-shadow: 3px 2px 10px var(--color-texto);
+        color: var(--color-texto);
         cursor: pointer;
     }
 

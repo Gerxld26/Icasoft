@@ -14,7 +14,7 @@
     --text-color: white;
     --relleno-color: linear-gradient(180deg, rgb(54, 56, 57), rgb(38, 40, 40));
     --card-style: 5px 10px 10px -3px var(--secundary-color);
-    --card-borde: 3px solid var(--principal-color);
+    --card-borde: 3px solid rgb(42, 76, 89);
 }
 
 body {
@@ -392,6 +392,7 @@ div#usuarios {
     background: var(--relleno-color);
     padding-left: 10px;
     padding-right: 10px;
+    gap:5px;
 }
 
 * .functionsTicket {
@@ -399,9 +400,16 @@ div#usuarios {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 10px;
+    
 }
-
+* .functionsTicket:hover{
+    background: linear-gradient(180deg, rgb(54, 56, 57), rgb(4, 58, 109));
+    transform: translateY(-1px);
+    transition: all 0.3s ease-in-out;
+    border-radius: 10px;;
+    cursor: pointer;
+    padding: 10px 2px 10px 2px;
+}
 .iconFunctions {
     color: rgb(54, 162, 235);
     font-size: xx-large;
@@ -427,14 +435,13 @@ div#usuarios {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap:15px;
 }
 .filtro{
     border-radius: 10px;
     background: var(--relleno-color);
     border: var(--card-borde);
     color: white;
-    padding: 5px;
+    padding: 5px 10px 5px 10px;
 }
 .list{
     background: rgb(54, 56, 57);
@@ -460,7 +467,9 @@ div#usuarios {
     width: 100%;
     border-radius: 10px;
 }
-
+div#mapaTech {
+    border-radius: 20px;
+}
 .contentMapa {
     padding-left: 20px;
 }

@@ -1,89 +1,109 @@
-from django.http import JsonResponse, HttpResponseForbidden, HttpResponseBadRequest
-from django.shortcuts import get_object_or_404
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import authenticate, login 
-from django.views.decorators.http import require_GET, require_POST
-from django.contrib import messages
-import heapq
-from django.db.models import Sum, Count
-from django.db.models import Count, F, Func, Value
-from django.db.models.functions import TruncMonth
-from users.models import User, UserProfile
-from tickets.models import Ticket
-from .forms import CreateTechForm, CreateAdminForm
-import requests
-from django.utils.timezone import now
-from datetime import timedelta
-from django.core.paginator import Paginator
-from django.shortcuts import render, get_object_or_404
-import logging
+# Standard library
 import os
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import JsonResponse
-import os
-import random
-import shutil
-from django.utils import timezone
-from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required, user_passes_test
-from openai import OpenAI
-from django.templatetags.static import static
-import psutil
-import speedtest 
-import platform
-import logging
-import time
-import tempfile
-import cpuinfo
-import subprocess  
-from .models import Diagnosis, DiagnosticReport, SystemComponent, DriverInfo, DiagnosticIssue, DiagnosticScenario, ScenarioRun, DiagnosticFile
-import subprocess
-from dashboard.forms import ProductoForm, CategoriaForm
 import json
-import GPUtil 
-from users.models import UserProfile
-from .forms import CustomUserCreationForm
-from .forms import UserProfileForm
-from .forms import TicketStatusForm
-from django.core.exceptions import PermissionDenied
-from virustotal_python import Virustotal
-from django.utils.dateparse import parse_date
-from django.conf import settings
-from .models import LearningVideo
-from .forms import LearningVideoForm
-from django.db.models import Q
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.utils.safestring import mark_safe
-import traceback
-from django.middleware.csrf import get_token
-from django.views.decorators.http import require_GET
-import tempfile
 import time
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from .utils import perform_speed_test
-from dotenv import load_dotenv
-from users.models import Categoria, Producto, RegistroVenta, DetalleVenta, Carrito
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
-from django.contrib.auth.decorators import login_required, user_passes_test
 import psutil
-import subprocess
-import platform
-import time
 import shutil
+import random
+import logging
+import tempfile
+import platform
 import threading
-from datetime import datetime, timedelta
-from django.http import FileResponse
-from django.http import Http404
+import subprocess
+import traceback
+import GPUtil
+import cpuinfo
+import speedtest
+import requests
+from django.conf import settings
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.utils.safestring import mark_safe
+from django.utils.timezone import now
+from django.middleware.csrf import get_token
+from django.templatetags.static import static
 
+# Django HTTP and routing
+from django.http import (
+    JsonResponse,
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseBadRequest,
+    FileResponse,
+    Http404,
+)
+from django.shortcuts import (
+    render,
+    redirect,
+    get_object_or_404,
+)
+from django.views.decorators.http import (
+    require_GET,
+    require_POST,
+    require_http_methods,
+)
+from django.views.decorators.csrf import csrf_exempt
 
+# Django auth
+from django.contrib import messages
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
+
+# Django ORM
+from django.db.models import (
+    Q,
+    F,
+    Func,
+    Value,
+    Count,
+    Sum,
+)
+from django.db.models.functions import (
+    TruncMonth,
+    ExtractMonth,
+)
+
+# Django pagination
+from django.core.paginator import (
+    Paginator,
+    EmptyPage,
+    PageNotAnInteger,
+)
+
+# Third-party
+import GPUtil
+import cpuinfo
+import speedtest
+from openai import OpenAI
+from dotenv import load_dotenv
+from virustotal_python import Virustotal
+
+# Local apps (models & forms)
+from users.models import User, UserProfile, Categoria, Producto, RegistroVenta, DetalleVenta, Carrito
+from tickets.models import Ticket
+from .models import (
+    Diagnosis,
+    DiagnosticReport,
+    SystemComponent,
+    DriverInfo,
+    DiagnosticIssue,
+    DiagnosticScenario,
+    ScenarioRun,
+    DiagnosticFile,
+    LearningVideo,
+)
+from .forms import (
+    CreateTechForm,
+    CreateAdminForm,
+    ProductoForm,
+    CategoriaForm,
+    CustomUserCreationForm,
+    UserProfileForm,
+    TicketStatusForm,
+    LearningVideoForm,
+)
+from .utils import perform_speed_test
 
 from .models import (
     Diagnosis, DiagnosticReport, SystemComponent, DriverInfo, 
@@ -301,7 +321,7 @@ def product_delete(request, pk):
 @login_required
 @user_passes_test(is_admin)
 def category_list(request):
-    categorias = Categoria.objects.all().order_by('-fechaCreacionCategoria')
+    categorias = Categoria.objects.all().filter(estadoCategoria=True).order_by('-fechaCreacionCategoria')
     
     query = request.GET.get('q')
     if query:
@@ -310,13 +330,14 @@ def category_list(request):
     paginator = Paginator(categorias, 10)
     page = request.GET.get('page')
     categorias_paginadas = paginator.get_page(page)
-    
+    form = CategoriaForm()
     context = {
         'categorias': categorias_paginadas,
-        'query': query
+        'query': query,
+        'form': form,
     }
     
-    return render(request, 'dashboard/admin/category_list.html', context)
+    return render(request, 'dashboard/admin/read_category.html', context)
 
 @login_required
 @user_passes_test(is_admin)
@@ -325,17 +346,20 @@ def category_create(request):
         form = CategoriaForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Categoría creada exitosamente.')
-            return redirect('category_list')
-    else:
-        form = CategoriaForm()
-    
-    context = {
-        'form': form,
-        'title': 'Crear Categoría'
-    }
-    
-    return render(request, 'dashboard/admin/category_form.html', context)
+
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'message': 'Categoría creada exitosamente.'})
+            else:
+                messages.success(request, 'Categoría creada exitosamente.')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                errors = form.errors.as_json()
+                return JsonResponse({'errors': errors}, status=400)
+            else:
+                messages.error(request, 'Hubo errores en el formulario. Corrígelos e intenta de nuevo.')
+                return redirect('read_category')
+
+    return redirect('read_category')
 
 @login_required
 @user_passes_test(is_admin)
@@ -347,7 +371,7 @@ def category_update(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, 'Categoría actualizada exitosamente.')
-            return redirect('category_list')
+            return redirect('read_category')
     else:
         form = CategoriaForm(instance=categoria)
     
@@ -357,26 +381,19 @@ def category_update(request, pk):
         'categoria': categoria
     }
     
-    return render(request, 'dashboard/admin/category_form.html', context)
+    return render(request, 'dashboard/admin/read_category.html', context)
 
 @login_required
 @user_passes_test(is_admin)
 def category_delete(request, pk):
     categoria = get_object_or_404(Categoria, idCategoria=pk)
     
-    if request.method == 'POST':
-        try:
-            categoria.delete()
-            messages.success(request, 'Categoría eliminada exitosamente.')
-        except Exception as e:
-            messages.error(request, f'No se pudo eliminar la categoría porque tiene productos asociados.')
-        return redirect('category_list')
-    
-    context = {
-        'categoria': categoria
-    }
-    
-    return render(request, 'dashboard/admin/category_confirm_delete.html', context)
+    if categoria.estadoCategoria:  # Solo desactiva si está activa
+        categoria.estadoCategoria = False
+        categoria.save()
+        return JsonResponse({'status': 'success', 'message': 'Categoría desactivada exitosamente.'})
+    else:
+        return JsonResponse({'status': 'warning', 'message': 'La categoría ya está desactivada.'})
 
 @login_required
 @user_passes_test(is_admin)
@@ -826,7 +843,7 @@ def client_chat(request):
 
 
 
-@user_passes_test(lambda user: user.role == 'client')
+@user_passes_test(lambda user: user.is_authenticated and user.role == 'client')
 def cpu_monitoring_data(request):
     try:
         system = platform.system()
@@ -6346,7 +6363,7 @@ def count_tech(request):
 @user_passes_test(lambda u: u.role == 'admin')
 def list_technician(request):
     try:
-        list_tech = User.objects.filter(role='tech', is_active=True).order_by('-date_joined').values('id', 'username') # Ordenar por fecha de creación (más reciente primero)
+        list_tech = User.objects.filter(profile__latitude__isnull=False, profile__longitude__isnull=False, is_active=True).order_by('-date_joined').values('id', 'username', 'profile__latitude', 'profile__longitude') # Ordenar por fecha de creación (más reciente primero)
         return JsonResponse({'listaTech':list(list_tech)})
     except Exception as e:
         return JsonResponse({'error': 'Ocurrió un error al listar los técnicos', 'detalle': str(e)}, status=500)
@@ -6354,27 +6371,50 @@ def list_technician(request):
 # Estado de tickets
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
-def status_tickets(request, idTech=None):
+def status_tickets(request,year,idTech=None):
     try:
-        count_tickets_client = Ticket.objects.filter(status__in=['open', 'in_progress']).count()
-        count_clientes = User.objects.filter(role='client', is_active=True).count()
+        count_tickets_client = Ticket.objects.filter(updated_at__year=year, status__in=['open', 'in_progress']).count()
+        count_clientes = User.objects.filter(role='client', is_active=True, last_login__year=year).count()
+        meses_es = {
+            1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+            5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+            9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+        }
       # Con id
         if idTech:
-            count_pendiente = Ticket.objects.filter(assigned_to_id=idTech, status='open').count() 
-            count_progreso = Ticket.objects.filter(assigned_to_id=idTech, status='in_progress').count()
-            count_resuelto = Ticket.objects.filter(assigned_to_id=idTech, status='resolved').count()
+            count_pendiente = Ticket.objects.filter(assigned_to_id=idTech, status='open', updated_at__year=year).count() 
+            count_progreso = Ticket.objects.filter(assigned_to_id=idTech, status='in_progress', updated_at__year=year).count()
+            count_resuelto = Ticket.objects.filter(assigned_to_id=idTech, status='resolved', updated_at__year=year).count()
+            servicios_completados = (Ticket.objects.filter(assigned_to_id=idTech, status='resolved', updated_at__year=year)
+                                .annotate(mes=ExtractMonth('updated_at'))
+                                .values('mes')
+                                .annotate(total=Count('status'))
+                                .order_by('mes'))
+            data_service = [
+                {'mes': meses_es[item['mes']], 'total': item['total']}
+                for item in servicios_completados
+            ]
         #Sin id
         else:
-            count_pendiente = Ticket.objects.filter(status='open').count()
-            count_progreso = Ticket.objects.filter(status='in_progress').count()
-            count_resuelto = Ticket.objects.filter(status='resolved').count()
-
+            count_pendiente = Ticket.objects.filter(status='open', updated_at__year=year).count()
+            count_progreso = Ticket.objects.filter(status='in_progress', updated_at__year=year).count()
+            count_resuelto = Ticket.objects.filter(status='resolved', updated_at__year=year).count()
+            servicios_completados = (Ticket.objects.filter(status='resolved', updated_at__year=year)
+                                .annotate(mes=ExtractMonth('updated_at'))
+                                .values('mes')
+                                .annotate(total=Count('status'))
+                                .order_by('mes'))
+            data_service = [
+                {'mes': meses_es[item['mes']], 'total': item['total']}
+                for item in servicios_completados
+            ]
         status_data = {
             'count_pendiente': count_pendiente,
             'count_progreso': count_progreso,
             'count_resuelto': count_resuelto,
             'count_ticketsTotal': count_tickets_client,
             'count_clientes': count_clientes,
+            'service_complete': data_service,
         }
         return JsonResponse(status_data)
 

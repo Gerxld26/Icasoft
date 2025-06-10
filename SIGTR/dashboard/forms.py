@@ -231,4 +231,4 @@ class ProductoForm(forms.ModelForm):
 class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
-        fields = ['nombreCategoria', 'estadoCategoria']
+        fields = ['nombreCategoria']

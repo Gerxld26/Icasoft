@@ -92,13 +92,8 @@
                     <div class="imagenIA">
                         <img class="robot" src="{% static 'dashboard/img/robotIA.webp' %}" alt="" id="robotimg">
                         <div class="video-container" id="video-container">
-                            <video class="robot" id="robotGIF" autoplay muted>
+                            <video class="robot" id="robotGIF" loop autoplay muted>
                                 <source src="{% static 'dashboard/video/robotHablando.mp4' %}" type="video/mp4">
-                            </video>
-                        </div>
-                        <div class="video-container" id="video-container2">
-                            <video class="robot" id="robotGIFOjos" autoplay muted>
-                                <source src="{% static 'dashboard/video/robotOjos.mp4' %}" type="video/mp4">
                             </video>
                         </div>
                         <audio controls autoplay muted id="audioRobot">
@@ -109,12 +104,12 @@
                     <div class="mensajeIA" id="mensajeIA">
                         <div class="header-chat" id="header-chat">
                             <h1>ICASOFT IA</h1>
-                            <i class="fa-solid fa-expand expand" id="expand"></i>
+                            <i class="fa-solid fa-xmark expand" id="cerrarChat"></i>
                         </div>
                         <div class="body-chat" id="body-chat">
                         </div>
                         <div class="footer-chat" id="footer-chat">
-                            <div class="contentFooter">
+                            <div class="contentFooter" id="contentFootertext">
                                 <div class="textIACont">
                                     <input id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA">
                                 </div>
@@ -124,6 +119,16 @@
                                     </button>
                                     <button class="btnChat" id="sendChat" style="display: none;">
                                         <i class="fa-solid fa-paper-plane enviarMessage"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="contentFooterAudio" style="display: none;" id="contentFooterAudio">
+                                <div class="textIACont">
+                                    <button class="btnChat" id="mostrarChat">
+                                        <i class="fa-solid fa-xmark microfono"></i>
+                                    </button>
+                                    <button class="btnChat" id="audioSend">
+                                        <i class="fa-solid fa-microphone microfono"></i>
                                     </button>
                                 </div>
                             </div>
@@ -141,7 +146,7 @@
                     </div>
                     <div class="monitoreo">
                         <button id="btnMonitoreo" class="btnUlt">
-                            <div class="textDiag" id="textMonitoreo">MONITOREO DEL SISTEMA</div>
+                            <div class="textDiag" id="textMonitoreo">MONITOREO DE HARDWARE</div>
                             <div class="graficoMonit"><img src="{% static 'dashboard/img/monitoreo.webp' %}" alt=""
                                     class="imgDiagnostico" id="imgGraficoMonitoreo"></div>
                             <div class="progress-bar" id="progressBarMonitoreo">
@@ -187,7 +192,7 @@
                     </div>
                     <div class="ultMant">
                         <button class="btnUlt" id="btnAbrirModalMantenimiento">
-                            <div class="textDiag">MANTENIMIENTO</div>
+                            <div class="textDiag">MANTENIMIENTO DEL SISTEMA</div>
                             <div class="imgDetDiag" id="imgMantDet"><img class="imgDiagnostico"
                                     src="{% static 'dashboard/img/mantenimientoDet.webp' %}" id="imgMant" alt="">
                                 <img src="{% static 'dashboard/img/mantenimientoGIF.gif' %}" class="imgMantGIF"
@@ -237,8 +242,8 @@
     <script src="{% static 'dashboard/js/clientes/recomendaciones.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/red.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/chat.js' %}"></script>
-    <!--<script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=marker,geometry&callback=initMap"
-    async defer></script>-->
+    <!-- <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=marker,geometry&callback=initMap"
+    async defer></script> -->
 </body>
 
 </html>

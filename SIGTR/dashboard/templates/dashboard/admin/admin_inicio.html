@@ -13,13 +13,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'dashboard/css/admin/admin.css' %}">
     <link rel="stylesheet" href="{% static 'dashboard/css/admin/modal.css' %}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
 
     <!-- Scripts -->
     <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 </head>
@@ -39,6 +36,24 @@
                         <div class="function">
                             <button class="btnFunction">
                                 <div class="iconFunction">
+                                    <i class="fa-solid fa-gear"></i>
+                                </div>
+                                <a href="{% url 'add_admin' %}" class="textFunction">ADMINISTRADOR</a>
+                            </button>
+                        </div>
+
+                        <div class="function">
+                            <button class="btnFunction">
+                                <div class="iconFunction">
+                                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                                </div>
+                                <a href="{% url 'read_technician' %}" class="textFunction">TÉCNICOS</a>
+                            </button>
+                        </div>
+
+                        <div class="function">
+                            <button class="btnFunction">
+                                <div class="iconFunction">
                                     <i class="fa-solid fa-ticket"></i>
                                 </div>
                                 <a class="textFunction">TICKETS</a>
@@ -52,20 +67,13 @@
                                 <a href="{% url 'read_client' %}" class="textFunction">CLIENTES</a>
                             </button>
                         </div>
-                        <div class="function">
-                            <button class="btnFunction">
-                                <div class="iconFunction">
-                                    <i class="fa-solid fa-screwdriver-wrench"></i>
-                                </div>
-                                <a href="{% url 'read_technician' %}" class="textFunction">TÉCNICOS</a>
-                            </button>
-                        </div>
+                
                         <div class="function">
                             <button class="btnFunction">
                                 <div class="iconFunction">
                                     <i class="fa-solid fa-desktop"></i>
                                 </div>
-                                <a href="{% url 'read_technician' %}" class="textFunction">PRODUCTOS</a>
+                                <a href="{% url 'product_list' %}" class="textFunction">PRODUCTOS</a>
                             </button>
                         </div>
                         <div class="function">
@@ -90,14 +98,6 @@
                                     <i class="fa-regular fa-file"></i>
                                 </div>
                                 <div class="textFunction">REPORTES</div>
-                            </button>
-                        </div>
-                        <div class="function">
-                            <button class="btnFunction">
-                                <div class="iconFunction">
-                                    <i class="fa-solid fa-gear"></i>
-                                </div>
-                                <div class="textFunction">CONFIGURACIÓN</div>
                             </button>
                         </div>
                     </div>
@@ -156,9 +156,9 @@
                     <div class="lugares" id="graficoServicio">
                         <div class="tituloGrafico">SERVICIOS COMPLETADOS</div>
                         <div class="graficoLugares">
-                            <canvas id="linealServicios"></canvas>
+                            <canvas id="linealServicios" class="linealServicios noResponsive"></canvas>
                         </div>
-                        <div class="verInforme"> <button class="btnVerInforme">VER INFORME</button></div>
+                        <div class="verInforme"> <button class="btnVerInforme" id="btnServiceInf">VER INFORME</button></div>
                     </div>
                     <div class="lugares" id="usuarios">
                         <div class="textActividad">CLIENTES ONLINE</div>
@@ -229,7 +229,7 @@
                         <div class="functionsTicket">
                             <div class="iconTicket"><i class="fa-solid fa-spinner iconFunctions"
                                     style="color: #177e89;"></i></div>
-                            <div class="textFunctionTicket">ACTUALIZAR</div>
+                            <div class="textFunctionTicket">ACTUALIZAR SISTEMA</div>
                         </div>
                     </div>
                 </div>
@@ -241,8 +241,9 @@
                     <div class="ubiTecnicos">
                         <div class="textUbicacion">
                             <div>
-                                <input type="text" name="daterange" id="fechaIntervalos"
-                                    value="12-04-2025 - 12-05-2025" class="filtro">
+                                <select  class="filtro" id="listYear">
+                                    <!--contenido js-->
+                                </select>
                             </div>
                             <div>
                                 <select name="" id="listTech" class="filtro">   
@@ -255,12 +256,8 @@
                             </div>
                         </div>
                         <div class="dataMapa">
-                            <div class="mapa">
-                                <!-- <iframe class="mapaUbi"
-                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3870.2186740547177!2d-75.7278443!3d-14.0642606!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9110e2bd0f99f96f%3A0x21a304d4341e31e2!2sIcasoft%20i21!5e0!3m2!1ses-419!2spe!4v1742567745922!5m2!1ses-419!2spe"
-                                    width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
-                                    referrerpolicy="no-referrer-when-downgrade">
-                                </iframe> -->
+                            <div class="mapa" id="mapaTech">
+                                <!-- Mapa de Leaflet en js-->
                             </div>
                             <div class="contentTecnico">
                                 <div class="contentSelect">
@@ -312,7 +309,9 @@
                             </div>
                         </div>
                     </div>
+                
                     <div class="lugares">
+                        <div class="tituloGrafico">ATENCIONES LUGARES</div>
                         <div class="graficoLugares">
                             <canvas id="barraAtenciones"></canvas>
                         </div>
@@ -323,10 +322,10 @@
         </div>
     </div>
 </body>
-{% include "dashboard/admin/modalInicio.html" %}
+{% include "dashboard/admin/modalGrafico.html" %}
 <script src="{% static 'dashboard/js/admin/adminInicio.js' %}"></script>
-<!-- Bootstrap JS -->
-<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script> -->
-
+<!-- Leaflet CSS y JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </html>
 {% endblock %}
