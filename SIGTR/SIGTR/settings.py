@@ -90,7 +90,7 @@ LOGGING = {
         'level': 'DEBUG',
     },
 }
-ALLOWED_HOSTS = [] #['192.168.8.121']
+ALLOWED_HOSTS = [] #192.168.1.43
 
 
 # Application definition

@@ -161,11 +161,7 @@ async function fetchCpuData() {
             textDisk += '</div>';
         });
         $("#contentDisco").html(textDisk);
-        if (datosDiscos.length > 3) {
-            modalMonitoreo.classList.add('two-columns');
-        } else {
-            modalMonitoreo.classList.remove('two-columns');
-        }
+        
         datosDiscos.forEach((diskDetails, index) => {
             const diskBar = document.getElementById('disco-bar-' + index);
             const diskUsage = parseFloat(diskDetails.percent);

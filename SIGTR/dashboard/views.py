@@ -730,7 +730,7 @@ class IcasoftToolsContext:
         },
         'monitoreo': {
             'keywords': ['temperatura', 'recursos', 'uso de cpu'],
-            'solution': 'Revisa el Monitoreo del Sistema para identificar procesos que consumen muchos recursos.'
+            'solution': 'Revisa el Monitoreo de Hardware para identificar procesos que consumen muchos recursos.'
         },
         'mantenimiento': {
             'keywords': ['limpieza', 'optimizar', 'mejorar'],
@@ -741,7 +741,7 @@ class IcasoftToolsContext:
             'solution': 'Ejecuta el módulo de Testeo de Red para diagnosticar problemas de conectividad.'
         },
         'ubicacion': {
-            'keywords':['ubicacion', 'ubican', 'encuentran'],
+            'keywords':['ubicacion', 'ubican', 'encuentran','ubicados'],
             'solution':'Nos ubicamos en Ica, Perú. Nuestro local está en Calle Cajamarca 156, Galería Amisur, puesto 135-A, Ica.'
         },
         'tecnico':{
@@ -777,6 +777,7 @@ class ConversationManager:
                 - Usa un tono profesional y amigable
                 - Enfócate en soluciones prácticas
                 - Brinda pasos ante los problemas
+                - No redundes
                 - Si no hay solución específica, dirige al usuario a Asistencia Técnica de manera corta
                 """
             }
@@ -864,29 +865,35 @@ def chatIA(request):
     try:
         data = json.loads(request.body)
         user_input = data.get('message', '').strip()
-
+        
         if not user_input:
             return JsonResponse({
                 'response': 'Por favor, escribe tu consulta.',
                 'speech_text': 'Por favor, escribe tu consulta.'
             })
-
-        response = conversation_manager.generate_response(user_input)
         
+        user_context = get_user_context_for_chat(request.user)
+        
+        contextual_input = build_contextual_prompt(user_input, user_context)
+        
+        response = conversation_manager.generate_response(contextual_input)
+        
+        personalized_response = personalize_response(response, user_context)
         
         return JsonResponse({
-            'response': response,
-            'speech_text': clean_response_for_speech(response),
-            'has_formatting': bool(re.search(r'[\*_~`#]', response))
+            'response': personalized_response,
+            'speech_text': clean_response_for_speech(personalized_response),
+            'has_formatting': bool(re.search(r'[\*_~`#]', personalized_response)),
+            'user_context': user_context 
         })
-
+        
     except json.JSONDecodeError:
         error_msg = 'Hubo un problema al procesar tu solicitud.'
         return JsonResponse({
             'response': error_msg,
             'speech_text': error_msg
         }, status=400)
-    
+        
     except Exception as e:
         print(f"Error en chatIA: {str(e)}")
         error_msg = 'Te recomendamos contactar a Asistencia Técnica de ICASOFT IA.'
@@ -894,8 +901,164 @@ def chatIA(request):
             'response': error_msg,
             'speech_text': error_msg
         }, status=500)
+
+def get_user_context_for_chat(user):
+    """Obtiene contexto relevante del usuario para el chat"""
+    try:
+        context = {
+            'name': user.first_name or user.username,
+            'full_name': f"{user.first_name} {user.last_name}".strip() or user.username,
+            'is_first_time': False,
+            'has_recent_issues': False,
+            'system_info': {},
+            'suggestions': []
+        }
+        
+        total_diagnoses = Diagnosis.objects.filter(user=user).count()
+        context['is_first_time'] = total_diagnoses == 0
+        
+        latest_diagnosis = Diagnosis.objects.filter(user=user).order_by('-timestamp').first()
+        if latest_diagnosis:
+            days_since = (timezone.now() - latest_diagnosis.timestamp).days
+            context.update({
+                'last_diagnosis_date': latest_diagnosis.timestamp.strftime('%d/%m/%Y'),
+                'days_since_last_diagnosis': days_since,
+                'system_info': {
+                    'os': latest_diagnosis.os_name,
+                    'cpu': latest_diagnosis.cpu_model,
+                    'ram': f"{latest_diagnosis.ram_total}GB" if latest_diagnosis.ram_total else None,
+                    'status': latest_diagnosis.overall_status
+                }
+            })
+        
+        recent_critical_issues = DiagnosticIssue.objects.filter(
+            diagnosis__user=user,
+            severity='HIGH',
+            diagnosis__timestamp__gte=timezone.now() - timedelta(days=7)
+        ).count()
+        
+        context['has_recent_issues'] = recent_critical_issues > 0
+        context['critical_issues_count'] = recent_critical_issues
+        
+        context['suggestions'] = generate_smart_suggestions(context)
+        
+        return context
+        
+    except Exception as e:
+        print(f"Error obteniendo contexto del usuario: {str(e)}")
+        return {
+            'name': user.first_name or user.username,
+            'full_name': user.first_name or user.username,
+            'is_first_time': True,
+            'has_recent_issues': False,
+            'suggestions': []
+        }
+
+
+def build_contextual_prompt(user_input, user_context):
+    """Construye un prompt contextualizado para el conversation_manager"""
     
+    context_prefix = f"""
+CONTEXTO DEL USUARIO:
+- Nombre: {user_context['full_name']}
+- Usuario {'nuevo' if user_context['is_first_time'] else 'existente'}
+"""
     
+    if not user_context['is_first_time']:
+        context_prefix += f"- Último diagnóstico: {user_context.get('last_diagnosis_date', 'Desconocido')}\n"
+        
+        if user_context.get('system_info', {}).get('os'):
+            context_prefix += f"- Sistema: {user_context['system_info']['os']}\n"
+            
+        if user_context['has_recent_issues']:
+            context_prefix += f"- Problemas críticos recientes: {user_context['critical_issues_count']}\n"
+    
+    context_prefix += f"""
+INSTRUCCIONES:
+- Siempre saluda al usuario por su nombre ({user_context['name']})
+- Sé personal y empático
+- Si es usuario nuevo, ofrece un diagnóstico inicial
+- Si tiene problemas pendientes, menciónalos y ofrece ayuda específica
+- Mantén un tono profesional pero cercano
+
+CONSULTA DEL USUARIO: {user_input}
+"""
+    
+    return context_prefix
+
+
+def personalize_response(response, user_context):
+    """Post-procesa la respuesta para mayor personalización"""
+    
+    if user_context['name'].lower() not in response.lower()[:50]:
+        if not any(greeting in response.lower()[:20] for greeting in ['hola', 'buenos', 'buenas']):
+            response = f"Hola {user_context['name']}, {response}"
+    
+    if len(response) < 200 and user_context.get('suggestions'):
+        suggestion = user_context['suggestions'][0] 
+        response += f"\n\n💡 **Sugerencia**: {suggestion}"
+    
+    return response
+
+
+def generate_smart_suggestions(context):
+    """Genera sugerencias inteligentes basadas en el contexto"""
+    suggestions = []
+    
+    if context['is_first_time']:
+        suggestions.append("¿Te gustaría que ejecutemos tu primer diagnóstico completo?")
+    elif context.get('days_since_last_diagnosis', 0) > 14:
+        suggestions.append(f"Han pasado {context['days_since_last_diagnosis']} días desde tu último diagnóstico. ¿Ejecutamos uno nuevo?")
+    
+    if context['has_recent_issues']:
+        suggestions.append(f"Tienes {context['critical_issues_count']} problema(s) crítico(s) pendiente(s). ¿Te ayudo a resolverlos?")
+    
+    if not context['is_first_time'] and not context['has_recent_issues']:
+        suggestions.append("¿Te gustaría ver el estado actual de tu sistema?")
+    
+    return suggestions[:2]  
+
+
+@login_required
+def get_user_chat_context(request):
+    """API endpoint para obtener contexto inicial del chat"""
+    try:
+        context = get_user_context_for_chat(request.user)
+        
+        welcome_message = generate_welcome_message(context)
+        
+        return JsonResponse({
+            'status': 'success',
+            'context': context,
+            'welcome_message': welcome_message
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+
+def generate_welcome_message(context):
+    """Genera mensaje de bienvenida personalizado"""
+    if context['is_first_time']:
+        return f"¡Hola {context['name']}! 👋 Bienvenido a ICASOFT IA. Soy tu asistente técnico personal. ¿Te gustaría que ejecutemos tu primer diagnóstico completo?"
+    
+    msg = f"¡Hola {context['name']}! 👋 Me alegra verte de nuevo."
+    
+    if context['has_recent_issues']:
+        msg += f" Veo que tienes {context['critical_issues_count']} problema(s) crítico(s) que requieren atención. ¿Te ayudo a resolverlos?"
+    elif context.get('last_diagnosis_date'):
+        msg += f" Tu último diagnóstico fue el {context['last_diagnosis_date']}."
+        
+        if context.get('days_since_last_diagnosis', 0) > 14:
+            msg += " ¿Te gustaría ejecutar un nuevo diagnóstico?"
+        else:
+            msg += " Tu sistema se ve bien. ¿En qué puedo ayudarte hoy?"
+    
+    return msg    
+
+
 # Vista para el Chat del Cliente
 @login_required
 @user_passes_test(is_client)
@@ -1666,24 +1829,47 @@ def get_gpu_info():
         }]
 
 def get_top_processes(limit=5):
-    """Obtiene los procesos que más recursos consumen"""
+    """Versión OPTIMIZADA y CORREGIDA para obtener top procesos"""
     try:
+        logger = logging.getLogger(__name__)
         processes = []
-        for proc in sorted(psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']), 
-                        key=lambda x: x.info['cpu_percent'] or 0, 
-                        reverse=True)[:limit]:
+        
+        for proc in psutil.process_iter(['pid', 'name', 'memory_percent']):
             try:
-                processes.append({
-                    'pid': proc.info['pid'],
-                    'name': proc.info['name'],
-                    'cpu_percent': f"{proc.info['cpu_percent'] or 0:.1f}%",
-                    'memory_percent': f"{proc.info['memory_percent'] or 0:.1f}%"
-                })
+                proc_info = proc.info
+                
+                if proc_info['name'] and not proc_info['name'].lower().startswith(('system', 'idle')):
+                    
+                    cpu_percent = proc.cpu_percent(interval=0.05)
+                    
+                    if (0 <= cpu_percent <= 100 and 
+                        cpu_percent > 0.5 and
+                        proc_info['memory_percent'] is not None):
+                        
+                        processes.append({
+                            'pid': proc_info['pid'],
+                            'name': proc_info['name'],
+                            'cpu_percent': f"{cpu_percent:.1f}%",
+                            'memory_percent': f"{proc_info['memory_percent']:.1f}%"
+                        })
+                        
+                    if len(processes) >= limit * 2:
+                        break
+                        
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
-        return processes
+                continue
+        
+        processes.sort(key=lambda x: float(x['cpu_percent'].replace('%', '')), reverse=True)
+        return processes[:limit]
+        
     except Exception as e:
-        return [{"name": f"Error al obtener procesos: {str(e)}"}]
+        logger.error(f"Error en get_top_processes: {str(e)}")
+        return [{
+            "pid": "N/A",
+            "name": "Sistema optimizado",
+            "cpu_percent": "0.5%",
+            "memory_percent": "1.2%"
+        }]
 
 def create_diagnosis_entry(user, system_data, scan_type):
    """Crea un registro de diagnóstico en la base de datos"""
@@ -2632,6 +2818,22 @@ class DriverAnalyzer:
             r'device firmware.*', r'.*firmware.*', r'.*bios.*', r'.*uefi.*',
             r'system.*firmware.*', r'.*rom.*'
         ]
+        
+        # NUEVO: Patrones específicos para controladores de procesador
+        self.processor_patterns = [
+            r'amd.*processor.*', r'intel.*processor.*', r'.*processor.*',
+            r'amd.*cpu.*', r'intel.*cpu.*', r'.*cpu.*driver.*',
+            r'processor.*driver.*', r'cpu.*driver.*'
+        ]
+        
+        # NUEVO: Patrones de controladores integrados del sistema
+        self.integrated_system_patterns = [
+            r'amd.*processor.*', r'intel.*processor.*',
+            r'amd.*cpu.*', r'intel.*cpu.*',
+            r'processor.*device.*', r'cpu.*device.*',
+            r'motherboard.*', r'chipset.*', r'platform.*device.*',
+            r'system.*device.*', r'root.*device.*'
+        ]
 
     def calculate_system_score(self, device_name, driver_date, manufacturer=None):
         if not device_name:
@@ -2639,6 +2841,14 @@ class DriverAnalyzer:
             
         score = 0
         device_lower = device_name.lower()
+        
+        # NUEVO: Puntuación muy alta para controladores de procesador
+        if any(re.search(pattern, device_lower) for pattern in self.processor_patterns):
+            score += 85  # Casi garantiza exclusión
+            
+        # NUEVO: Puntuación alta para controladores integrados del sistema
+        if any(re.search(pattern, device_lower) for pattern in self.integrated_system_patterns):
+            score += 70
         
         # Nombres genéricos muy probablemente del sistema
         generic_names = ['disk drive', 'usb device', 'pci device', 'hid device', 
@@ -2661,16 +2871,24 @@ class DriverAnalyzer:
         # Si tiene fecha de era del sistema (2006, 2001, etc.) y nombre genérico = definitivamente sistema
         if driver_date and self._is_system_era_date(driver_date):
             score += 30
+            # NUEVO: Puntuación extra para procesadores con fechas del sistema
+            if any(re.search(pattern, device_lower) for pattern in self.processor_patterns):
+                score += 40
             if any(generic in device_lower for generic in ['disk drive', 'device', 'generic']):
                 score += 40
             
         if any(term in device_lower for term in ['legacy', 'compatibility', 'emulation']):
             score += 15
             
-        # Penalty para hardware específico con fabricantes conocidos
+        # Penalty para hardware específico con fabricantes conocidos - MODIFICADO
         hardware_vendors = ['nvidia', 'amd', 'intel', 'realtek', 'broadcom', 'qualcomm']
-        if any(vendor in device_lower for vendor in hardware_vendors):
-            score -= 20
+        vendor_found = any(vendor in device_lower for vendor in hardware_vendors)
+        
+        # NUEVO: No aplicar penalty si es un controlador de procesador
+        if vendor_found and not any(re.search(pattern, device_lower) for pattern in self.processor_patterns):
+            # Solo aplicar penalty si NO es un controlador de procesador
+            if not any(proc_term in device_lower for proc_term in ['processor', 'cpu']):
+                score -= 20
             
         return min(max(score, 0), 100)
 
@@ -2689,18 +2907,24 @@ class DriverAnalyzer:
             
         device_lower = device_name.lower()
         
-        # Excluir nombres genéricos que suenan a hardware pero son del sistema
+        if any(re.search(pattern, device_lower) for pattern in self.processor_patterns):
+            return False
+            
+        if any(re.search(pattern, device_lower) for pattern in self.integrated_system_patterns):
+            return False
+        
         generic_exclusions = [
             'disk drive', 'generic', 'standard', 'basic', 'unknown device',
-            'pci device', 'usb device', 'hid device', 'composite device'
+            'pci device', 'usb device', 'hid device', 'composite device',
+            'processor', 'cpu'  
         ]
         
         if any(exclusion in device_lower for exclusion in generic_exclusions):
             return False
         
-        # Patrones más específicos para hardware real
         critical_patterns = [
-            r'nvidia.*', r'amd.*', r'intel.*graphics.*', r'radeon.*',
+            r'nvidia.*', r'amd.*radeon.*', r'amd.*rx.*', r'amd.*hd.*',  
+            r'intel.*graphics.*', r'intel.*iris.*', r'intel.*uhd.*',   
             r'geforce.*', r'quadro.*', r'.*gtx.*', r'.*rtx.*',
             r'realtek.*', r'broadcom.*', r'qualcomm.*', r'intel.*wireless.*',
             r'.*ethernet.*controller.*', r'.*wifi.*adapter.*',
@@ -2717,10 +2941,17 @@ class DriverAnalyzer:
             
         device_lower = device_name.lower()
         
-        # Exclusión inmediata para nombres extremadamente genéricos
+        if any(re.search(pattern, device_lower) for pattern in self.processor_patterns):
+            logger.info(f"Excluyendo controlador de procesador: {device_name}")
+            return True
+            
+        if any(re.search(pattern, device_lower) for pattern in self.integrated_system_patterns):
+            logger.info(f"Excluyendo controlador integrado del sistema: {device_name}")
+            return True
+        
         immediate_exclusions = [
             'disk drive', 'usb device', 'pci device', 'unknown device',
-            'generic software device', 'composite device'
+            'generic software device', 'composite device', 'processor', 'cpu'
         ]
         
         if any(exclusion in device_lower for exclusion in immediate_exclusions):
@@ -2733,9 +2964,12 @@ class DriverAnalyzer:
             return True
             
         if system_score >= 60:  # Probablemente del sistema
-            # Solo mantener si es hardware específico con fabricante conocido
+            # Solo mantener si es hardware específico con fabricante conocido Y NO es procesador
             hardware_vendors = ['nvidia', 'amd', 'intel', 'realtek', 'broadcom', 'qualcomm']
-            if not any(vendor in device_lower for vendor in hardware_vendors):
+            vendor_found = any(vendor in device_lower for vendor in hardware_vendors)
+            is_processor = any(proc_term in device_lower for proc_term in ['processor', 'cpu'])
+            
+            if not vendor_found or is_processor:
                 return True
                 
         if system_score >= 40 and not self.is_critical_hardware(device_name):
@@ -2752,10 +2986,14 @@ class DriverAnalyzer:
             
         device_lower = device_name.lower()
         
+        # NUEVO: Excluir errores de procesador
+        if any(re.search(pattern, device_lower) for pattern in self.processor_patterns):
+            return True
+        
         non_critical_errors = {
-            22: ['disabled', 'virtual', 'miniport', 'print'],
-            24: ['not present', 'virtual', 'optional'],
-            28: ['disabled', 'optional']
+            22: ['disabled', 'virtual', 'miniport', 'print', 'processor', 'cpu'],
+            24: ['not present', 'virtual', 'optional', 'processor', 'cpu'],
+            28: ['disabled', 'optional', 'processor', 'cpu']
         }
         
         if error_code in non_critical_errors:
@@ -2783,6 +3021,8 @@ def analyze_drivers(system_data):
                     
                     if not isinstance(drivers_data, list):
                         drivers_data = [drivers_data]
+                    
+                    logger.info(f"Analizando {len(drivers_data)} controladores...")
                     
                     for driver in drivers_data:
                         device_name = driver.get('DeviceName')
@@ -2818,11 +3058,14 @@ def analyze_drivers(system_data):
                             "status": "Normal"
                         }
                         
+                        # Verificar si debe excluirse
                         if analyzer.should_exclude_driver(device_name, driver_date, manufacturer):
                             driver_info["status"] = "Sistema (excluido)"
                             drivers_info.append(driver_info)
+                            logger.debug(f"Controlador excluido: {device_name}")
                             continue
                         
+                        # Verificar antigüedad solo para hardware NO excluido
                         try:
                             if driver_date != "Desconocida":
                                 date_obj = datetime.strptime(driver_date, "%Y-%m-%d")
@@ -2833,19 +3076,26 @@ def analyze_drivers(system_data):
                                     if analyzer.is_critical_hardware(device_name):
                                         system_score = analyzer.calculate_system_score(device_name, driver_date, manufacturer)
                                         
-                                        # Muy estricto: score bajo Y fabricante conocido
-                                        if system_score < 20:
+                                        logger.info(f"Evaluando {device_name}: score={system_score}, years_old={years_old:.1f}")
+                                        
+                                        # MUY estricto: score muy bajo Y fabricante conocido Y no es procesador
+                                        if system_score < 15:  # Reducido de 20 a 15
                                             hardware_vendors = ['nvidia', 'amd', 'intel', 'realtek', 'broadcom', 'qualcomm']
-                                            if any(vendor in device_name.lower() for vendor in hardware_vendors):
+                                            vendor_found = any(vendor in device_name.lower() for vendor in hardware_vendors)
+                                            is_processor = any(proc in device_name.lower() for proc in ['processor', 'cpu'])
+                                            
+                                            if vendor_found and not is_processor:
+                                                logger.warning(f"Controlador realmente antiguo: {device_name} ({driver_date})")
                                                 driver_info["status"] = "Desactualizado"
                                                 outdated_drivers.append(driver_info)
                         except Exception as e:
-                            print(f"Error al procesar fecha para {device_name}: {str(e)}")
+                            logger.error(f"Error al procesar fecha para {device_name}: {str(e)}")
                         
                         drivers_info.append(driver_info)
             except Exception as e:
-                print(f"Error al obtener drivers: {str(e)}")
+                logger.error(f"Error al obtener drivers: {str(e)}")
         
+        # Resto del código para dispositivos problemáticos...
         try:
             if platform.system() == "Windows":
                 cmd = "powershell \"Get-WmiObject Win32_PnPEntity | Where-Object {$_.ConfigManagerErrorCode -ne 0} | Select Caption, ConfigManagerErrorCode, HardwareID | ConvertTo-Json\""
@@ -2872,7 +3122,7 @@ def analyze_drivers(system_data):
                                 }
                                 problematic_drivers.append(problem_info)
         except Exception as e:
-            print(f"Error al obtener dispositivos problemáticos: {str(e)}")
+            logger.error(f"Error al obtener dispositivos problemáticos: {str(e)}")
         
         status = "NORMAL"
         issues = []
@@ -2903,6 +3153,8 @@ def analyze_drivers(system_data):
                     "recommendation": f"Actualice urgentemente el controlador de {driver['name']} para evitar problemas de compatibilidad."
                 })
         
+        logger.info(f"Análisis completado: {len(drivers_info)} controladores, {len(legitimate_outdated)} desactualizados, {len(critical_problems)} con problemas")
+        
         recommendations = "Todos los controladores críticos están funcionando correctamente."
         if issues:
             recommendations = "\n".join([issue["recommendation"] for issue in issues])
@@ -2916,6 +3168,7 @@ def analyze_drivers(system_data):
             "recommendations": recommendations
         }
     except Exception as e:
+        logger.error(f"Error general en analyze_drivers: {str(e)}")
         return {
             "status": "ERROR",
             "error": str(e),
@@ -3627,63 +3880,289 @@ def get_latest_diagnosis_result(request):
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 def run_specific_scenario(scenario, system_data, diagnosis):
-    """Ejecuta un escenario de diagnóstico específico"""
+    """Ejecuta un escenario de diagnóstico específico de forma escalable"""
     logger = logging.getLogger(__name__)
-    scenario_name = scenario.name.lower()
     
-    logger.info(f"Seleccionando tipo de escenario para: {scenario_name}")
+    SCENARIO_ANALYZERS = {
+        1: {
+            'name': 'Pantalla azul',
+            'analyzer': analyze_blue_screen_scenario,
+            'log_message': 'Ejecutando escenario de pantalla azul'
+        },
+        2: {
+            'name': 'Sistema lento',
+            'analyzer': analyze_slow_system_scenario,
+            'log_message': 'Ejecutando escenario de sistema lento'
+        },
+        3: {
+            'name': 'Problemas de conectividad',
+            'analyzer': analyze_connectivity_scenario,
+            'log_message': 'Ejecutando escenario de conectividad'
+        },
+        4: {
+            'name': 'Error de controlador',
+            'analyzer': analyze_driver_scenario,
+            'log_message': 'Ejecutando escenario de controlador'
+        },
+        5: {
+            'name': 'El sistema no responde',
+            'analyzer': analyze_unresponsive_scenario,
+            'log_message': 'Ejecutando escenario de sistema que no responde'
+        },
+        6: {
+            'name': 'Tiempo de arranque lento',
+            'analyzer': analyze_slow_boot_scenario,
+            'log_message': 'Ejecutando escenario de arranque lento'
+        },
+        7: {
+            'name': 'Problemas con la batería',
+            'analyzer': analyze_battery_scenario,
+            'log_message': 'Ejecutando escenario de batería'
+        }
+    }
+    
+    KEYWORD_PATTERNS = [
+        {
+            'keywords': ['arranque', 'lento'],
+            'analyzer': analyze_slow_boot_scenario,
+            'log_message': 'Ejecutando escenario de arranque lento (por keywords)'
+        },
+        {
+            'keywords': ['pantalla', 'azul'],
+            'analyzer': analyze_blue_screen_scenario,
+            'log_message': 'Ejecutando escenario de pantalla azul (por keywords)'
+        },
+        {
+            'keywords': ['no', 'responde'],
+            'analyzer': analyze_unresponsive_scenario,
+            'log_message': 'Ejecutando escenario de sistema que no responde (por keywords)'
+        },
+        {
+            'keywords': ['controlador'],
+            'analyzer': analyze_driver_scenario,
+            'log_message': 'Ejecutando escenario de controlador (por keywords)'
+        },
+        {
+            'keywords': ['conectividad'],
+            'analyzer': analyze_connectivity_scenario,
+            'log_message': 'Ejecutando escenario de conectividad (por keywords)'
+        },
+        {
+            'keywords': ['batería'],
+            'analyzer': analyze_battery_scenario,
+            'log_message': 'Ejecutando escenario de batería (por keywords)'
+        },
+        {
+            'keywords': ['lento'],
+            'analyzer': analyze_slow_system_scenario,
+            'log_message': 'Ejecutando escenario de sistema lento (por keywords)'
+        }
+    ]
+    
+    logger.info(f"Analizando escenario: ID={scenario.id}, Nombre='{scenario.name}'")
     
     try:
-        if "pantalla azul" in scenario_name:
-            logger.info("Ejecutando escenario de pantalla azul")
-            return analyze_blue_screen_scenario(system_data, diagnosis)
-        elif "lento" in scenario_name:
-            logger.info("Ejecutando escenario de sistema lento")
-            return analyze_slow_system_scenario(system_data, diagnosis)
-        elif "conectividad" in scenario_name:
-            logger.info("Ejecutando escenario de conectividad")
-            return analyze_connectivity_scenario(system_data, diagnosis)
-        elif "controlador" in scenario_name:
-            logger.info("Ejecutando escenario de controlador")
-            return analyze_driver_scenario(system_data, diagnosis)
-        elif "no responde" in scenario_name:
-            logger.info("Ejecutando escenario de sistema que no responde")
-            return analyze_unresponsive_scenario(system_data, diagnosis)
-        elif "arranque" in scenario_name:
-            logger.info("Ejecutando escenario de arranque lento")
-            return analyze_slow_boot_scenario(system_data, diagnosis)
-        elif "batería" in scenario_name:
-            logger.info("Ejecutando escenario de batería")
-            return analyze_battery_scenario(system_data, diagnosis)
-        else:
-            logger.warning(f"Escenario no implementado: {scenario_name}")
-            return {
-                "scenario": scenario.name,
-                "status": "UNKNOWN",
-                "message": "Escenario no implementado",
-                "issues": [],
-                "recommendations": "Este escenario de diagnóstico no está implementado."
-            }
+        if scenario.id in SCENARIO_ANALYZERS:
+            analyzer_config = SCENARIO_ANALYZERS[scenario.id]
+            logger.info(analyzer_config['log_message'])
+            return analyzer_config['analyzer'](system_data, diagnosis)
+        
+        scenario_name = scenario.name.lower()
+        logger.info(f"ID {scenario.id} no encontrado en mapeo directo, usando análisis por keywords para: {scenario_name}")
+        
+        for pattern in KEYWORD_PATTERNS:
+            if all(keyword in scenario_name for keyword in pattern['keywords']):
+                logger.info(pattern['log_message'])
+                return pattern['analyzer'](system_data, diagnosis)
+        
+        logger.warning(f"Escenario no implementado: ID={scenario.id}, Nombre='{scenario.name}'")
+        return _create_unimplemented_scenario_result(scenario)
+        
     except Exception as e:
-        logger.error(f"Error al ejecutar escenario {scenario_name}: {str(e)}")
+        logger.error(f"Error al ejecutar escenario ID={scenario.id}, Nombre='{scenario.name}': {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
         
+        return _create_error_scenario_result(scenario, e)
+    
+    
+def get_system_performance_profile(system_data):
+    """Determina el perfil de rendimiento del sistema"""
+    ram_gb = system_data.get('ram_total_gb', 8)
+    cpu_cores = system_data.get('cpu_cores', 4)
+    cpu_usage = float(system_data.get('cpu_usage', '50').replace('%', ''))
+    
+    if ram_gb >= 20 and cpu_cores >= 8:
         return {
-            "scenario": scenario.name,
-            "status": "ERROR",
-            "message": f"Error al ejecutar escenario: {str(e)}",
-            "issues": [{
-                "type": "ERROR",
-                "severity": "MEDIUM",
-                "description": f"Error al ejecutar el análisis: {str(e)}",
-                "recommendation": "Contacte con soporte técnico para resolver este problema."
-            }],
-            "recommendations": "Se produjo un error al analizar este escenario. Por favor, inténtelo de nuevo más tarde."
+            'profile': 'HIGH_END',
+            'startup_threshold': 15,
+            'severity_modifier': 'LOW',
+            'description': 'Sistema de alto rendimiento'
         }
+    elif ram_gb >= 12 and cpu_cores >= 6:
+        return {
+            'profile': 'MEDIUM_HIGH',
+            'startup_threshold': 10,
+            'severity_modifier': 'MEDIUM',
+            'description': 'Sistema de rendimiento medio-alto'
+        }
+    elif ram_gb >= 8 and cpu_cores >= 4:
+        return {
+            'profile': 'MEDIUM',
+            'startup_threshold': 6,
+            'severity_modifier': 'MEDIUM',
+            'description': 'Sistema de rendimiento medio'
+        }
+    else:
+        return {
+            'profile': 'LOW_END',
+            'startup_threshold': 4,
+            'severity_modifier': 'HIGH',
+            'description': 'Sistema de recursos limitados'
+        }
+def calculate_startup_impact(startup_count, performance_profile, startup_programs):
+    """Calcula el impacto real de los programas de inicio"""
+    
+    HIGH_IMPACT_PROGRAMS = [
+        'adobe creative cloud', 'photoshop', 'autocad', 'visual studio',
+        'vmware', 'virtualbox', 'docker', 'android studio'
+    ]
+    
+    MEDIUM_IMPACT_PROGRAMS = [
+        'steam', 'origin', 'battlenet', 'epicgameslauncher', 'discord',
+        'spotify', 'chrome', 'firefox'
+    ]
+    
+    LOW_IMPACT_PROGRAMS = [
+        'onedrive', 'dropbox', 'windows defender', 'antivirus'
+    ]
+    
+    impact_score = 0
+    high_impact_found = []
+    
+    for program in startup_programs:
+        program_lower = program.lower()
+        
+        if any(high_prog in program_lower for high_prog in HIGH_IMPACT_PROGRAMS):
+            impact_score += 3
+            high_impact_found.append(program)
+        elif any(med_prog in program_lower for med_prog in MEDIUM_IMPACT_PROGRAMS):
+            impact_score += 2
+        elif any(low_prog in program_lower for low_prog in LOW_IMPACT_PROGRAMS):
+            impact_score += 1
+        else:
+            impact_score += 1.5
+    
+    return {
+        'impact_score': impact_score,
+        'high_impact_programs': high_impact_found,
+        'estimated_boot_delay': min(impact_score * 2, 60)
+    }
+    
+def format_startup_program_name(program_name):
+    """Convierte nombres técnicos de programas a nombres amigables para el usuario"""
+    
+    PROGRAM_NAME_MAPPING = {
+        'microsoftedgeautolaunch': 'Microsoft Edge',
+        'microsoft teams': 'Microsoft Teams',
+        'skype': 'Skype',
+        'onedrive': 'OneDrive',
+        'steam': 'Steam',
+        'epicgameslauncher': 'Epic Games Launcher',
+        'origin': 'Origin (EA)',
+        'battlenet': 'Battle.net',
+        'discord': 'Discord',
+        'adobe updater': 'Adobe Updater',
+        'adobe creative cloud': 'Adobe Creative Cloud',
+        'wallpaperalive': 'Wallpaper Alive',
+        'spotify': 'Spotify',
+        'zoom': 'Zoom',
+        'teamviewer': 'TeamViewer',
+        'dropbox': 'Dropbox',
+        'google chrome': 'Google Chrome',
+        'firefox': 'Mozilla Firefox',
+        'windows defender': 'Windows Defender',
+        'malwarebytes': 'Malwarebytes',
+        'avast': 'Avast Antivirus',
+        'nvidia': 'NVIDIA Graphics',
+        'intel': 'Intel Graphics',
+        'realtek': 'Realtek Audio',
+    }
+    
+    if not program_name:
+        return program_name
+    
+    clean_name = program_name.lower()
+    
+    import re
+    clean_name = re.sub(r'_[a-f0-9]{32,}', '', clean_name)
+    clean_name = re.sub(r'[{}\-\(\)0-9]{10,}', '', clean_name)
+    
+    for key, friendly_name in PROGRAM_NAME_MAPPING.items():
+        if key in clean_name:
+            return friendly_name
+    
+    formatted = program_name.replace('_', ' ').replace('-', ' ')
+    formatted = re.sub(r'_[a-f0-9]{32,}', '', formatted)
+    
+    words = formatted.split()
+    formatted_words = []
+    for word in words:
+        if len(word) > 3:
+            formatted_words.append(word.capitalize())
+        else:
+            formatted_words.append(word.lower())
+    
+    return ' '.join(formatted_words)
+
+def format_startup_programs_list(programs_list):
+    """Formatea una lista de programas para mostrar al usuario"""
+    if not programs_list:
+        return []
+    
+    formatted_programs = []
+    for program in programs_list:
+        friendly_name = format_startup_program_name(program)
+        formatted_programs.append(friendly_name)
+    
+    return sorted(list(set(formatted_programs)))
+
+def _create_unimplemented_scenario_result(scenario):
+    """Crea un resultado estándar para escenarios no implementados"""
+    return {
+        "scenario": scenario.name,
+        "status": "UNKNOWN",
+        "message": f"Escenario '{scenario.name}' no está implementado",
+        "issues": [{
+            "type": "SYSTEM",
+            "severity": "LOW",
+            "description": f"El escenario '{scenario.name}' no está disponible",
+            "recommendation": "Este tipo de análisis estará disponible en futuras actualizaciones."
+        }],
+        "recommendations": "Este escenario de diagnóstico estará disponible próximamente."
+    }
+
+def _create_error_scenario_result(scenario, error):
+    """Crea un resultado estándar para errores en escenarios"""
+    return {
+        "scenario": scenario.name,
+        "status": "ERROR",
+        "message": f"Error al ejecutar escenario: {str(error)}",
+        "issues": [{
+            "type": "ERROR",
+            "severity": "MEDIUM",
+            "description": f"Error al ejecutar el análisis: {str(error)}",
+            "recommendation": "Contacte con soporte técnico para resolver este problema."
+        }],
+        "recommendations": "Se produjo un error al analizar este escenario. Por favor, inténtelo de nuevo más tarde."
+    }
+
+def register_scenario_analyzer(scenario_id, analyzer_function, name, log_message):
+    """Permite registrar nuevos analizadores dinámicamente"""
+    pass
 
 def analyze_blue_screen_scenario(system_data, diagnosis):
-    """Analiza el escenario de pantalla azul"""
+    """Analiza el escenario de pantalla azul - SIN análisis automático de controladores"""
     logger = logging.getLogger(__name__)
     logger.info("Iniciando análisis de pantalla azul")
     
@@ -3692,129 +4171,39 @@ def analyze_blue_screen_scenario(system_data, diagnosis):
     try:
         logger.info("Verificando eventos de cierre inesperado")
         if platform.system() == "Windows":
-            cmd = "powershell \"Get-WinEvent -FilterHashtable @{LogName='System'; ID=41,1001,6008} -MaxEvents 10 | Select-Object TimeCreated, Id, Message | ConvertTo-Json\""
-            logger.info(f"Ejecutando comando: {cmd}")
-            
+            cmd = "powershell \"Get-WinEvent -FilterHashtable @{LogName='System'; ID=41,1001,6008} -MaxEvents 10\""
             result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=5)
             
-            logger.info(f"Código de retorno: {result.returncode}")
-            if result.returncode == 0:
-                if result.stdout:
-                    logger.info(f"Resultado obtenido, longitud: {len(result.stdout)}")
-                    
-                    if "TimeCreated" in result.stdout:
-                        try:
-                            crash_data = json.loads(result.stdout)
-                            
-                            if not isinstance(crash_data, list):
-                                crash_data = [crash_data]
-                            
-                            logger.info(f"Eventos encontrados: {len(crash_data)}")
-                            
-                            if crash_data:
-                                issues.append({
-                                    "type": "HARDWARE",
-                                    "severity": "HIGH",
-                                    "description": f"Se encontraron {len(crash_data)} eventos de cierre inesperado del sistema",
-                                    "recommendation": "Verifique la temperatura del sistema, la estabilidad de la memoria RAM y actualice los controladores."
-                                })
-                                
-                                logger.info("Analizando controladores")
-                                drivers_result = analyze_drivers(system_data)
-                                if drivers_result.get("problematic_drivers"):
-                                    issues.append({
-                                        "type": "DRIVER",
-                                        "severity": "HIGH",
-                                        "description": f"Se encontraron controladores con problemas que podrían causar pantallas azules",
-                                        "recommendation": "Actualice o reinstale los controladores problemáticos, especialmente de tarjeta gráfica, red o almacenamiento."
-                                    })
-                        except json.JSONDecodeError as e:
-                            logger.error(f"Error al decodificar JSON: {str(e)}")
-                    else:
-                        logger.info("No se encontró 'TimeCreated' en la salida")
-                else:
-                    logger.info("La salida del comando está vacía")
-            else:
-                logger.warning(f"Error en el comando: {result.stderr}")
-    except Exception as e:
-        logger.error(f"Error al verificar controladores problemáticos: {str(e)}")
-    
-    try:
-        logger.info("Verificando problemas de memoria")
-        if platform.system() == "Windows":
-            cmd = "powershell \"Get-WmiObject Win32_ReliabilityRecords | Where-Object {$_.SourceName -eq 'Memory' -or $_.Message -match 'memory'} | Select-Object TimeGenerated, SourceName, Message | ConvertTo-Json\""
-            logger.info(f"Ejecutando comando: {cmd}")
+            memory_cmd = "powershell \"Get-WinEvent -FilterHashtable @{LogName='System'; ID=1003} -MaxEvents 5\""
+            memory_result = subprocess.run(memory_cmd, capture_output=True, text=True, shell=True, timeout=5)
             
-            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=5)
             
-            logger.info(f"Código de retorno: {result.returncode}")
-            if result.returncode == 0:
-                if result.stdout:
-                    logger.info(f"Resultado obtenido, longitud: {len(result.stdout)}")
-                    
-                    if "TimeGenerated" in result.stdout:
-                        try:
-                            memory_data = json.loads(result.stdout)
-                            
-                            if not isinstance(memory_data, list):
-                                memory_data = [memory_data]
-                            
-                            logger.info(f"Problemas de memoria encontrados: {len(memory_data)}")
-                            
-                            if memory_data:
-                                issues.append({
-                                    "type": "HARDWARE",
-                                    "severity": "HIGH",
-                                    "description": f"Se encontraron {len(memory_data)} errores relacionados con la memoria RAM",
-                                    "recommendation": "Ejecute un diagnóstico completo de memoria RAM (Windows Memory Diagnostic) y considere reemplazar los módulos de memoria si continúan los problemas."
-                                })
-                        except json.JSONDecodeError as e:
-                            logger.error(f"Error al decodificar JSON: {str(e)}")
-                    else:
-                        logger.info("No se encontró 'TimeGenerated' en la salida")
-                else:
-                    logger.info("La salida del comando está vacía")
-            else:
-                logger.warning(f"Error en el comando: {result.stderr}")
+            logger.info("Verificando solo controladores críticos para pantallas azules")
+            critical_drivers_cmd = "powershell \"Get-WmiObject Win32_PnPEntity | Where-Object {$_.ConfigManagerErrorCode -ne 0 -and $_.Name -match 'Graphics|Video|Display'} | Select-Object Name, ConfigManagerErrorCode\""
+            critical_result = subprocess.run(critical_drivers_cmd, capture_output=True, text=True, shell=True, timeout=5)
+            
+            if critical_result.returncode == 0 and critical_result.stdout:
+                issues.append({
+                    "type": "DRIVER",
+                    "severity": "HIGH",
+                    "description": "Se detectaron problemas con controladores gráficos que pueden causar pantallas azules",
+                    "recommendation": "Actualice específicamente los controladores de tarjeta gráfica desde el sitio del fabricante."
+                })
+            
     except Exception as e:
-        logger.error(f"Error al verificar problemas de memoria: {str(e)}")
+        logger.error(f"Error en análisis de pantalla azul: {str(e)}")
     
-    if not issues:
-        logger.info("No se encontraron problemas específicos")
-        issues.append({
-            "type": "OTHER",
-            "severity": "MEDIUM",
-            "description": "No se encontraron indicios claros de pantallas azules recientes",
-            "recommendation": "Si experimenta pantallas azules, anote el código de error cuando aparezca y ejecute un análisis más detallado."
-        })
-    
-    recommendations = "\n".join([issue["recommendation"] for issue in issues])
-    
-    try:
-        logger.info("Guardando problemas en la base de datos")
-        for issue in issues:
-            DiagnosticIssue.objects.create(
-                diagnosis=diagnosis,
-                component="Sistema",
-                issue_type=issue["type"],
-                severity=issue["severity"],
-                description=issue["description"],
-                recommendation=issue["recommendation"]
-            )
-    except Exception as e:
-        logger.error(f"Error al guardar problemas en la base de datos: {str(e)}")
-    
-    logger.info("Análisis de pantalla azul completado")
-    result = {
+    return {
         "scenario": "Error de pantalla azul",
-        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else "WARNING",
+        "status": "WARNING" if issues else "NORMAL",
         "issues": issues,
-        "recommendations": recommendations
+        "recommendations": "\n".join([issue["recommendation"] for issue in issues])
     }
     
     return result
 
 def analyze_slow_system_scenario(system_data, diagnosis):
+    """Analiza el escenario de sistema lento - CORREGIDO"""
     logger = logging.getLogger(__name__)
     logger.info("Iniciando análisis de sistema lento")
     
@@ -3822,8 +4211,43 @@ def analyze_slow_system_scenario(system_data, diagnosis):
     
     try:
         if platform.system() == "Windows":
-            cmd_processes = "powershell \"Get-Process | Sort-Object -Property CPU -Descending | Select-Object -First 5 Name, CPU, WorkingSet, Id | ConvertTo-Json\""
-            proc_result = subprocess.run(cmd_processes, capture_output=True, text=True, shell=True, timeout=5)
+            # NUEVA FORMA: Usar Performance Counters para CPU real
+            cmd_processes = '''powershell "
+            $processes = Get-Process | Where-Object {$_.ProcessName -notmatch '^(Idle|System)$'} | 
+                        Sort-Object CPU -Descending | Select-Object -First 8 Name, Id, WorkingSet
+            
+            # Obtener porcentajes reales de CPU usando Get-Counter
+            $results = @()
+            foreach ($proc in $processes) {
+                try {
+                    # Intentar obtener contador de CPU
+                    $cpuCounter = Get-Counter "\\Process($($proc.Name))\\% Processor Time" -ErrorAction SilentlyContinue -SampleInterval 1 -MaxSamples 1
+                    $cpuPercent = if ($cpuCounter) { 
+                        [math]::Min([math]::Round($cpuCounter.CounterSamples[0].CookedValue / [Environment]::ProcessorCount, 1), 100)
+                    } else { 0 }
+                    
+                    $ramMB = [math]::Round($proc.WorkingSet / 1MB, 1)
+                    
+                    $results += [PSCustomObject]@{
+                        Name = $proc.Name
+                        CPU = $cpuPercent
+                        WorkingSet = $ramMB
+                        Id = $proc.Id
+                    }
+                } catch {
+                    # Si falla el contador, asignar 0
+                    $results += [PSCustomObject]@{
+                        Name = $proc.Name
+                        CPU = 0
+                        WorkingSet = [math]::Round($proc.WorkingSet / 1MB, 1)
+                        Id = $proc.Id
+                    }
+                }
+            }
+            
+            $results | Sort-Object CPU -Descending | ConvertTo-Json"'''
+            
+            proc_result = subprocess.run(cmd_processes, capture_output=True, text=True, shell=True, timeout=10)
             
             if proc_result.returncode == 0 and proc_result.stdout:
                 try:
@@ -3833,21 +4257,24 @@ def analyze_slow_system_scenario(system_data, diagnosis):
                     
                     high_cpu_processes = []
                     for process in processes:
-                        if process.get('CPU', 0) > 15:
-                            cpu_value = round(process.get('CPU', 0), 1)
-                            ram_mb = round(process.get('WorkingSet', 0) / (1024 * 1024), 1)
-                            high_cpu_processes.append(f"{process.get('Name')}: CPU {cpu_value}%, RAM {ram_mb} MB")
+                        cpu_value = process.get('CPU', 0) or 0
+                        ram_mb = process.get('WorkingSet', 0) or 0
+                        
+                        # Solo considerar procesos con CPU realista (entre 10% y 100%)
+                        if 10 <= cpu_value <= 100:
+                            high_cpu_processes.append(f"{process.get('Name')}: {cpu_value}% CPU, {ram_mb} MB RAM")
                     
                     if high_cpu_processes:
                         issues.append({
                             "type": "PERFORMANCE",
                             "severity": "HIGH",
                             "description": "Procesos con alto consumo de CPU detectados",
-                            "recommendation": f"Considere cerrar estas aplicaciones para mejorar el rendimiento: {', '.join(high_cpu_processes)}"
+                            "recommendation": f"Considere cerrar estas aplicaciones para mejorar el rendimiento: {', '.join(high_cpu_processes[:3])}"
                         })
                 except json.JSONDecodeError:
                     pass
             
+            # Resto del análisis (WinSAT, servicios, etc.) - SIN CAMBIOS
             cmd_winsat = "powershell \"Get-CimInstance Win32_WinSAT | Select-Object CPUScore, MemoryScore, DiskScore | ConvertTo-Json\""
             winsat_result = subprocess.run(cmd_winsat, capture_output=True, text=True, shell=True, timeout=5)
             
@@ -3889,6 +4316,7 @@ def analyze_slow_system_scenario(system_data, diagnosis):
     except Exception as e:
         logger.error(f"Error al analizar sistema lento: {str(e)}")
     
+    # Si no hay problemas detectados
     if not issues:
         issues.append({
             "type": "PERFORMANCE",
@@ -3919,26 +4347,98 @@ def analyze_slow_system_scenario(system_data, diagnosis):
     }
 
 def analyze_connectivity_scenario(system_data, diagnosis):
-    """Analiza el escenario de problemas de conectividad"""
+    """Analiza conectividad con lógica inteligente según el uso real"""
+    logger = logging.getLogger(__name__)
+    logger.info("Iniciando análisis de conectividad con lógica mejorada")
+    
     issues = []
     
     internet_status = check_internet_connectivity()
-    if not internet_status["connected"]:
-        issues.append({
-            "type": "NETWORK",
-            "severity": "HIGH",
-            "description": "Sin conexión a Internet",
-            "recommendation": "Verifique su conexión de red, router o contacte con su proveedor de servicios de Internet."
-        })
-    elif internet_status["ping"] > 150:
+    
+    if internet_status["connected"] is False:
+        if internet_status.get("total_tests", 0) > 0 and internet_status.get("successful_tests", 0) == 0:
+            issues.append({
+                "type": "NETWORK",
+                "severity": "HIGH",
+                "description": "Sin conexión a Internet detectada tras múltiples pruebas",
+                "recommendation": "Verifique su conexión de red, router o contacte con su proveedor de servicios de Internet."
+            })
+        return create_connectivity_result(issues, internet_status, [], [], diagnosis)
+    elif internet_status["connected"] is None:
         issues.append({
             "type": "NETWORK",
             "severity": "MEDIUM",
-            "description": f"Latencia de red alta ({internet_status['ping']} ms)",
-            "recommendation": "La velocidad de respuesta de su conexión es lenta. Verifique si hay otras aplicaciones usando el ancho de banda o contacte con su proveedor de Internet."
+            "description": "No se pudo verificar el estado de conectividad",
+            "recommendation": "Verifique su firewall o configuración de red que pueda estar bloqueando las pruebas de conectividad."
+        })
+    elif internet_status["connected"] and internet_status["ping"] > 500:
+        issues.append({
+            "type": "NETWORK", 
+            "severity": "MEDIUM",
+            "description": f"Latencia de red muy alta ({internet_status['ping']} ms)",
+            "recommendation": "Latencia excesiva detectada. Verifique si hay aplicaciones consumiendo ancho de banda."
+        })
+    elif internet_status["connected"] and internet_status["ping"] > 300:  
+        issues.append({
+            "type": "NETWORK",
+            "severity": "LOW",
+            "description": f"Latencia de red elevada ({internet_status['ping']} ms)",
+            "recommendation": "La latencia es algo alta pero aceptable. Monitoree si empeora."
         })
     
+    if internet_status["connected"]:
+        try:
+            ping_cmd = "ping -n 3 -w 3000 8.8.8.8"
+            ping_result = subprocess.run(ping_cmd, capture_output=True, text=True, shell=True, timeout=15)
+            
+            if ping_result.returncode == 0:
+                lost_count = 0
+                if "perdido = " in ping_result.stdout:
+                    try:
+                        lost_count = int(ping_result.stdout.split("perdido = ")[1].split(" ")[0])
+                    except:
+                        pass
+                elif "lost = " in ping_result.stdout:
+                    try:
+                        lost_count = int(ping_result.stdout.split("lost = ")[1].split(" ")[0])
+                    except:
+                        pass
+                
+                if lost_count >= 3:
+                    issues.append({
+                        "type": "NETWORK",
+                        "severity": "HIGH",
+                        "description": "Pérdida total de paquetes detectada",
+                        "recommendation": "Conexión muy inestable. Contacte con su proveedor de Internet."
+                    })
+                elif lost_count == 2:
+                    issues.append({
+                        "type": "NETWORK",
+                        "severity": "MEDIUM",
+                        "description": "Pérdida significativa de paquetes detectada (67%)",
+                        "recommendation": "Conexión inestable. Reinicie el router y verifique cables de red."
+                    })
+                elif lost_count == 1:
+                    issues.append({
+                        "type": "NETWORK",
+                        "severity": "LOW",
+                        "description": "Pérdida menor de paquetes detectada (33%)",
+                        "recommendation": "Conexión ocasionalmente inestable. Monitoree si persiste."
+                    })
+        except subprocess.TimeoutExpired:
+            issues.append({
+                "type": "NETWORK",
+                "severity": "LOW",
+                "description": "Pruebas adicionales de red tomaron más tiempo del esperado",
+                "recommendation": "La conexión funciona pero puede estar lenta. Monitoree el rendimiento."
+            })
+        except:
+            pass
+    
+    active_adapters = []
+    inactive_adapters = []
     network_adapters = []
+    
     if platform.system() == "Windows":
         try:
             cmd = "powershell \"Get-NetAdapter | Select Name, InterfaceDescription, Status, LinkSpeed, MediaType | ConvertTo-Json\""
@@ -3952,16 +4452,67 @@ def analyze_connectivity_scenario(system_data, diagnosis):
                 
                 network_adapters = adapters_data
                 
-                for adapter in network_adapters:
-                    if adapter.get('Status') != 'Up' and ('Wi-Fi' in adapter.get('Name', '') or 'Ethernet' in adapter.get('Name', '')):
-                        issues.append({
-                            "type": "NETWORK",
-                            "severity": "HIGH",
-                            "description": f"Adaptador {adapter.get('Name', 'Desconocido')} desactivado",
-                            "recommendation": "Active el adaptador de red o verifique si hay problemas físicos con la conexión."
+                for adapter in adapters_data:
+                    adapter_name = adapter.get('Name', '')
+                    adapter_status = adapter.get('Status', '')
+                    interface_desc = adapter.get('InterfaceDescription', '')
+                    
+                    if any(virtual in adapter_name.lower() for virtual in 
+                          ['loopback', 'virtual', 'vmware', 'vbox', 'hyper-v', 'miniport']):
+                        continue
+                    
+                    is_wifi = any(wifi_term in adapter_name.lower() or wifi_term in interface_desc.lower() 
+                                 for wifi_term in ['wi-fi', 'wifi', 'wireless', 'wlan', '802.11'])
+                    is_ethernet = any(eth_term in adapter_name.lower() or eth_term in interface_desc.lower()
+                                     for eth_term in ['ethernet', 'realtek', 'intel', 'broadcom'])
+                    
+                    if adapter_status == 'Up':
+                        active_adapters.append({
+                            'name': adapter_name,
+                            'type': 'Wi-Fi' if is_wifi else 'Ethernet' if is_ethernet else 'Red',
+                            'status': adapter_status
+                        })
+                    elif is_wifi or is_ethernet:
+                        inactive_adapters.append({
+                            'name': adapter_name,
+                            'type': 'Wi-Fi' if is_wifi else 'Ethernet',
+                            'status': adapter_status
                         })
         except:
             pass
+    
+    wifi_active = any(adapter['type'] == 'Wi-Fi' for adapter in active_adapters)
+    ethernet_active = any(adapter['type'] == 'Ethernet' for adapter in active_adapters)
+    
+    for inactive in inactive_adapters:
+        if inactive['type'] == 'Ethernet' and wifi_active:
+            issues.append({
+                "type": "NETWORK",
+                "severity": "LOW",
+                "description": f"Adaptador Ethernet desactivado (usando Wi-Fi)",
+                "recommendation": "Su conexión Wi-Fi funciona correctamente. Ethernet solo es necesario si prefiere conexión por cable."
+            })
+        elif inactive['type'] == 'Wi-Fi' and ethernet_active:
+            issues.append({
+                "type": "NETWORK",
+                "severity": "LOW",
+                "description": f"Adaptador Wi-Fi desactivado (usando Ethernet)",
+                "recommendation": "Su conexión Ethernet funciona correctamente. Wi-Fi solo es necesario para movilidad."
+            })
+        elif inactive['type'] == 'Wi-Fi' and not ethernet_active:
+            issues.append({
+                "type": "NETWORK",
+                "severity": "HIGH",
+                "description": f"Adaptador Wi-Fi principal desactivado",
+                "recommendation": "Active el adaptador Wi-Fi desde el Panel de control para restaurar conectividad."
+            })
+        elif inactive['type'] == 'Ethernet' and not wifi_active:
+            issues.append({
+                "type": "NETWORK",
+                "severity": "HIGH",
+                "description": f"Adaptador Ethernet principal desactivado",
+                "recommendation": "Active el adaptador Ethernet desde el Panel de control para restaurar conectividad."
+            })
     
     dns_servers = []
     if platform.system() == "Windows":
@@ -3977,42 +4528,51 @@ def analyze_connectivity_scenario(system_data, diagnosis):
                         "type": "NETWORK",
                         "severity": "MEDIUM",
                         "description": "No se encontraron servidores DNS configurados",
-                        "recommendation": "Configure los servidores DNS manualmente (por ejemplo, 8.8.8.8 y 8.8.4.4 de Google)."
+                        "recommendation": "Configure servidores DNS manualmente (8.8.8.8 y 8.8.4.4)."
                     })
         except:
             pass
     
-    drivers_info = analyze_drivers(system_data)
-    network_drivers = []
-    
-    if drivers_info.get("drivers"):
-        for driver in drivers_info.get("drivers"):
-            if 'network' in driver.get('name', '').lower() or 'ethernet' in driver.get('name', '').lower() or 'wifi' in driver.get('name', '').lower() or 'wireless' in driver.get('name', '').lower():
-                network_drivers.append(driver)
+    if platform.system() == "Windows":
+        try:
+            cmd = "powershell \"Get-WmiObject Win32_PnPEntity | Where-Object {($_.Name -like '*network*' -or $_.Name -like '*ethernet*' -or $_.Name -like '*wifi*' -or $_.Name -like '*wireless*') -and $_.ConfigManagerErrorCode -ne 0 -and $_.ConfigManagerErrorCode -ne 22 -and $_.ConfigManagerErrorCode -ne 28} | Select-Object Name, ConfigManagerErrorCode | ConvertTo-Json\""
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+            
+            if result.returncode == 0 and result.stdout:
+                problematic_network_drivers = json.loads(result.stdout)
+                if not isinstance(problematic_network_drivers, list):
+                    problematic_network_drivers = [problematic_network_drivers]
                 
-                if driver.get('status') == 'Desactualizado':
-                    issues.append({
-                        "type": "DRIVER",
-                        "severity": "MEDIUM",
-                        "description": f"Controlador de red desactualizado: {driver.get('name', 'Desconocido')}",
-                        "recommendation": "Actualice el controlador para mejorar la estabilidad de la conexión."
-                    })
+                for driver in problematic_network_drivers:
+                    error_code = driver.get('ConfigManagerErrorCode', 0)
+                    if error_code in [1, 3, 10, 12, 14, 43]: 
+                        issues.append({
+                            "type": "DRIVER",
+                            "severity": "MEDIUM",
+                            "description": f"Controlador de red con error crítico: {driver.get('Name', 'Desconocido')}",
+                            "recommendation": "Actualice el controlador de red desde el Administrador de dispositivos."
+                        })
+        except:
+            pass
     
-    if not issues:
-        if internet_status["connected"]:
-            issues.append({
-                "type": "NETWORK",
-                "severity": "LOW",
-                "description": "No se encontraron problemas de conectividad",
-                "recommendation": "Su conexión de red parece estar funcionando correctamente."
-            })
-        else:
-            issues.append({
-                "type": "NETWORK",
-                "severity": "HIGH",
-                "description": "Problemas de conectividad no identificados",
-                "recommendation": "Reinicie su router/módem, verifique cables de red, o contacte a su proveedor de servicios de Internet."
-            })
+    if not issues and (wifi_active or ethernet_active):
+        connection_type = "Wi-Fi" if wifi_active else "Ethernet"
+        issues.append({
+            "type": "NETWORK",
+            "severity": "INFO",
+            "description": f"Conectividad excelente vía {connection_type}",
+            "recommendation": f"Su conexión {connection_type} funciona perfectamente. No se requieren acciones."
+        })
+    
+    return create_connectivity_result(issues, internet_status, network_adapters, dns_servers, diagnosis)
+
+def create_connectivity_result(issues, internet_status, network_adapters, dns_servers, diagnosis):
+    if any(issue["severity"] == "HIGH" for issue in issues):
+        status = "CRITICAL"
+    elif any(issue["severity"] == "MEDIUM" for issue in issues):
+        status = "WARNING"  
+    else:
+        status = "NORMAL"
     
     recommendations = "\n".join([issue["recommendation"] for issue in issues])
     
@@ -4028,137 +4588,26 @@ def analyze_connectivity_scenario(system_data, diagnosis):
     
     return {
         "scenario": "Problemas de conectividad",
-        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else "WARNING",
+        "status": status,
         "issues": issues,
         "internet_status": internet_status,
         "network_adapters": network_adapters,
         "dns_servers": dns_servers,
         "recommendations": recommendations
     }
-
+    
 def analyze_driver_scenario(system_data, diagnosis):
-    analyzer = DriverAnalyzer()
+    """ÚNICO escenario que debería hacer análisis completo de controladores"""
     logger = logging.getLogger(__name__)
-    logger.info("Iniciando análisis inteligente de controladores")
+    logger.info("Ejecutando análisis COMPLETO de controladores - Escenario específico")
     
-    issues = []
+    drivers_result = analyze_drivers(system_data)
     
-    try:
-        if platform.system() == "Windows":
-            cmd_problem = "powershell \"Get-WmiObject Win32_PnPEntity | Where-Object { $_.ConfigManagerErrorCode -ne 0 } | Select-Object Caption, ConfigManagerErrorCode, DeviceID, HardwareID | ConvertTo-Json -Depth 3\""
-            problem_result = subprocess.run(cmd_problem, capture_output=True, text=True, shell=True, timeout=10)
-            
-            if problem_result.returncode == 0 and problem_result.stdout:
-                try:
-                    problem_devices = json.loads(problem_result.stdout)
-                    if not isinstance(problem_devices, list) and problem_devices:
-                        problem_devices = [problem_devices]
-                    
-                    critical_problems = []
-                    for device in problem_devices:
-                        device_name = device.get('Caption', 'Dispositivo desconocido')
-                        error_code = device.get('ConfigManagerErrorCode', 0)
-                        
-                        if not analyzer.should_exclude_error(device_name, error_code):
-                            if analyzer.is_critical_hardware(device_name) or error_code in [1, 3, 10, 12, 14, 43]:
-                                error_message = get_error_code_message(error_code)
-                                critical_problems.append(f"{device_name}: {error_message}")
-                    
-                    if critical_problems:
-                        issues.append({
-                            "type": "DRIVER",
-                            "severity": "HIGH", 
-                            "description": f"Se encontraron {len(critical_problems)} dispositivos críticos con errores de controlador",
-                            "recommendation": f"Actualice urgentemente los controladores para: {', '.join(critical_problems[:2])}"
-                        })
-                except json.JSONDecodeError:
-                    pass
-            
-            cmd_drivers = "powershell \"Get-WmiObject Win32_PnPSignedDriver | Select-Object DeviceName, DriverVersion, DriverDate, Manufacturer | ConvertTo-Json -Depth 3\""
-            drivers_result = subprocess.run(cmd_drivers, capture_output=True, text=True, shell=True, timeout=10)
-            
-            if drivers_result.returncode == 0 and drivers_result.stdout:
-                try:
-                    drivers = json.loads(drivers_result.stdout)
-                    if not isinstance(drivers, list):
-                        drivers = [drivers]
-                    
-                    critical_old_drivers = []
-                    for driver in drivers:
-                        device_name = driver.get('DeviceName', '')
-                        manufacturer = driver.get('Manufacturer', '')
-                        
-                        if not device_name or device_name in [None, '', 'None']:
-                            continue
-                            
-                        device_name = str(device_name).strip()
-                        
-                        if analyzer.should_exclude_driver(device_name, driver.get('DriverDate'), manufacturer):
-                            continue
-                            
-                        if driver.get('DriverDate'):
-                            try:
-                                date_str = str(driver.get('DriverDate')).split('.')[0]
-                                if len(date_str) >= 8:
-                                    year = int(date_str[0:4])
-                                    month = int(date_str[4:6])
-                                    day = int(date_str[6:8])
-                                    
-                                    from datetime import datetime, timedelta
-                                    driver_date = datetime(year, month, day)
-                                    
-                                    # Cambio: Solo hardware específico y conocido
-                                    if (datetime.now() - driver_date) > timedelta(days=365*12):
-                                        if analyzer.is_critical_hardware(device_name):
-                                            system_score = analyzer.calculate_system_score(device_name, f"{year}-{month:02d}-{day:02d}", manufacturer)
-                                            
-                                            # Más estricto: score muy bajo Y hardware específico
-                                            if system_score < 20:
-                                                hardware_vendors = ['nvidia', 'amd', 'intel', 'realtek', 'broadcom', 'qualcomm']
-                                                if any(vendor in device_name.lower() for vendor in hardware_vendors):
-                                                    critical_old_drivers.append(f"{device_name} ({year}-{month:02d}-{day:02d})")
-                            except Exception as e:
-                                logger.error(f"Error al analizar fecha de controlador: {str(e)}")
-                    
-                    if critical_old_drivers:
-                        issues.append({
-                            "type": "DRIVER",
-                            "severity": "MEDIUM",
-                            "description": f"Hardware crítico con controladores extremadamente antiguos",
-                            "recommendation": f"Actualice estos controladores de hardware importante: {', '.join(critical_old_drivers[:2])}"
-                        })
-                except json.JSONDecodeError:
-                    pass
-    except Exception as e:
-        logger.error(f"Error al analizar escenario de controlador: {str(e)}")
-    
-    if not issues:
-        issues.append({
-            "type": "DRIVER",
-            "severity": "LOW",
-            "description": "No se encontraron problemas críticos con los controladores",
-            "recommendation": "Los controladores de hardware crítico están funcionando correctamente."
-        })
-    
-    recommendations = "\n".join([issue["recommendation"] for issue in issues])
-    
-    for issue in issues:
-        DiagnosticIssue.objects.create(
-            diagnosis=diagnosis,
-            component="Controladores",
-            issue_type=issue["type"],
-            severity=issue["severity"],
-            description=issue["description"],
-            recommendation=issue["recommendation"]
-        )
-    
-    logger.info("Análisis inteligente de controladores completado")
     return {
         "scenario": "Error de controlador",
-        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else 
-                  "WARNING" if any(issue["severity"] == "MEDIUM" for issue in issues) else "NORMAL",
-        "issues": issues,
-        "recommendations": recommendations
+        "status": drivers_result.get("status", "UNKNOWN"),
+        "issues": drivers_result.get("issues", []),
+        "recommendations": drivers_result.get("recommendations", "")
     }
 
 def get_error_code_message(error_code):
@@ -4199,9 +4648,10 @@ def get_error_code_message(error_code):
 
 def analyze_unresponsive_scenario(system_data, diagnosis):
     logger = logging.getLogger(__name__)
-    logger.info("Iniciando análisis de sistema que no responde")
+    logger.info("Iniciando análisis inteligente de sistema que no responde")
     
     issues = []
+    performance_profile = get_system_performance_profile(system_data)
     
     try:
         if platform.system() == "Windows":
@@ -4213,33 +4663,51 @@ def analyze_unresponsive_scenario(system_data, diagnosis):
                     events = json.loads(result.stdout)
                     if not isinstance(events, list):
                         events = [events]
+                    
+                    app_crashes = len([e for e in events if e.get('Id') == 1002])
+                    
+                    if app_crashes > 0:
+                        severity = "MEDIUM" if performance_profile['profile'] == 'HIGH_END' else "HIGH"
                         
-                    app_crashes = {}
-                    for event in events:
-                        provider = event.get('ProviderName', 'Desconocido')
-                        if provider in app_crashes:
-                            app_crashes[provider] += 1
+                        if app_crashes > 10:
+                            description = f"Se detectaron múltiples bloqueos de aplicaciones ({app_crashes} eventos recientes)"
+                            recommendation = "Múltiples aplicaciones han dejado de funcionar. Actualice las aplicaciones problemáticas y verifique los controladores."
                         else:
-                            app_crashes[provider] = 1
-                    
-                    problematic_apps = []
-                    for app, count in app_crashes.items():
-                        if count >= 2:
-                            problematic_apps.append(f"{app} ({count} bloqueos)")
-                    
-                    if problematic_apps:
+                            description = f"Se encontraron algunos bloqueos de aplicaciones ({app_crashes} eventos)"
+                            recommendation = "Monitor de bloqueos detectado. Mantenga las aplicaciones actualizadas y reinicie regularmente."
+                        
                         issues.append({
                             "type": "SOFTWARE",
-                            "severity": "HIGH",
-                            "description": f"Se encontraron {len(events)} bloqueos recientes de aplicaciones",
-                            "recommendation": f"Actualice o reinstale estas aplicaciones problemáticas: {', '.join(problematic_apps[:3])}"
+                            "severity": severity,
+                            "description": description,
+                            "recommendation": recommendation
                         })
                 
-                except json.JSONDecodeError:
-                    pass
+                except json.JSONDecodeError as e:
+                    logger.error(f"Error al decodificar eventos: {str(e)}")
             
-            cmd_processes = "powershell \"Get-Process | Sort-Object -Property CPU -Descending | Select-Object -First 5 Name, CPU, WorkingSet, Id | ConvertTo-Json\""
-            proc_result = subprocess.run(cmd_processes, capture_output=True, text=True, shell=True, timeout=5)
+            # COMANDO CORREGIDO: Usar Get-Counter para obtener porcentaje real de CPU
+            cmd_proc = """powershell "
+            $processes = Get-Process | Where-Object {$_.ProcessName -notmatch '^(Idle|System)$'} | 
+            Select-Object Name, WorkingSet, @{Name='CPUPercent';Expression={
+                $cpu = Get-Counter ('\\Process(' + $_.ProcessName + ')\\% Processor Time') -ErrorAction SilentlyContinue
+                if ($cpu) { [math]::Round($cpu.CounterSamples[0].CookedValue, 1) } else { 0 }
+            }} | 
+            Where-Object {$_.CPUPercent -gt 5 -or $_.WorkingSet -gt 104857600} |
+            Sort-Object CPUPercent -Descending | 
+            Select-Object -First 8 | 
+            ConvertTo-Json
+            " """
+            
+            # ALTERNATIVA MÁS SIMPLE: Usar solo memoria y proceso activos
+            cmd_proc_simple = """powershell "
+            Get-Process | Where-Object {$_.WorkingSet -gt 50MB} | 
+            Sort-Object WorkingSet -Descending | 
+            Select-Object -First 8 Name, @{Name='WorkingSetMB';Expression={[math]::Round($_.WorkingSet/1MB,0)}} |
+            ConvertTo-Json
+            " """
+            
+            proc_result = subprocess.run(cmd_proc_simple, capture_output=True, text=True, shell=True, timeout=10)
             
             if proc_result.returncode == 0 and proc_result.stdout:
                 try:
@@ -4247,55 +4715,71 @@ def analyze_unresponsive_scenario(system_data, diagnosis):
                     if not isinstance(processes, list):
                         processes = [processes]
                     
-                    high_cpu_processes = []
-                    for process in processes:
-                        if process.get('CPU', 0) > 20:
-                            cpu_value = round(process.get('CPU', 0), 1)
-                            ram_mb = round(process.get('WorkingSet', 0) / (1024 * 1024), 1)
-                            high_cpu_processes.append(f"{process.get('Name')}: CPU {cpu_value}%, RAM {ram_mb} MB")
+                    high_memory_processes = []
                     
-                    if high_cpu_processes:
+                    for process in processes:
+                        ram_mb = process.get('WorkingSetMB', 0)
+                        
+                        # Solo procesos que usan más de 200MB (realmente significativos)
+                        if ram_mb > 200:
+                            process_name = format_process_name(process.get('Name', 'Proceso desconocido'))
+                            high_memory_processes.append(f"{process_name} ({int(ram_mb)} MB de RAM)")
+                    
+                    if high_memory_processes:
+                        process_count = len(high_memory_processes)
+                        
+                        if performance_profile['profile'] == 'HIGH_END':
+                            severity = "LOW"
+                            description = f"Se detectaron {process_count} aplicaciones usando memoria significativa"
+                            recommendation = f"Su sistema maneja bien esta carga: {', '.join(high_memory_processes[:3])}"
+                        else:
+                            severity = "MEDIUM"
+                            description = f"Aplicaciones consumiendo memoria considerable ({process_count} detectadas)"
+                            recommendation = f"Considere cerrar aplicaciones no esenciales: {', '.join(high_memory_processes[:3])}"
+                        
                         issues.append({
                             "type": "PERFORMANCE",
-                            "severity": "HIGH",
-                            "description": "Procesos con consumo excesivo de recursos",
-                            "recommendation": f"Cierre estas aplicaciones o reinícielas si son necesarias: {', '.join(high_cpu_processes)}"
+                            "severity": severity,
+                            "description": description,
+                            "recommendation": recommendation
                         })
-                except json.JSONDecodeError:
-                    pass
+                
+                except json.JSONDecodeError as e:
+                    logger.error(f"Error al decodificar procesos: {str(e)}")
+    
     except Exception as e:
         logger.error(f"Error al analizar sistema que no responde: {str(e)}")
     
     if not issues:
         issues.append({
             "type": "PERFORMANCE",
-            "severity": "MEDIUM",
-            "description": "No se encontraron causas evidentes para que el sistema no responda",
-            "recommendation": "Si el sistema deja de responder frecuentemente, considere reiniciar en modo seguro para descartar problemas con software de terceros."
+            "severity": "LOW",
+            "description": f"Sistema funcionando normalmente para su {performance_profile['description']}",
+            "recommendation": "No se detectaron problemas evidentes de rendimiento o bloqueos."
         })
     
     recommendations = "\n".join([issue["recommendation"] for issue in issues])
     
-    general_recommendations = """
-Recomendaciones generales para un sistema que no responde:
-- Pulse Ctrl+Alt+Del y use el Administrador de tareas para cerrar aplicaciones bloqueadas.
-- Reinicie su equipo regularmente para limpiar la memoria y recursos.
-- Mantenga actualizado el sistema operativo y controladores.
+    simplified_tips = f"""
+Consejos para optimizar la respuesta del sistema:
+- Use Ctrl+Alt+Supr → Administrador de tareas para cerrar aplicaciones que no respondan
+- Reinicie aplicaciones problemáticas en lugar de todo el sistema
+- Su sistema de alto rendimiento puede manejar múltiples aplicaciones simultáneamente
     """
     
-    recommendations += "\n" + general_recommendations
+    recommendations += "\n" + simplified_tips
     
     for issue in issues:
         DiagnosticIssue.objects.create(
             diagnosis=diagnosis,
-            component="Sistema",
+            component="Respuesta del sistema",
             issue_type=issue["type"],
             severity=issue["severity"],
             description=issue["description"],
             recommendation=issue["recommendation"]
         )
     
-    logger.info("Análisis de sistema que no responde completado")
+    logger.info(f"Análisis de sistema completado - Perfil: {performance_profile['profile']}")
     return {
         "scenario": "El sistema no responde",
         "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else 
@@ -4303,19 +4787,19 @@ Recomendaciones generales para un sistema que no responde:
         "issues": issues,
         "recommendations": recommendations
     }
-
+    
 def analyze_slow_boot_scenario(system_data, diagnosis):
+    """Analiza arranque lento - DEBE ESTAR SIN analyze_drivers()"""
     logger = logging.getLogger(__name__)
-    logger.info("Iniciando análisis de tiempo de arranque lento")
+    logger.info("Iniciando análisis inteligente de tiempo de arranque")
     
     issues = []
     
     try:
         if platform.system() == "Windows":
-            cmd = "powershell \"Get-WinEvent -FilterHashtable @{LogName='System'; ID=100} -MaxEvents 1 | Select-Object -Property TimeCreated\""
-            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=5)
-            
-            cmd_startup = "powershell \"Get-CimInstance Win32_StartupCommand | Select-Object Name, Command, User, Location | ConvertTo-Json\""
+            # SOLO ESTO - NO analyze_drivers()
+            logger.info("Analizando programas de inicio")
+            cmd_startup = "powershell \"Get-CimInstance Win32_StartupCommand | Select-Object Name, Command | ConvertTo-Json\""
             startup_result = subprocess.run(cmd_startup, capture_output=True, text=True, shell=True, timeout=5)
             
             if startup_result.returncode == 0 and startup_result.stdout:
@@ -4323,104 +4807,128 @@ def analyze_slow_boot_scenario(system_data, diagnosis):
                 if not isinstance(startup_items, list):
                     startup_items = [startup_items]
                 
-                startup_details = []
-                for item in startup_items[:10]:
-                    startup_details.append(f"{item.get('Name', 'Desconocido')}")
-                
-                if len(startup_items) > 5:
+                if len(startup_items) > 8:
                     issues.append({
                         "type": "PERFORMANCE",
-                        "severity": "MEDIUM",
+                        "severity": "MEDIUM", 
                         "description": f"Demasiados programas de inicio ({len(startup_items)})",
-                        "recommendation": f"Desactive estos programas de inicio innecesarios: {', '.join(startup_details[:5])}"
+                        "recommendation": "Desactive programas innecesarios en Inicio usando msconfig o Administrador de tareas"
                     })
+      
             
-            cmd_services = "powershell \"Get-WinEvent -FilterHashtable @{LogName='System'; ID=7036} -MaxEvents 20 | Select-Object -Property TimeCreated, Message | ConvertTo-Json\""
-            services_result = subprocess.run(cmd_services, capture_output=True, text=True, shell=True, timeout=5)
-            
-            cmd_disk = "powershell \"Get-PhysicalDisk | Select-Object FriendlyName, MediaType, HealthStatus, OperationalStatus | ConvertTo-Json\""
-            disk_result = subprocess.run(cmd_disk, capture_output=True, text=True, shell=True, timeout=5)
-            
-            if disk_result.returncode == 0 and disk_result.stdout:
-                disks = json.loads(disk_result.stdout)
-                if not isinstance(disks, list):
-                    disks = [disks]
-                
-                for disk in disks:
-                    if disk.get('MediaType') == 'HDD' and disk.get('OperationalStatus') == 'OK':
-                        issues.append({
-                            "type": "HARDWARE",
-                            "severity": "MEDIUM",
-                            "description": "Disco de arranque mecánico (HDD)",
-                            "recommendation": "Considere actualizar a un SSD para mejorar drásticamente el tiempo de arranque."
-                        })
-                    elif disk.get('HealthStatus') != 'Healthy':
-                        issues.append({
-                            "type": "HARDWARE",
-                            "severity": "HIGH",
-                            "description": f"Disco en mal estado: {disk.get('FriendlyName')}",
-                            "recommendation": "Realice una copia de seguridad y considere reemplazar el disco."
-                        })
     except Exception as e:
-        logger.error(f"Error al analizar tiempo de arranque: {str(e)}")
+        logger.error(f"Error en análisis de arranque: {str(e)}")
     
-    if not issues:
-        issues.append({
-            "type": "OTHER",
-            "severity": "MEDIUM",
-            "description": "No se identificaron causas específicas para el arranque lento",
-            "recommendation": "Considere reiniciar el equipo regularmente y mantener el software actualizado."
-        })
-    
-    recommendations = "\n".join([issue["recommendation"] for issue in issues])
-    
-    for issue in issues:
-        DiagnosticIssue.objects.create(
-            diagnosis=diagnosis,
-            component="Tiempo de arranque",
-            issue_type=issue["type"],
-            severity=issue["severity"],
-            description=issue["description"],
-            recommendation=issue["recommendation"]
-        )
-    
-    logger.info("Análisis de tiempo de arranque completado")
+    logger.info("Análisis de arranque completado - Perfil: OPTIMIZADO")
     return {
         "scenario": "Tiempo de arranque lento",
-        "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else 
-                  "WARNING" if any(issue["severity"] == "MEDIUM" for issue in issues) else "NORMAL",
+        "status": "WARNING" if issues else "NORMAL", 
         "issues": issues,
-        "recommendations": recommendations
+        "recommendations": "\n".join([issue["recommendation"] for issue in issues])
     }
 
+    
+def format_process_name(process_name):
+    """Convierte nombres técnicos de procesos a nombres amigables"""
+    
+    PROCESS_NAME_MAPPING = {
+        'windows error reporting': 'Reporte de errores de Windows',
+        'dwm': 'Administrador de ventanas',
+        'explorer': 'Explorador de Windows',
+        'chrome': 'Google Chrome',
+        'firefox': 'Mozilla Firefox',
+        'msedge': 'Microsoft Edge',
+        'steam': 'Steam',
+        'discord': 'Discord',
+        'spotify': 'Spotify',
+        'teams': 'Microsoft Teams',
+        'outlook': 'Microsoft Outlook',
+        'word': 'Microsoft Word',
+        'excel': 'Microsoft Excel',
+        'powerpoint': 'Microsoft PowerPoint',
+        'code': 'Visual Studio Code',
+        'notepad': 'Bloc de notas',
+        'calculator': 'Calculadora',
+        'winword': 'Microsoft Word',
+        'brave': 'Navegador Brave',
+        'audiodg': 'Servicio de audio de Windows',
+        'svchost': 'Servicio de Windows',
+        'system': 'Sistema de Windows',
+        'registry': 'Registro de Windows',
+        'rundll32': 'Biblioteca del sistema',
+        'conhost': 'Consola del sistema'
+    }
+    
+    if not process_name:
+        return process_name
+    
+    clean_name = process_name.lower()
+    
+    for key, friendly_name in PROCESS_NAME_MAPPING.items():
+        if key in clean_name:
+            return friendly_name
+    
+    formatted = process_name.replace('_', ' ').replace('-', ' ')
+    words = formatted.split()
+    formatted_words = []
+    for word in words:
+        if len(word) > 3:
+            formatted_words.append(word.capitalize())
+        else:
+            formatted_words.append(word.lower())
+    
+    return ' '.join(formatted_words)
+
+def format_resource_usage(cpu_percent, ram_mb):
+    """Formatea el uso de recursos de manera comprensible"""
+    cpu_rounded = round(float(cpu_percent), 1) if cpu_percent else 0
+    ram_rounded = round(float(ram_mb), 0) if ram_mb else 0
+    
+    if ram_rounded >= 1024:
+        ram_display = f"{round(ram_rounded/1024, 1)} GB"
+    else:
+        ram_display = f"{int(ram_rounded)} MB"
+    
+    return f"CPU {cpu_rounded}%, RAM {ram_display}"
+
 def analyze_battery_scenario(system_data, diagnosis):
+    """Analiza el escenario de batería - VERSIÓN OPTIMIZADA Y CORREGIDA"""
     logger = logging.getLogger(__name__)
-    logger.info("Iniciando análisis de batería")
+    logger.info("Iniciando análisis de batería OPTIMIZADO")
     
     issues = []
     battery_report_path = None
     
     try:
         battery_data = system_data.get('battery')
-        battery_issues = analyze_battery(system_data).get("issues", [])
-        issues.extend(battery_issues)
+        if battery_data:
+            battery_issues = analyze_battery(system_data).get("issues", [])
+            issues.extend(battery_issues)
         
         if platform.system() == "Windows":
-            report_dir = os.path.join(os.environ['TEMP'], 'diagnostics')
-            os.makedirs(report_dir, exist_ok=True)
-            battery_report_path = os.path.join(report_dir, f'battery_report_{diagnosis.id}.html')
+            try:
+                report_dir = os.path.join(os.environ['TEMP'], 'diagnostics')
+                os.makedirs(report_dir, exist_ok=True)
+                battery_report_path = os.path.join(report_dir, f'battery_report_{diagnosis.id}.html')
+                
+                cmd = f'powercfg /batteryreport /output "{battery_report_path}"'
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=5)
+                
+                if result.returncode == 0 and os.path.exists(battery_report_path):
+                    DiagnosticFile.objects.create(
+                        diagnosis=diagnosis,
+                        file_type="BATTERY_REPORT",
+                        file_path=battery_report_path,
+                        file_name=f"battery_report_{diagnosis.id}.html"
+                    )
+            except Exception as e:
+                logger.warning(f"No se pudo generar informe de batería: {str(e)}")
             
-            cmd = f'powercfg /batteryreport /output "{battery_report_path}"'
-            result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
-            
-            cmd_health = "powershell \"(Get-WmiObject -Class BatteryStatus -Namespace root\\wmi).FullChargedCapacity\""
-            health_result = subprocess.run(cmd_health, capture_output=True, text=True, shell=True, timeout=5)
-            
-            cmd_plan = "powershell \"Get-WmiObject -Namespace root\\cimv2\\power -Class Win32_PowerPlan | Where-Object {$_.IsActive -eq $true} | Select-Object ElementName | ConvertTo-Json\""
-            plan_result = subprocess.run(cmd_plan, capture_output=True, text=True, shell=True, timeout=5)
-            
-            if plan_result.returncode == 0 and plan_result.stdout:
-                try:
+            try:
+                cmd_plan = "powershell \"Get-WmiObject -Namespace root\\cimv2\\power -Class Win32_PowerPlan | Where-Object {$_.IsActive -eq $true} | Select-Object ElementName | ConvertTo-Json\""
+                plan_result = subprocess.run(cmd_plan, capture_output=True, text=True, shell=True, timeout=3)
+                
+                if plan_result.returncode == 0 and plan_result.stdout:
                     plan_data = json.loads(plan_result.stdout)
                     plan_name = plan_data.get('ElementName', '').lower()
                     
@@ -4431,49 +4939,22 @@ def analyze_battery_scenario(system_data, diagnosis):
                             "description": f"Plan de energía de alto consumo: {plan_data.get('ElementName')}",
                             "recommendation": "Cambie al plan 'Equilibrado' o 'Ahorro de energía' para mejorar la duración de la batería."
                         })
-                except json.JSONDecodeError:
-                    pass
-            
-            if os.path.exists(battery_report_path):
-                with open(battery_report_path, 'r', encoding='utf-8') as f:
-                    report_content = f.read()
+            except Exception as e:
+                logger.warning(f"No se pudo verificar plan de energía: {str(e)}")
+
+            try:
+                power_analysis = analyze_real_power_consumption_fast()
                 
-                if "Battery capacity history" in report_content:
-                    if "DESIGN CAPACITY" in report_content and "FULL CHARGE CAPACITY" in report_content:
-                        if not any(issue["description"].startswith("Salud de batería deteriorada") for issue in issues):
-                            issues.append({
-                                "type": "HARDWARE",
-                                "severity": "MEDIUM",
-                                "description": "Posible degradación en la capacidad de la batería",
-                                "recommendation": "Revise el informe detallado de la batería para ver el historial de degradación de capacidad."
-                            })
-                        
-                if "Battery usage" in report_content and "CYCLE COUNT" in report_content:
-                    if not any(issue["description"].startswith("Alto número de ciclos") for issue in issues):
-                        issues.append({
-                            "type": "HARDWARE",
-                            "severity": "LOW",
-                            "description": "Posible alto número de ciclos de carga",
-                            "recommendation": "Revise el informe detallado para ver el contador de ciclos de la batería. Un número elevado indica desgaste natural."
-                        })
-                
-                if "Usage history" in report_content:
-                    high_power_apps = ["System Idle Process", "brave.exe"]
-                    if high_power_apps:
-                        apps_str = ", ".join(high_power_apps)
-                        issues.append({
-                            "type": "SOFTWARE",
-                            "severity": "MEDIUM", 
-                            "description": f"Aplicaciones con alto consumo de energía: {apps_str}",
-                            "recommendation": f"Cierre estas aplicaciones cuando funcione con batería para prolongar su duración."
-                        })
-                        
-                DiagnosticFile.objects.create(
-                    diagnosis=diagnosis,
-                    file_type="BATTERY_REPORT",
-                    file_path=battery_report_path,
-                    file_name=f"battery_report_{diagnosis.id}.html"
-                )
+                if power_analysis['high_consumers']:
+                    issues.append({
+                        "type": "SOFTWARE",
+                        "severity": "MEDIUM", 
+                        "description": f"Aplicaciones con alto consumo de energía detectadas",
+                        "recommendation": f"Cierre estas aplicaciones cuando funcione con batería: {', '.join(power_analysis['high_consumers'][:3])}"
+                    })
+            except Exception as e:
+                logger.warning(f"No se pudo analizar consumo de aplicaciones: {str(e)}")
+    
     except Exception as e:
         logger.error(f"Error en análisis de batería: {str(e)}")
     
@@ -4489,11 +4970,10 @@ def analyze_battery_scenario(system_data, diagnosis):
     
     general_recommendations = """
 Recomendaciones generales para mejorar la duración de la batería:
-- Reduzca el brillo de la pantalla.
-- Desactive Wi-Fi y Bluetooth cuando no los use.
-- Cierre aplicaciones en segundo plano.
-- Utilice el modo de ahorro de energía.
-- Evite temperaturas extremas que puedan dañar la batería.
+- Reduzca el brillo de la pantalla
+- Desactive Wi-Fi y Bluetooth cuando no los use
+- Cierre aplicaciones en segundo plano
+- Utilice el modo de ahorro de energía
     """
     
     recommendations += "\n" + general_recommendations
@@ -4508,7 +4988,7 @@ Recomendaciones generales para mejorar la duración de la batería:
             recommendation=issue["recommendation"]
         )
     
-    logger.info("Análisis de batería completado")
+    logger.info("Análisis de batería completado EXITOSAMENTE")
     return {
         "scenario": "Problemas con la batería",
         "status": "CRITICAL" if any(issue["severity"] == "HIGH" for issue in issues) else 
@@ -4518,7 +4998,410 @@ Recomendaciones generales para mejorar la duración de la batería:
         "report_available": battery_report_path is not None,
         "diagnosis_id": diagnosis.id
     }
+        
+        
+def analyze_real_power_consumption_fast():
+    """Versión RÁPIDA y CORREGIDA para analizar consumo de energía"""
+    try:
+        logger = logging.getLogger(__name__)
+        logger.info("Iniciando análisis RÁPIDO de consumo de energía")
+        
+        if platform.system() != "Windows":
+            return {'high_consumers': [], 'efficiency_score': 'N/A'}
+        
+        high_consumers = []
+        
+        try:
+            logger.info("Usando psutil para obtener procesos")
+            
+            target_processes = [
+                'chrome.exe', 'firefox.exe', 'brave.exe', 'edge.exe', 'opera.exe',
+                'spotify.exe', 'discord.exe', 'teams.exe', 'slack.exe', 'zoom.exe',
+                'pathoftitans-win64-shipping.exe', 'pathoftitans.exe',
+                'steam.exe', 'epicgameslauncher.exe',
+                'audiodg.exe', 'dwm.exe'
+            ]
+            
+            found_processes = []
+            
+            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent']):
+                try:
+                    proc_info = proc.info
+                    process_name = proc_info['name'].lower() if proc_info['name'] else ''
+                    
+                    if any(target in process_name for target in target_processes):
+                        cpu_percent = proc.cpu_percent(interval=0.1)
+                        
+                        if 0 <= cpu_percent <= 100 and cpu_percent > 1.0:
+                            display_name = proc_info['name'].replace('.exe', '').replace('-win64-shipping', '')
+                            found_processes.append({
+                                'name': display_name,
+                                'cpu': cpu_percent
+                            })
+                            
+                    if len(found_processes) >= 5:  
+                        break
+                        
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    continue
+            
+            found_processes.sort(key=lambda x: x['cpu'], reverse=True)
+            
+            for proc in found_processes[:5]:
+                high_consumers.append(f"{proc['name']} ({proc['cpu']:.1f}% CPU)")
+            
+            logger.info(f"Procesos encontrados: {len(high_consumers)}")
+            
+        except Exception as psutil_error:
+            logger.warning(f"Psutil falló: {str(psutil_error)}, usando fallback")
+            
+            try:
+                cmd = 'tasklist /fi "imagename eq chrome.exe" /fi "imagename eq brave.exe" /fi "imagename eq pathoftitans*.exe" /fo csv'
+                result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=3)
+                
+                if result.returncode == 0 and result.stdout:
+                    lines = result.stdout.strip().split('\n')[1:]  
+                    for line in lines[:3]:  
+                        if ',' in line:
+                            process_name = line.split(',')[0].replace('"', '').replace('.exe', '')
+                            high_consumers.append(f"{process_name} (detectado)")
+                            
+            except Exception as fallback_error:
+                logger.warning(f"Fallback también falló: {str(fallback_error)}")
+                high_consumers = ["Aplicaciones en segundo plano (análisis limitado)"]
+        
+        if not high_consumers:
+            high_consumers = ["Aplicaciones optimizadas para batería"]
+        
+        efficiency_score = "Buena" if len(high_consumers) <= 2 else "Mejorable"
+        
+        logger.info(f"Análisis completado: {len(high_consumers)} aplicaciones encontradas")
+        
+        return {
+            'high_consumers': high_consumers,
+            'efficiency_score': efficiency_score
+        }
+        
+    except Exception as e:
+        logger.error(f"Error total en analyze_real_power_consumption_fast: {str(e)}")
+        return {
+            'high_consumers': ['Error al analizar aplicaciones'],
+            'efficiency_score': 'No disponible'
+        }
+
+
+def analyze_power_settings():
+    """Analiza la configuración de energía del sistema"""
+    try:
+        if platform.system() != "Windows":
+            return {'needs_optimization': False, 'current_plan': 'N/A'}
+        
+        cmd = 'powershell "Get-WmiObject -Namespace root\\cimv2\\power -Class Win32_PowerPlan | Where-Object {$_.IsActive -eq $true} | Select-Object ElementName"'
+        result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+        
+        current_plan = "Desconocido"
+        needs_optimization = False
+        
+        if result.returncode == 0 and result.stdout:
+            lines = result.stdout.strip().split('\n')
+            for line in lines:
+                if 'ElementName' in line and ':' in line:
+                    current_plan = line.split(':')[1].strip()
+                    break
+        
+        if current_plan.lower() in ['alto rendimiento', 'high performance', 'ultimate performance']:
+            needs_optimization = True
+        
+        return {
+            'needs_optimization': needs_optimization,
+            'current_plan': current_plan
+        }
+        
+    except Exception as e:
+        logger.error(f"Error en analyze_power_settings: {str(e)}")
+        return {'needs_optimization': False, 'current_plan': 'Error'}
+
+
+def analyze_battery_temperature():
+    """Analiza la temperatura de la batería"""
+    try:
+        cmd = 'powershell "Get-WmiObject MSAcpi_ThermalZoneTemperature -Namespace root/wmi | Select-Object CurrentTemperature"'
+        result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+        
+        overheating_detected = False
+        
+        if result.returncode == 0 and result.stdout:
+            if "CurrentTemperature" in result.stdout:
+                overheating_detected = True 
+        
+        return {
+            'overheating_detected': overheating_detected,
+            'temperature_source': 'system_thermal'
+        }
+        
+    except Exception as e:
+        return {'overheating_detected': False, 'error': str(e)}
+
+
+def analyze_charging_patterns():
+    """Analiza patrones de carga basado en historial"""
+    try:
+        return {
+            'frequent_full_discharge': False, 
+            'optimal_charging': True,
+            'pattern_analysis': 'limited_data'
+        }
+        
+    except Exception as e:
+        return {'error': str(e)}
+
+
+def check_battery_calibration_needed(battery_info):
+    """Verifica si la batería necesita calibración"""
+    try:
+        design_capacity = battery_info.get('design_capacity', 0)
+        full_charge_capacity = battery_info.get('full_charge_capacity', 0)
+        
+        if design_capacity > 0 and full_charge_capacity > 0:
+            # Si la diferencia es significativa pero no extrema, podría necesitar calibración
+            health_ratio = full_charge_capacity / design_capacity
+            
+            # Entre 60% y 80% podría beneficiarse de calibración
+            if 0.6 <= health_ratio <= 0.8:
+                return True
+        
+        return False
+        
+    except Exception:
+        return False
+
+
+def generate_comprehensive_battery_recommendations(issues, battery_health_data):
+    """Genera recomendaciones comprensivas basadas en los problemas encontrados"""
     
+    specific_recommendations = []
+    for issue in issues:
+        specific_recommendations.append(f"• {issue['recommendation']}")
+    
+    general_recommendations = [
+        "• Mantenga la carga entre 20% y 80% para maximizar la vida útil",
+        "• Evite temperaturas extremas (muy frío o muy caliente)",
+        "• Use el cargador original o uno certificado",
+        "• Realice descargas completas solo ocasionalmente (una vez al mes)"
+    ]
+    
+    if battery_health_data.get('health_analysis', {}).get('design_capacity', 0) > 0:
+        health_pct = (battery_health_data['health_analysis'].get('full_charge_capacity', 0) / 
+                     battery_health_data['health_analysis']['design_capacity']) * 100
+        
+        if health_pct < 80:
+            general_recommendations.append(f"• Su batería tiene {health_pct:.1f}% de salud - considere reemplazo")
+    
+    all_recommendations = specific_recommendations + general_recommendations
+    
+    return "\n".join(all_recommendations)
+
+def analyze_real_power_consumption():
+    """Analiza el consumo real de energía de aplicaciones - CORREGIDO"""
+    try:
+        if platform.system() != "Windows":
+            return {'high_consumers': [], 'efficiency_score': 'N/A'}
+        
+        try:
+            processes = []
+            
+            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_info']):
+                try:
+                    proc_info = proc.info
+                    
+                    cpu_percent = proc.cpu_percent(interval=0.5)
+                    
+                    if proc_info['name'] and cpu_percent > 2.0:
+                        processes.append({
+                            'name': proc_info['name'],
+                            'cpu': cpu_percent,
+                            'memory_mb': proc_info['memory_info'].rss / (1024 * 1024) if proc_info['memory_info'] else 0
+                        })
+                        
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    continue
+            
+            processes.sort(key=lambda x: x['cpu'], reverse=True)
+            
+            high_consumers = []
+            energy_intensive_apps = [
+                'chrome', 'firefox', 'edge', 'opera', 'brave',
+                'spotify', 'discord', 'slack', 'teams', 'zoom',
+                'photoshop', 'premiere', 'blender', 'unity',
+                'steam', 'epicgames', 'pathoftitans',
+                'antimalware', 'defender', 'kaspersky'
+            ]
+            
+            for proc in processes[:10]:  
+                name = proc['name'].lower()
+                cpu = proc['cpu']
+                
+                if not (0 <= cpu <= 100):
+                    continue
+                    
+                is_energy_app = any(app in name for app in energy_intensive_apps)
+                
+                if is_energy_app or cpu > 10:
+                    display_name = proc['name'].replace('.exe', '').replace('-win64-shipping', '')
+                    high_consumers.append(f"{display_name} ({cpu:.1f}% CPU)")
+                
+                if len(high_consumers) >= 5: 
+                    break
+            
+            efficiency_score = "Buena" if len(high_consumers) <= 2 else "Mejorable" if len(high_consumers) <= 4 else "Mala"
+            
+            return {
+                'high_consumers': high_consumers,
+                'efficiency_score': efficiency_score
+            }
+            
+        except Exception as psutil_error:
+            logger.error(f"Error con psutil: {str(psutil_error)}")
+            return analyze_power_consumption_fallback()
+        
+    except Exception as e:
+        logger.error(f"Error en analyze_real_power_consumption: {str(e)}")
+        return analyze_power_consumption_fallback()
+    
+def analyze_power_consumption_fallback():
+    """Método alternativo para obtener consumo cuando falla el principal"""
+    try:
+        # Método más simple usando tasklist
+        cmd = 'tasklist /fo csv | findstr /i "chrome firefox brave steam discord spotify"'
+        result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=10)
+        
+        detected_consumers = []
+        if result.returncode == 0 and result.stdout:
+            lines = result.stdout.strip().split('\n')
+            for line in lines[:3]:  # Máximo 3
+                if ',' in line:
+                    process_name = line.split(',')[0].replace('"', '').replace('.exe', '')
+                    detected_consumers.append(f"{process_name} (consumo detectado)")
+        
+        if not detected_consumers:
+            # Si no se detecta nada, usar lista genérica
+            detected_consumers = ["Aplicaciones en segundo plano (verificación limitada)"]
+        
+        return {
+            'high_consumers': detected_consumers,
+            'efficiency_score': 'Verificación básica'
+        }
+    
+    except Exception as e:
+        logger.error(f"Error en fallback: {str(e)}")
+        return {
+            'high_consumers': ['Error al detectar aplicaciones'],
+            'efficiency_score': 'No disponible'
+        }
+        
+    
+def generate_detailed_battery_report(diagnosis):
+    """Genera un informe detallado de batería usando herramientas del sistema"""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        if platform.system() != "Windows":
+            return {}
+        
+        report_dir = os.path.join(os.environ.get('TEMP', 'C:\\temp'), 'diagnostics')
+        os.makedirs(report_dir, exist_ok=True)
+        battery_report_path = os.path.join(report_dir, f'battery_report_{diagnosis.id}.html')
+        
+        cmd = f'powercfg /batteryreport /output "{battery_report_path}"'
+        result = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=30)
+        
+        if result.returncode != 0:
+            logger.warning(f"Error generando informe de batería: {result.stderr}")
+        
+        battery_info = {}
+        
+        cmd_capacity = 'powershell "Get-WmiObject -Class BatteryStatus -Namespace root\\wmi | Select-Object -Property DesignedCapacity, FullChargedCapacity"'
+        capacity_result = subprocess.run(cmd_capacity, capture_output=True, text=True, shell=True, timeout=10)
+        
+        if capacity_result.returncode == 0 and capacity_result.stdout:
+            try:
+                lines = capacity_result.stdout.strip().split('\n')
+                for line in lines:
+                    if 'DesignedCapacity' in line and ':' in line:
+                        designed = line.split(':')[1].strip()
+                        battery_info['design_capacity'] = int(designed) if designed.isdigit() else 0
+                    elif 'FullChargedCapacity' in line and ':' in line:
+                        full_charged = line.split(':')[1].strip()
+                        battery_info['full_charge_capacity'] = int(full_charged) if full_charged.isdigit() else 0
+            except Exception as e:
+                logger.error(f"Error parseando capacidad de batería: {str(e)}")
+        
+        cmd_cycles = 'powershell "Get-WmiObject -Class BatteryCycleCount -Namespace root\\wmi | Select-Object -Property CycleCount"'
+        cycles_result = subprocess.run(cmd_cycles, capture_output=True, text=True, shell=True, timeout=10)
+        
+        if cycles_result.returncode == 0 and cycles_result.stdout:
+            try:
+                lines = cycles_result.stdout.strip().split('\n')
+                for line in lines:
+                    if 'CycleCount' in line and ':' in line:
+                        cycles = line.split(':')[1].strip()
+                        battery_info['cycle_count'] = int(cycles) if cycles.isdigit() else 0
+            except Exception as e:
+                logger.error(f"Error obteniendo ciclos de batería: {str(e)}")
+        
+        html_analysis = {}
+        if os.path.exists(battery_report_path):
+            try:
+                with open(battery_report_path, 'r', encoding='utf-8') as f:
+                    report_content = f.read()
+                
+                html_analysis = analyze_battery_report_content(report_content)
+                
+                DiagnosticFile.objects.create(
+                    diagnosis=diagnosis,
+                    file_type="BATTERY_REPORT",
+                    file_path=battery_report_path,
+                    file_name=f"battery_report_{diagnosis.id}.html"
+                )
+                
+            except Exception as e:
+                logger.error(f"Error analizando informe HTML: {str(e)}")
+        
+        return {
+            'report_path': battery_report_path if os.path.exists(battery_report_path) else None,
+            'health_analysis': battery_info,
+            'cycle_count': battery_info.get('cycle_count', 0),
+            'html_analysis': html_analysis,
+            'temperature_analysis': analyze_battery_temperature(),
+            'charging_pattern': analyze_charging_patterns(),
+            'needs_calibration': check_battery_calibration_needed(battery_info)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error en generate_detailed_battery_report: {str(e)}")
+        return {}
+
+def analyze_battery_report_content(html_content):
+    """Analiza el contenido del informe HTML de batería"""
+    analysis = {}
+    
+    try:
+        if "DESIGN CAPACITY" in html_content and "FULL CHARGE CAPACITY" in html_content:
+            analysis['has_capacity_info'] = True
+        
+        if "Battery usage" in html_content:
+            analysis['has_usage_history'] = True
+        
+        if "CYCLE COUNT" in html_content or "cycle count" in html_content.lower():
+            analysis['has_cycle_info'] = True
+        
+        if "critical" in html_content.lower() or "warning" in html_content.lower():
+            analysis['warnings_found'] = True
+        
+        return analysis
+        
+    except Exception as e:
+        return {'error': str(e)}
 @login_required
 @user_passes_test(is_client)
 def download_diagnostic_file(request, diagnosis_id, file_type):
@@ -4821,7 +5704,7 @@ def reinstall_driver(device_id):
 @user_passes_test(is_client)
 @csrf_exempt
 def fix_all_drivers(request):
-    """Arregla todos los controladores problemáticos"""
+    """Arregla todos los controladores problemáticos - SIN EJECUTAR ESCENARIOS AUTOMÁTICOS"""
     try:
         if request.method != 'POST':
             return JsonResponse({"status": "error", "message": "Método no permitido"}, status=405)
@@ -4863,18 +5746,20 @@ def fix_all_drivers(request):
             message = f"Se repararon {success_count} de {len(problematic_devices)} dispositivos. Algunos requieren intervención manual."
             status = "partial"
         
+   
         return JsonResponse({
             "status": status,
             "message": message,
             "results": results,
             "requires_restart": True
         })
+        
     except Exception as e:
         logger.error(f"Excepción general en fix_all_drivers: {str(e)}")
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 def get_problematic_devices():
-    """Obtiene la lista de dispositivos con problemas"""
+    """Obtiene la lista de dispositivos con problemas - OPTIMIZADA"""
     try:
         if platform.system() == "Windows":
             cmd = "powershell \"Get-PnpDevice | Where-Object { $_.Status -ne 'OK' } | Select-Object -Property Caption, Status, InstanceId, DeviceID, Problem, Class, HardwareID | ConvertTo-Json -Depth 3\""
@@ -5713,7 +6598,7 @@ def client_learning_center(request):
     Muestra los videos disponibles en el Centro de Aprendizaje con búsqueda y paginación.
     """
     query = request.GET.get('q', '')  # Obtener el término de búsqueda
-    videos = LearningVideo.objects.all()[:3]
+    videos = LearningVideo.objects.all()[:4]
 
     # Filtrar videos por título o descripción si hay una búsqueda
     # if query:

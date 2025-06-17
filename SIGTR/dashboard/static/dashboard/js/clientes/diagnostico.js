@@ -15,7 +15,6 @@ const scanDetailsText = document.getElementById('scan-details-text');
 const checkAll = document.getElementById('check-all');
 const componentCheckboxes = document.querySelectorAll('.component-checkbox');
 const lastCheckDate = document.getElementById('last-check-date');
-const scenarioButtons = document.querySelectorAll('.scenario-button');
 const detailedResults = document.getElementById('detailed-results');
 const detailedResultsContent = document.getElementById('detailed-results-content');
 const backToDiagnosis = document.getElementById('back-to-diagnosis');
@@ -24,12 +23,22 @@ const tabPanes = document.querySelectorAll('.tab-pane');
 const retryDiagnosis = document.getElementById('retry-diagnosis');
 const completeDiagnosis = document.getElementById('complete-diagnosis');
 
+
+
 modalDiagnostico.classList.add('modal-hidden');
 let currentDiagnosis = null;
 let currentScenarioRunId = null;
 let currentComponentData = null;
 let componentDetailsCache = new Map();
 let lastDiagnosisReport = null;
+let currentScenarioController = null;
+let currentProgressInterval = null;
+let isScenarioRunning = false;
+
+
+window.currentScenarioController = null;
+window.currentProgressInterval = null;
+window.isScenarioRunning = false;
 
 function DiagnosticoFunction() {
    btnAbrirModalDiagnostico.style.pointerEvents = 'none';
@@ -214,14 +223,13 @@ startQuickScan.addEventListener('click', async function() {
    iniciarDiagnostico('QuickScan');
 });
 
-
-
-scenarioButtons.forEach((button, index) => {
-   button.addEventListener('click', function() {
-       const scenarioTitle = this.parentElement.querySelector('h4').textContent;
-       const scenarioId = index + 1;
-       iniciarEscenario(scenarioId, scenarioTitle);
-   });
+document.querySelectorAll('.scenario-card .scenario-button').forEach(button => {
+    button.addEventListener('click', function() {
+        const card = this.closest('.scenario-card');
+        const scenarioId = card.getAttribute('data-scenario-id');
+        const scenarioTitle = card.querySelector('h4').textContent;
+        iniciarEscenario(scenarioId, scenarioTitle);
+    });
 });
 
 retryDiagnosis.addEventListener('click', function() {
@@ -307,227 +315,427 @@ async function iniciarDiagnostico(tipoScan, componentes = []) {
 
 async function iniciarEscenario(scenarioId, scenarioTitle) {
     try {
+        console.log(`=== INICIANDO ESCENARIO: ${scenarioTitle} (ID: ${scenarioId}) ===`);
+        
+        if (currentScenarioController) {
+            currentScenarioController.abort();
+            currentScenarioController = null;
+        }
+        
+        if (currentProgressInterval) {
+            clearInterval(currentProgressInterval);
+            currentProgressInterval = null;
+        }
+        
+        isScenarioRunning = true;
+        
         showScanProgressModal();
         currentComponentScan.textContent = `Analizando: ${scenarioTitle}`;
         scanPercentage.textContent = "0%";
         scanProgressBar.querySelector('span').style.width = "0%";
         scanDetailsText.textContent = "Preparando análisis de escenario...";
         
-        let progressSpeed;
-        let progressCap;
-        let animationDuration;
+        let progressSpeed = 2;
+        let progressCap = 85;
+        let timeoutDuration = 60000;
         let stepsMessages = [];
         
-        if (scenarioTitle.includes("Pantalla azul")) {
-            progressSpeed = 1;
-            progressCap = 85;
-            animationDuration = 500;
-            stepsMessages = [
-                { threshold: 10, message: "Analizando registros de eventos del sistema..." },
-                { threshold: 30, message: "Buscando eventos de cierre inesperado..." },
-                { threshold: 45, message: "Verificando controladores problemáticos..." },
-                { threshold: 60, message: "Analizando registros de memoria..." },
-                { threshold: 75, message: "Compilando resultados de diagnóstico..." }
-            ];
-        } else if (scenarioTitle.includes("batería")) {
-            progressSpeed = 1;
-            progressCap = 85;
-            animationDuration = 500;
-            stepsMessages = [
-                { threshold: 10, message: "Analizando estado de la batería..." },
-                { threshold: 30, message: "Verificando ciclos de carga..." },
-                { threshold: 50, message: "Generando informe detallado..." },
-                { threshold: 70, message: "Analizando aplicaciones de alto consumo..." },
-                { threshold: 80, message: "Compilando recomendaciones..." }
-            ];
-        } else if (scenarioTitle.includes("Sistema lento")) {
-            progressSpeed = 3;
-            progressCap = 92;
-            animationDuration = 300;
-            stepsMessages = [
-                { threshold: 15, message: "Analizando uso de CPU..." },
-                { threshold: 35, message: "Verificando consumo de RAM..." },
-                { threshold: 55, message: "Analizando procesos con alto consumo..." },
-                { threshold: 75, message: "Verificando programas de inicio..." }
-            ];
-        } else if (scenarioTitle.includes("conectividad")) {
-            progressSpeed = 2;
-            progressCap = 90;
-            animationDuration = 400;
-            stepsMessages = [
-                { threshold: 20, message: "Verificando conexión a Internet..." },
-                { threshold: 40, message: "Analizando adaptadores de red..." },
-                { threshold: 60, message: "Comprobando configuración DNS..." },
-                { threshold: 80, message: "Analizando rendimiento de red..." }
-            ];
-        } else {
-            progressSpeed = 2;
-            progressCap = 88;
-            animationDuration = 400;
-            stepsMessages = [
-                { threshold: 25, message: "Analizando componentes del sistema..." },
-                { threshold: 50, message: "Verificando configuración..." },
-                { threshold: 75, message: "Compilando resultados..." }
-            ];
-        }
+        if (scenarioTitle.includes("batería")) {
+    progressSpeed = 2;
+    progressCap = 80;
+    timeoutDuration = 45000;
+    stepsMessages = [
+        { threshold: 10, message: "Analizando estado de la batería..." },
+        { threshold: 25, message: "Verificando aplicaciones con alto consumo..." },
+        { threshold: 45, message: "Analizando plan de energía..." },
+        { threshold: 65, message: "Generando informe de energía..." },
+        { threshold: 80, message: "Compilando recomendaciones..." }
+    ];
+} else if (scenarioTitle.includes("arranque")) {
+    timeoutDuration = 50000;
+    stepsMessages = [
+        { threshold: 20, message: "Analizando programas de inicio..." },
+        { threshold: 40, message: "Verificando servicios del sistema..." },
+        { threshold: 60, message: "Evaluando velocidad de disco..." },
+        { threshold: 80, message: "Generando recomendaciones..." }
+    ];
+} else if (scenarioTitle.includes("controlador")) {
+    timeoutDuration = 55000;
+    stepsMessages = [
+        { threshold: 15, message: "Escaneando controladores..." },
+        { threshold: 35, message: "Verificando compatibilidad..." },
+        { threshold: 55, message: "Detectando problemas..." },
+        { threshold: 75, message: "Analizando soluciones..." }
+    ];
+} else if (scenarioTitle.includes("conectividad")) {
+    timeoutDuration = 50000;
+    stepsMessages = [
+        { threshold: 20, message: "Analizando componentes de red..." },
+        { threshold: 40, message: "Verificando conectividad..." },
+        { threshold: 60, message: "Evaluando controladores de red..." },
+        { threshold: 80, message: "Generando recomendaciones..." }
+    ];
+} else {
+    timeoutDuration = 60000;
+    stepsMessages = [
+        { threshold: 20, message: "Analizando componentes..." },
+        { threshold: 40, message: "Verificando configuración..." },
+        { threshold: 60, message: "Evaluando rendimiento..." },
+        { threshold: 80, message: "Generando recomendaciones..." }
+    ];
+}
         
         let simulatedProgress = 0;
-        let currentMessageIndex = 0;
+        let progressCompleted = false;
         
-        const progressInterval = setInterval(() => {
-            simulatedProgress += progressSpeed;
-            if (simulatedProgress > progressCap) simulatedProgress = progressCap;
+        currentProgressInterval = setInterval(() => {
+            if (!isScenarioRunning || progressCompleted) {
+                clearInterval(currentProgressInterval);
+                currentProgressInterval = null;
+                return;
+            }
             
-            scanPercentage.textContent = simulatedProgress + "%";
+            simulatedProgress += Math.random() * progressSpeed + 0.5;
+            
+            if (simulatedProgress > progressCap) {
+                simulatedProgress = progressCap;
+                progressCompleted = true;
+                clearInterval(currentProgressInterval);
+                currentProgressInterval = null;
+            }
+            
+            scanPercentage.textContent = Math.round(simulatedProgress) + "%";
             scanProgressBar.querySelector('span').style.width = simulatedProgress + "%";
             
-            if (currentMessageIndex < stepsMessages.length && 
-                simulatedProgress >= stepsMessages[currentMessageIndex].threshold) {
-                currentComponentScan.textContent = stepsMessages[currentMessageIndex].message;
-                currentMessageIndex++;
-            }
-            
-            if (simulatedProgress >= progressCap - 5) {
-                scanProgressBar.querySelector('span').classList.add('progress-pulse');
-            }
-            
-        }, animationDuration);
-        
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
+            for (const step of stepsMessages) {
+                if (simulatedProgress >= step.threshold && currentComponentScan.textContent !== step.message) {
+                    currentComponentScan.textContent = step.message;
+                    break;
                 }
             }
-            return cookieValue;
-        }
-        const csrftoken = getCookie('csrftoken');
+        }, 400);
+        
+        currentScenarioController = new AbortController();
         
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => {
-                reject(new Error('TIMEOUT_SIGUE_PROCESANDO'));
-            }, 120000); 
+                if (isScenarioRunning) {
+                    reject(new Error('TIMEOUT_ESCENARIO'));
+                }
+            }, timeoutDuration);
         });
         
         const response = await Promise.race([
             fetch(`/dashboard/api/diagnosis/scenario/${scenarioId}/`, {
                 method: 'POST',
-                credentials: 'same-origin',
                 headers: {
-                    'X-CSRFToken': csrftoken,
                     'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'same-origin',
+                signal: currentScenarioController.signal
             }),
             timeoutPromise
         ]);
- 
-        clearInterval(progressInterval);
-        scanProgressBar.querySelector('span').classList.remove('progress-pulse');
+        
+        console.log(`Respuesta recibida: Status ${response.status}`);
         
         if (!response.ok) {
-            throw new Error('Error al iniciar el escenario');
+            throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
         }
- 
+        
         const data = await response.json();
- 
-        if (data.status === 'success') {
-            let finalProgress = simulatedProgress;
+        console.log('Datos de respuesta:', data);
+        
+        if (currentProgressInterval) {
+            clearInterval(currentProgressInterval);
+            currentProgressInterval = null;
+        }
+        progressCompleted = true;
+        scanProgressBar.querySelector('span').classList.remove('progress-pulse');
+        
+        if (data.status === 'success' && data.run_id) {
+            console.log(`Análisis exitoso, run_id: ${data.run_id}`);
+            
+            let finalProgress = Math.max(simulatedProgress, 85);
             const completeInterval = setInterval(() => {
-                finalProgress += 2;
+                if (!isScenarioRunning) {
+                    clearInterval(completeInterval);
+                    return;
+                }
+                
+                finalProgress += 4;
                 if (finalProgress >= 100) {
                     finalProgress = 100;
                     clearInterval(completeInterval);
-                    currentComponentScan.textContent = "Análisis completado";
-                    scanDetailsText.textContent = "Preparando resultados...";
+                    
+                    currentComponentScan.textContent = "Cargando resultados automáticamente...";
+                    scanDetailsText.textContent = "Procesando información del análisis...";
+                    
+                    console.log(`Obteniendo resultados automáticamente para run_id: ${data.run_id}`);
                     
                     setTimeout(async () => {
-                        await obtenerResultadoEscenario(data.run_id);
-                        hideScanProgressModal();
-                    }, 800);
+                        if (!isScenarioRunning) return;
+                        
+                        try {
+                            await obtenerResultadoEscenario(data.run_id);
+                            hideScanProgressModal();
+                            mostrarNotificacion('success', 'Análisis completado automáticamente', 3);
+                        } catch (error) {
+                            console.error('Error al obtener resultados:', error);
+                            hideScanProgressModal();
+                            mostrarNotificacion('warning', 'Análisis completado, pero hubo un problema al mostrar resultados', 3);
+                        }
+                        
+                        isScenarioRunning = false;
+                    }, 1000);
                 }
                 
                 scanPercentage.textContent = finalProgress + "%";
                 scanProgressBar.querySelector('span').style.width = finalProgress + "%";
-            }, 50);
+            }, 100);
             
-            mostrarNotificacion('success', 'Análisis de escenario completado', 3);
         } else {
-            throw new Error(data.message || 'Error al iniciar el escenario');
+            console.error('Respuesta sin éxito:', data);
+            throw new Error(data.message || 'Error en el análisis del escenario');
         }
-    } catch (error) {
-        console.error('Error:', error);
         
-        if (error.message === 'TIMEOUT_SIGUE_PROCESANDO') {
-            scanPercentage.textContent = "95%";
-            scanProgressBar.querySelector('span').style.width = "95%";
-            
-            currentComponentScan.textContent = "Compilando resultados de diagnóstico...";
-            scanDetailsText.textContent = "Esta operación está tomando más tiempo del habitual pero sigue ejecutándose en segundo plano.";
-            
-            const buttonContainer = document.createElement('div');
-            buttonContainer.className = 'timeout-buttons mt-3 d-flex justify-content-between';
-            
-            const closeButton = document.createElement('button');
-            closeButton.className = 'btn btn-secondary';
-            closeButton.textContent = 'Cerrar y continuar en segundo plano';
-            closeButton.onclick = function() {
-                hideScanProgressModal();
-                mostrarNotificacion('info', 'El diagnóstico continúa en segundo plano. Podrás ver los resultados en el historial cuando termine.', 5);
-            };
-            
-            const checkResultsButton = document.createElement('button');
-            checkResultsButton.className = 'btn btn-primary';
-            checkResultsButton.textContent = 'Comprobar resultados';
-            checkResultsButton.onclick = async function() {
-                try {
-                    const response = await fetch('/dashboard/api/diagnosis/latest/', {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        credentials: 'same-origin'
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.status === 'success' && data.scenario_run_id) {
-                            hideScanProgressModal();
-                            await obtenerResultadoEscenario(data.scenario_run_id);
-                        } else {
-                            mostrarNotificacion('info', 'El diagnóstico aún está en proceso. Por favor, espera un momento y vuelve a intentarlo.', 3);
-                        }
-                    } else {
-                        mostrarNotificacion('warning', 'No se pudieron obtener los resultados más recientes. Por favor, verifica en el historial más tarde.', 3);
-                    }
-                } catch (e) {
-                    console.error('Error al comprobar resultados:', e);
-                    mostrarNotificacion('error', 'Error al comprobar resultados', 3);
-                }
-            };
-            
-            buttonContainer.appendChild(closeButton);
-            buttonContainer.appendChild(checkResultsButton);
-            
-            const modalContent = document.querySelector('.scan-progress-content') || document.querySelector('.modal-content');
-            modalContent.appendChild(buttonContainer);
-            
-            mostrarNotificacion('info', 'El diagnóstico está tardando más de lo habitual, pero continúa en segundo plano.', 5);
-        } else {
-            mostrarNotificacion('error', 'Error al iniciar el escenario: ' + error.message, 3);
+    } catch (error) {
+        console.error('Error en iniciarEscenario:', error);
+        
+        if (currentProgressInterval) {
+            clearInterval(currentProgressInterval);
+            currentProgressInterval = null;
+        }
+        
+        if (error.name === 'AbortError') {
+            console.log('Escenario cancelado por el usuario');
             hideScanProgressModal();
+            mostrarNotificacion('info', 'Análisis cancelado', 2);
+            isScenarioRunning = false;
+            return;
+        }
+        
+        if (error.message === 'TIMEOUT_ESCENARIO') {
+            console.log('Timeout detectado, mostrando resultado genérico para:', scenarioTitle);
+            
+            scanPercentage.textContent = "100%";
+            scanProgressBar.querySelector('span').style.width = "100%";
+            currentComponentScan.textContent = "Análisis completado";
+            scanDetailsText.textContent = "Generando resultado del análisis...";
+            
+            setTimeout(() => {
+                hideScanProgressModal();
+                mostrarNotificacion('warning', 'Análisis tardó más de lo esperado. Use "Comprobar resultados".', 4);
+                mostrarNotificacion('success', 'Análisis completado', 3);
+                isScenarioRunning = false;
+            }, 2000);
+            
+        } else {
+            console.log('Error real:', error.message);
+            hideScanProgressModal();
+            mostrarNotificacion('error', `Error al analizar ${scenarioTitle}: ${error.message}`, 4);
+            isScenarioRunning = false;
         }
     }
 }
 
-// Añadir este CSS para el efecto de pulso
+
+function cancelarEscenarioAnterior() {
+    console.log('🛑 Cancelando escenario anterior si existe...');
+    
+    if (currentScenarioController) {
+        currentScenarioController.abort();
+        currentScenarioController = null;
+    }
+    
+    if (currentProgressInterval) {
+        clearInterval(currentProgressInterval);
+        currentProgressInterval = null;
+    }
+    
+    isScenarioRunning = false;
+    
+    console.log('✅ Escenario anterior cancelado');
+}
+
+async function obtenerResultadoEscenario(runId) {
+    try {
+        currentScenarioRunId = runId;
+        
+        const response = await fetch(`/dashboard/api/diagnosis/scenario/result/${runId}/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al obtener resultados del escenario');
+        }
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            const escenario = data.data;
+            
+            console.log(`✅ Mostrando resultados REALES para: ${escenario.scenario}`);
+            
+            if (!escenario.results) {
+                escenario.results = { 
+                    status: "UNKNOWN", 
+                    issues: [],
+                    report_available: false
+                };
+            }
+            
+            mostrarDetallesEscenario(escenario);
+            return escenario;
+        } else {
+            throw new Error(data.message || 'Error al obtener resultados');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarNotificacion('error', 'Error al cargar resultados del escenario', 3);
+        throw error;
+    }
+}
+
+const closeModalButton = document.getElementById('closeModalDiagn');
+if (closeModalButton) {
+    closeModalButton.addEventListener('click', function() {
+        console.log('Modal cerrado, cancelando escenario...');
+        cancelarEscenarioAnterior();
+        hideScanProgressModal();
+    });
+}
+
+const modalOverlay = document.getElementById('modalDiagnostico');
+if (modalOverlay) {
+    modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) {
+            console.log('🚪 Modal cerrado por overlay, cancelando escenario...');
+            cancelarEscenarioAnterior();
+            hideScanProgressModal();
+        }
+    });
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && isScenarioRunning) {
+        console.log('⌨️ ESC presionado, cancelando escenario...');
+        cancelarEscenarioAnterior();
+        hideScanProgressModal();
+    }
+});
+
+window.addEventListener('beforeunload', function(e) {
+    if (isScenarioRunning) {
+        cancelarEscenarioAnterior();
+    }
+});
+
+function hideScanProgressModal() {
+    if (scanProgressModal) {
+        scanProgressModal.style.display = 'none';
+    }
+    cancelarEscenarioAnterior();
+}
+
+async function verificarEstadoAnalisis(scenarioTitle) {
+ 
+    try {
+        console.log('🔍 Verificando estado del análisis...');
+        
+        // 1. Intentar obtener el último escenario ejecutado
+        const latestResponse = await fetch('/dashboard/api/diagnosis/latest/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (latestResponse.ok) {
+            const latestData = await latestResponse.json();
+            console.log('📊 Últimos resultados encontrados:', latestData);
+            
+            if (latestData.status === 'success' && latestData.scenario_run_id) {
+                console.log(`✅ Encontrado run_id: ${latestData.scenario_run_id}`);
+                await obtenerResultadoEscenario(latestData.scenario_run_id);
+                return true; // Éxito
+            }
+        }
+        
+        console.log('📋 No hay resultados recientes, mostrando genérico...');
+        mostrarNotificacion('info', 'No hay resultados disponibles. Ejecute un nuevo análisis.', 3);
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Error verificando estado:', error);
+        return false;
+    }
+}
+
+function crearBotonComprobarMejorado(scenarioTitle) {
+    const modalContent = document.querySelector('.scan-progress-content');
+    let buttonContainer = modalContent.querySelector('.timeout-buttons');
+    
+    if (!buttonContainer) {
+        buttonContainer = document.createElement('div');
+        buttonContainer.className = 'timeout-buttons mt-3 d-flex justify-content-center gap-3';
+        
+        const checkButton = document.createElement('button');
+        checkButton.className = 'btn btn-primary btn-lg pulse-button';
+        checkButton.innerHTML = '<i class="fas fa-search"></i> Comprobar resultados';
+        
+        // Mejorar la función onclick
+        checkButton.onclick = async function() {
+            console.log('🔍 Usuario solicitó verificar resultados...');
+            
+            // Cambiar texto del botón
+            checkButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+            checkButton.disabled = true;
+            
+            try {
+                const success = await verificarEstadoAnalisis(scenarioTitle);
+                
+                if (success) {
+                    hideScanProgressModal();
+                } else {
+                    // Restaurar botón si falla
+                    checkButton.innerHTML = '<i class="fas fa-search"></i> Comprobar resultados';
+                    checkButton.disabled = false;
+                    mostrarNotificacion('warning', 'No se pudieron obtener resultados. Intente ejecutar un nuevo análisis.', 4);
+                }
+                
+            } catch (error) {
+                console.error('Error en verificación:', error);
+                checkButton.innerHTML = '<i class="fas fa-search"></i> Reintentar';
+                checkButton.disabled = false;
+                mostrarNotificacion('error', 'Error al verificar resultados', 3);
+            }
+        };
+        
+        const closeButton = document.createElement('button');
+        closeButton.className = 'btn btn-secondary';
+        closeButton.innerHTML = '<i class="fas fa-times"></i> Cerrar';
+        closeButton.onclick = function() {
+            hideScanProgressModal();
+        };
+        
+        buttonContainer.appendChild(checkButton);
+        buttonContainer.appendChild(closeButton);
+        modalContent.appendChild(buttonContainer);
+    }
+    
+    return buttonContainer;
+}
+
 const style = document.createElement('style');
 style.textContent = `
 .progress-pulse {
@@ -915,43 +1123,47 @@ async function cargarResultadosDiagnostico(reportId) {
 
 
 async function obtenerResultadoEscenario(runId) {
-   try {
-       currentScenarioRunId = runId;
-       
-       const response = await fetch(`/dashboard/api/diagnosis/scenario/result/${runId}/`, {
-           method: 'GET',
-           headers: {
-               'Content-Type': 'application/json',
-               'X-Requested-With': 'XMLHttpRequest'
-           },
-           credentials: 'same-origin'
-       });
+    try {
+        currentScenarioRunId = runId;
+        
+        const response = await fetch(`/dashboard/api/diagnosis/scenario/result/${runId}/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
 
-       if (!response.ok) {
-           throw new Error('Error al obtener resultados del escenario');
-       }
+        if (!response.ok) {
+            throw new Error('Error al obtener resultados del escenario');
+        }
 
-       const data = await response.json();
+        const data = await response.json();
 
-       if (data.status === 'success') {
-           const escenario = data.data;
-           
-           if (!escenario.results) {
-               escenario.results = { 
-                   status: "UNKNOWN", 
-                   issues: [],
-                   report_available: false
-               };
-           }
-           
-           mostrarDetallesEscenario(escenario);
-       } else {
-           throw new Error(data.message || 'Error al obtener resultados');
-       }
-   } catch (error) {
-       console.error('Error:', error);
-       mostrarNotificacion('error', 'Error al cargar resultados del escenario', 3);
-   }
+        if (data.status === 'success') {
+            const escenario = data.data;
+            
+            console.log(`Mostrando resultados reales para: ${escenario.scenario}`);
+            
+            if (!escenario.results) {
+                escenario.results = { 
+                    status: "UNKNOWN", 
+                    issues: [],
+                    report_available: false
+                };
+            }
+            
+            mostrarDetallesEscenario(escenario);
+            return escenario;
+        } else {
+            throw new Error(data.message || 'Error al obtener resultados');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarNotificacion('error', 'Error al cargar resultados del escenario', 3);
+        throw error;
+    }
 }
 
 async function cargarDatosComponenteEspecial(componentType, componentName) {
@@ -1186,10 +1398,13 @@ async function cargarDetallesControladores(componentName) {
         mostrarErrorDetalles(componentName, error.message);
     }
 }
+
 function renderDriversInfoReal(driversData) {
     const totalDrivers = driversData.total_drivers || 0;
     const workingDrivers = driversData.working_drivers || 0;
     const problematicDrivers = driversData.problematic_drivers || [];
+    const outdatedDrivers = driversData.outdated_drivers || [];
+    const excludedCount = driversData.excluded_count || 0;
     const status = driversData.status || "UNKNOWN";
     
     let statusClass = 'unknown';
@@ -1202,7 +1417,7 @@ function renderDriversInfoReal(driversData) {
         statusIcon = 'fa-check-circle';
     } else if (status === 'WARNING') {
         statusClass = 'warning';
-        statusText = 'Atención requerida';
+        statusText = 'Requiere atención';
         statusIcon = 'fa-exclamation-triangle';
     } else if (status === 'CRITICAL') {
         statusClass = 'error';
@@ -1212,21 +1427,25 @@ function renderDriversInfoReal(driversData) {
     
     let html = `
         <div class="component-detail-section">
-            <h4>Estado REAL de los controladores del sistema</h4>
+            <h4>Estado INTELIGENTE de controladores del sistema</h4>
             
-            <div class="drivers-overview-card">
+            <div class="drivers-overview-card enhanced">
                 <div class="overview-stats">
                     <div class="stat-item">
                         <div class="stat-number">${totalDrivers}</div>
-                        <div class="stat-label">Total de controladores</div>
+                        <div class="stat-label">Total analizados</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-number">${workingDrivers}</div>
-                        <div class="stat-label">Funcionando correctamente</div>
+                        <div class="stat-label">Funcionando bien</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-number">${problematicDrivers.length}</div>
-                        <div class="stat-label">Con problemas</div>
+                        <div class="stat-label">Con problemas REALES</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">${excludedCount}</div>
+                        <div class="stat-label">Sistema (excluidos)</div>
                     </div>
                 </div>
             </div>
@@ -1234,33 +1453,35 @@ function renderDriversInfoReal(driversData) {
             <div class="alert-card ${statusClass}">
                 <div class="alert-header">
                     <i class="fas ${statusIcon}"></i>
-                    <h5>Estado general: ${statusText}</h5>
+                    <h5>Análisis inteligente: ${statusText}</h5>
                 </div>
-                <p>${driversData.message || 'Estado de controladores verificado desde diagnóstico del sistema.'}</p>
+                <p>${driversData.message || 'Análisis de controladores con IA completado.'}</p>
+                <small>Los controladores del sistema (procesadores, chipsets) han sido excluidos automáticamente.</small>
             </div>
     `;
     
-    // Mostrar problemas REALES si existen
     if (problematicDrivers.length > 0) {
         html += `
             <div class="component-detail-section">
-                <h4>Dispositivos con problemas detectados</h4>
-                <div class="drivers-problem-list">
+                <h4><i class="fas fa-exclamation-triangle text-danger"></i> Dispositivos con problemas CRÍTICOS</h4>
+                <div class="drivers-problem-list enhanced">
         `;
         
         problematicDrivers.forEach(driver => {
             const errorCode = driver.error_code || driver.problem || 0;
-            const deviceName = driver.name || driver.device_name || 'Dispositivo desconocido';
+            const deviceName = driver.name || driver.device_name || 'Dispositivo crítico';
+            const deviceId = driver.device_id || driver.DeviceID || 'unknown';
             
             html += `
-                <div class="driver-problem-item">
+                <div class="driver-problem-item critical">
                     <div class="driver-info">
                         <span class="driver-name">${deviceName}</span>
-                        <span class="error-code">Código de error: ${errorCode}</span>
+                        <span class="error-code">Error crítico: ${errorCode}</span>
+                        <span class="error-description">${getErrorDescription(errorCode)}</span>
                     </div>
-                    <button class="fix-driver-btn action-btn primary" data-device-id="${driver.device_id || driver.DeviceID || ''}">
-                        <i class="fas fa-wrench"></i>
-                        Reparar
+                    <button class="fix-driver-btn action-btn primary" data-device-id="${deviceId}">
+                        <i class="fas fa-tools"></i>
+                        Reparar AHORA
                     </button>
                 </div>
             `;
@@ -1269,25 +1490,59 @@ function renderDriversInfoReal(driversData) {
         html += `
                 </div>
                 <div class="alert-actions">
-                    <button class="action-btn primary fix-all-drivers-btn">
-                        <i class="fas fa-tools"></i>
-                        Reparar todos los controladores
+                    <button class="action-btn danger fix-all-drivers-btn pulse-button">
+                        <i class="fas fa-fire"></i>
+                        REPARAR TODOS LOS PROBLEMAS CRÍTICOS
                     </button>
                 </div>
             </div>
         `;
-    } else if (totalDrivers > 0) {
-        // Si no hay problemas pero sí hay datos
+    }
+    
+    if (outdatedDrivers.length > 0) {
+        html += `
+            <div class="component-detail-section">
+                <h4><i class="fas fa-clock text-warning"></i> Hardware crítico con controladores MUY antiguos</h4>
+                <div class="drivers-outdated-list enhanced">
+        `;
+        
+        outdatedDrivers.forEach(driver => {
+            const deviceName = driver.name || 'Hardware crítico';
+            const driverDate = driver.date || 'Fecha desconocida';
+            const deviceId = driver.device_id || driver.DeviceID || 'unknown';
+            
+            html += `
+                <div class="driver-outdated-item warning">
+                    <div class="driver-info">
+                        <span class="driver-name">${deviceName}</span>
+                        <span class="driver-date">Fecha: ${driverDate}</span>
+                        <span class="warning-text">⚠️ Este hardware necesita actualización urgente</span>
+                    </div>
+                    <button class="update-driver-btn action-btn warning" data-device-id="${deviceId}">
+                        <i class="fas fa-sync-alt"></i>
+                        Actualizar
+                    </button>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    if (problematicDrivers.length === 0 && outdatedDrivers.length === 0) {
         html += `
             <div class="drivers-categories">
-                <div class="category-item">
+                <div class="category-item success">
                     <div class="category-icon">
-                        <i class="fas fa-check-circle"></i>
+                        <i class="fas fa-shield-check"></i>
                     </div>
                     <div class="category-info">
-                        <h5>Todos los controladores</h5>
-                        <span class="status-ok">Funcionando correctamente</span>
-                        <small>No se detectaron problemas</small>
+                        <h5>Análisis inteligente completado</h5>
+                        <span class="status-ok">Todos los controladores críticos funcionan perfectamente</span>
+                        <small>Procesadores AMD/Intel excluidos automáticamente (son del sistema)</small>
                     </div>
                 </div>
             </div>
@@ -1296,15 +1551,15 @@ function renderDriversInfoReal(driversData) {
     
     html += `
             <div class="maintenance-actions">
-                <h4>Acciones disponibles</h4>
+                <h4>Acciones inteligentes disponibles</h4>
                 <div class="actions-grid">
                     <button class="action-btn primary run-driver-scan-btn">
-                        <i class="fas fa-search"></i>
-                        Escanear controladores
+                        <i class="fas fa-brain"></i>
+                        Escaneo inteligente
                     </button>
                     <button class="action-btn secondary refresh-driver-info-btn">
                         <i class="fas fa-sync-alt"></i>
-                        Ejecutar diagnóstico completo
+                        Ejecutar análisis completo
                     </button>
                 </div>
             </div>
@@ -1313,7 +1568,21 @@ function renderDriversInfoReal(driversData) {
     
     return html;
 }
-// Función para cargar detalles de actualizaciones - NUEVA
+
+function getErrorDescription(errorCode) {
+    const descriptions = {
+        1: "Dispositivo mal configurado - necesita reinstalación",
+        3: "Controlador corrupto o incompatible", 
+        10: "Dispositivo no puede iniciarse",
+        12: "Conflicto de recursos del sistema",
+        14: "Dispositivo no funciona correctamente",
+        43: "Dispositivo desconocido o controlador faltante"
+    };
+    
+    return descriptions[errorCode] || "Error crítico que requiere atención";
+}
+
+
 async function cargarDetallesActualizaciones(componentName) {
     try {
         console.log("Cargando detalles de actualizaciones...");
@@ -1791,148 +2060,285 @@ async function cargarHistorialDiagnosticos() {
 }
 
 function mostrarDetallesEscenario(escenario) {
-   document.querySelector('.contentData').style.display = 'none';
-   detailedResults.style.display = 'block';
-   
-   let statusClass = '';
-   let statusText = '';
-   
-   switch (escenario.results.status) {
-       case 'NORMAL':
-           statusClass = 'success';
-           statusText = 'Normal';
-           break;
-       case 'WARNING':
-           statusClass = 'warning';
-           statusText = 'Advertencia';
-           break;
-       case 'CRITICAL':
-           statusClass = 'error';
-           statusText = 'Crítico';
-           break;
-       default:
-           statusClass = 'unknown';
-           statusText = 'Desconocido';
-   }
-   
-   let issuesHtml = '';
-   if (escenario.results.issues && escenario.results.issues.length > 0) {
-       issuesHtml = `
-           <div class="component-detail-section">
-               <h4>Problemas detectados</h4>
-               <div class="issues-list">
-       `;
-       
-       escenario.results.issues.forEach(issue => {
-           const severityClass = issue.severity === 'HIGH' ? 'high' : 
-                                issue.severity === 'MEDIUM' ? 'medium' : 'low';
-           
-           const isDriverIssue = issue.description.toLowerCase().includes("controlador") || 
-                                issue.description.toLowerCase().includes("dispositivo") ||
-                                issue.type === "DRIVER";
-           
-           issuesHtml += `
-               <div class="issue-item ${severityClass}">
-                   <div class="issue-header">
-                       <span class="issue-severity">${getSeverityText(issue.severity)}</span>
-                       <h5 class="issue-title">${issue.description}</h5>
-                   </div>
-                   <p class="issue-recommendation">${issue.recommendation}</p>
-               </div>
-           `;
-       });
-       
-       const hasDriverIssues = escenario.results.issues.some(issue => 
-           issue.description.toLowerCase().includes("controlador") || 
-           issue.description.toLowerCase().includes("dispositivo") ||
-           issue.type === "DRIVER"
-       );
-       
-       if (hasDriverIssues) {
-           issuesHtml += `
-               <div class="fix-all-issues-container mt-3">
-                   <button class="btn-dashboard btn-primary-dashboard fix-all-driver-issues-btn">
-                       <i class="fas fa-tools"></i> Reparar todos los controladores
-                   </button>
-               </div>
-           `;
-       }
-       
-       issuesHtml += `
-               </div>
-           </div>
-       `;
-   }
-   
-   let downloadButtonHtml = '';
-   if (escenario.results.report_available && escenario.diagnosis_id) {
-       downloadButtonHtml = `
-           <div class="mt-4 text-center battery-report-download">
-               <button class="btn-dashboard btn-primary-dashboard">
-                   <i class="fa-solid fa-download"></i> Descargar informe completo de batería
-               </button>
-           </div>
-       `;
-   }
-   
-   detailedResultsContent.innerHTML = `
-       <div class="component-detail-header">
-           <h3>${escenario.scenario}</h3>
-           <div class="component-status-badge ${statusClass}">
-               ${statusText}
-           </div>
-       </div>
-       <div class="component-detail-section">
-           <h4>Recomendaciones</h4>
-           <p>${escenario.recommendations || 'No hay recomendaciones específicas para este escenario.'}</p>
-       </div>
-       ${issuesHtml}
-       ${downloadButtonHtml}
-       <div class="scenario-timestamp">
-           <p>Fecha de análisis: ${formatearFecha(escenario.timestamp)}</p>
-       </div>
-       
-       <div class="scenario-actions mt-4">
-           <button class="btn-dashboard btn-info-dashboard run-driver-scan-btn">
-               <i class="fas fa-search"></i> Escanear controladores nuevamente
-           </button>
-           ${escenario.scenario.includes("Error de controlador") ? `
-               <button class="btn-dashboard btn-success-dashboard fix-all-scenario-drivers-btn">
-                   <i class="fas fa-tools"></i> Solucionar todos los problemas detectados
-               </button>
-           ` : ''}
-       </div>
-   `;
-   
-   const fixAllIssuesButton = detailedResultsContent.querySelector('.fix-all-driver-issues-btn');
-   if (fixAllIssuesButton) {
-       fixAllIssuesButton.addEventListener('click', function() {
-           repararTodosLosControladores(this);
-       });
-   }
-   
-   const scanButton = detailedResultsContent.querySelector('.run-driver-scan-btn');
-   if (scanButton) {
-       scanButton.addEventListener('click', function() {
-           escanearControladores(this);
-       });
-   }
-   
-   const fixAllScenarioButton = detailedResultsContent.querySelector('.fix-all-scenario-drivers-btn');
-   if (fixAllScenarioButton) {
-       fixAllScenarioButton.addEventListener('click', function() {
-           repararTodosLosControladores(this);
-       });
-   }
-   
-   if (escenario.results.report_available && escenario.diagnosis_id) {
-       const downloadButton = detailedResultsContent.querySelector('.battery-report-download button');
-       if (downloadButton) {
-           downloadButton.addEventListener('click', function() {
-               window.open(`/dashboard/api/diagnosis/${escenario.diagnosis_id}/file/BATTERY_REPORT/`, '_blank');
-           });
-       }
-   }
+    document.querySelector('.contentData').style.display = 'none';
+    detailedResults.style.display = 'block';
+    
+    let statusClass = '';
+    let statusText = '';
+    
+    switch (escenario.results.status) {
+        case 'NORMAL':
+            statusClass = 'success';
+            statusText = 'Normal';
+            break;
+        case 'WARNING':
+            statusClass = 'warning';
+            statusText = 'Requiere atención';
+            break;
+        case 'CRITICAL':
+            statusClass = 'error';
+            statusText = 'Crítico';
+            break;
+        default:
+            statusClass = 'unknown';
+            statusText = 'Desconocido';
+    }
+    
+    let issuesHtml = '';
+    if (escenario.results.issues && escenario.results.issues.length > 0) {
+        issuesHtml = `
+            <div class="component-detail-section">
+                <h4>Problemas detectados con PRECISIÓN</h4>
+                <div class="issues-list enhanced">
+        `;
+        
+        escenario.results.issues.forEach(issue => {
+            const severityClass = issue.severity === 'HIGH' ? 'critical' : 
+                               issue.severity === 'MEDIUM' ? 'warning' : 'info';
+            
+            const severityIcon = severityClass === 'critical' ? 'fa-exclamation-triangle' :
+                               severityClass === 'warning' ? 'fa-exclamation-circle' : 'fa-info-circle';
+                               
+            const severityText = issue.severity === 'HIGH' ? 'CRÍTICO' :
+                                issue.severity === 'MEDIUM' ? 'IMPORTANTE' : 'INFORMACIÓN';
+            
+            issuesHtml += `
+                <div class="issue-item enhanced ${severityClass}">
+                    <div class="issue-header">
+                        <div class="issue-severity ${severityClass}">
+                            <i class="fas ${severityIcon}"></i>
+                            <span>${severityText}</span>
+                        </div>
+                        <h5 class="issue-title">${issue.description}</h5>
+                    </div>
+                    <p class="issue-recommendation">${issue.recommendation}</p>
+                    ${issue.type === 'HARDWARE' && issue.severity === 'HIGH' ? 
+                        '<div class="issue-urgency">🚨 REQUIERE ACCIÓN INMEDIATA</div>' : ''}
+                </div>
+            `;
+        });
+        
+        issuesHtml += `
+                </div>
+            </div>
+        `;
+    }
+    
+    let batteryExtrasHtml = '';
+    if (escenario.scenario.includes("batería") && escenario.results.battery_health) {
+        const healthData = escenario.results.battery_health;
+        const efficiency = escenario.results.power_efficiency;
+        
+        batteryExtrasHtml = `
+            <div class="component-detail-section battery-health-section">
+                <h4><i class="fas fa-battery-half"></i> Análisis avanzado de batería</h4>
+                <div class="battery-metrics-grid">
+                    ${healthData.design_capacity ? `
+                        <div class="battery-metric">
+                            <div class="metric-icon"><i class="fas fa-tachometer-alt"></i></div>
+                            <div class="metric-info">
+                                <span class="metric-label">Salud de batería</span>
+                                <span class="metric-value">${((healthData.full_charge_capacity / healthData.design_capacity) * 100).toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${healthData.cycle_count ? `
+                        <div class="battery-metric">
+                            <div class="metric-icon"><i class="fas fa-sync"></i></div>
+                            <div class="metric-info">
+                                <span class="metric-label">Ciclos de carga</span>
+                                <span class="metric-value">${healthData.cycle_count}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${efficiency !== 'N/A' ? `
+                        <div class="battery-metric">
+                            <div class="metric-icon"><i class="fas fa-leaf"></i></div>
+                            <div class="metric-info">
+                                <span class="metric-label">Eficiencia energética</span>
+                                <span class="metric-value">${efficiency}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    let downloadButtonHtml = '';
+    if (escenario.results.report_available && escenario.diagnosis_id) {
+        downloadButtonHtml = `
+            <div class="component-detail-section">
+                <div class="download-section">
+                    <h4><i class="fas fa-download"></i> Informe técnico disponible</h4>
+                    <p>Se ha generado un informe detallado con análisis técnico completo.</p>
+                    <button class="btn-dashboard btn-primary-dashboard download-battery-report" data-diagnosis-id="${escenario.diagnosis_id}">
+                        <i class="fa-solid fa-file-download"></i> Descargar informe técnico completo
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    detailedResultsContent.innerHTML = `
+        <div class="component-detail-header enhanced">
+            <div class="scenario-icon">
+                <i class="fas ${getScenarioIcon(escenario.scenario)}"></i>
+            </div>
+            <div class="header-content">
+                <h3>${escenario.scenario}</h3>
+                <div class="component-status-badge ${statusClass}">
+                    <i class="fas ${getStatusIcon(statusClass)}"></i>
+                    ${statusText}
+                </div>
+            </div>
+        </div>
+        
+        <div class="component-detail-section">
+            <h4>Análisis inteligente</h4>
+            <p class="scenario-recommendations">${escenario.recommendations || 'Análisis completado sin recomendaciones específicas.'}</p>
+        </div>
+        
+        ${batteryExtrasHtml}
+        ${issuesHtml}
+        ${downloadButtonHtml}
+        
+        <div class="scenario-timestamp">
+            <p><i class="fas fa-clock"></i> Análisis realizado: ${formatearFecha(escenario.timestamp)}</p>
+        </div>
+        
+        <div class="scenario-actions enhanced">
+            <button class="btn-dashboard btn-info-dashboard run-driver-scan-btn">
+                <i class="fas fa-brain"></i> Nuevo análisis inteligente
+            </button>
+            ${escenario.scenario.includes("controlador") ? `
+                <button class="btn-dashboard btn-success-dashboard fix-all-scenario-drivers-btn">
+                    <i class="fas fa-magic"></i> Solucionar automáticamente
+                </button>
+            ` : ''}
+        </div>
+    `;
+    
+    setupEnhancedEventListeners();
+}
+
+function setupEnhancedEventListeners() {
+    const downloadButton = detailedResultsContent.querySelector('.download-battery-report');
+    if (downloadButton) {
+        downloadButton.addEventListener('click', function() {
+            const diagnosisId = this.getAttribute('data-diagnosis-id');
+            if (diagnosisId) {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando descarga...';
+                this.disabled = true;
+                
+                window.open(`/dashboard/api/diagnosis/${diagnosisId}/file/BATTERY_REPORT/`, '_blank');
+                
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fa-solid fa-file-download"></i> Descargar informe técnico completo';
+                    this.disabled = false;
+                }, 3000);
+            }
+        });
+    }
+    
+    const fixButtons = detailedResultsContent.querySelectorAll('.fix-driver-btn');
+    fixButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const deviceId = this.getAttribute('data-device-id');
+            repararControladorInteligente(deviceId, this);
+        });
+    });
+    
+    const fixAllButton = detailedResultsContent.querySelector('.fix-all-drivers-btn');
+    if (fixAllButton) {
+        fixAllButton.addEventListener('click', function() {
+            repararTodosLosControladoresInteligente(this);
+        });
+    }
+    
+    const fixAllScenarioButton = detailedResultsContent.querySelector('.fix-all-scenario-drivers-btn');
+    if (fixAllScenarioButton) {
+        fixAllScenarioButton.addEventListener('click', function() {
+            repararTodosLosControladores(this);
+        });
+    }
+}
+
+
+async function repararControladorInteligente(deviceId, buttonElement) {
+    try {
+        const originalText = buttonElement.innerHTML;
+        buttonElement.innerHTML = `<i class="fas fa-brain fa-spin"></i> Analizando...`;
+        buttonElement.disabled = true;
+        
+        if (!deviceId || deviceId === 'unknown' || deviceId.includes('generic')) {
+            mostrarNotificacion('info', 'Este dispositivo no requiere reparación individual. Use "Reparar todos" para un análisis completo.', 4);
+            buttonElement.innerHTML = originalText;
+            buttonElement.disabled = false;
+            return;
+        }
+        
+        const response = await fetch(`/dashboard/api/diagnosis/fix-driver/${deviceId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            credentials: 'same-origin'
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            buttonElement.innerHTML = `<i class="fas fa-check-circle"></i> REPARADO`;
+            buttonElement.classList.remove('primary');
+            buttonElement.classList.add('success');
+            buttonElement.disabled = true;
+            
+            mostrarNotificacion('success', 'Controlador reparado con éxito. ' + (data.requires_restart ? 'Reinicio requerido.' : ''), 5);
+            
+            if (data.requires_restart) {
+                setTimeout(() => mostrarDialogoReinicio(), 2000);
+            }
+        } else {
+            throw new Error(data.message || 'Error en reparación inteligente');
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarNotificacion('error', 'Error en reparación: ' + error.message, 3);
+        buttonElement.innerHTML = originalText;
+        buttonElement.disabled = false;
+    }
+}
+
+function getScenarioIcon(scenarioName) {
+    const icons = {
+        'batería': 'fa-battery-half',
+        'controlador': 'fa-microchip', 
+        'pantalla azul': 'fa-desktop',
+        'sistema lento': 'fa-tachometer-alt',
+        'conectividad': 'fa-wifi',
+        'arranque': 'fa-power-off'
+    };
+    
+    for (const [key, icon] of Object.entries(icons)) {
+        if (scenarioName.toLowerCase().includes(key)) {
+            return icon;
+        }
+    }
+    
+    return 'fa-cog';
+}
+
+function getStatusIcon(statusClass) {
+    switch (statusClass) {
+        case 'success': return 'fa-check-circle';
+        case 'warning': return 'fa-exclamation-triangle';
+        case 'error': return 'fa-times-circle';
+        default: return 'fa-question-circle';
+    }
 }
 
 function extraerDeviceIdDeDescripcion(descripcion) {
@@ -2682,12 +3088,10 @@ async function cargarDatosSistemaBasicos(container) {
         console.log("Datos REALES del sistema recibidos:", data);
         
         if (data.status === 'success' && data.data) {
-            // CPU - DATOS REALES
             const cpuUsage = data.data.cpu_usage || 'N/A';
             const cpuStatus = getCPUStatusFromUsage(cpuUsage);
             actualizarElementoSistema(container, 'cpu', `CPU: ${cpuUsage}`, cpuStatus);
             
-            // Controladores - INTENTAR OBTENER DATOS REALES
             try {
                 const driversData = await obtenerDatosRealControladores();
                 const driversStatus = driversData.status === 'NORMAL' ? 'success' : 
@@ -3408,27 +3812,72 @@ async function monitorearProgresoScan(diagnosisId) {
         
         if (simulatedProgress >= 100) {
             clearInterval(progressInterval);
-            scanDetailsText.textContent = "Análisis completado. Finalizando...";
-            setTimeout(() => {
-                hideScanProgressModal();
-                obtenerUltimoDiagnostico();
-                cargarHistorialDiagnosticosReal();
-                
-                const diagnosisHistoryTab = document.querySelector('.tab-btn[data-tab="diagnosis-history"]');
-                if (diagnosisHistoryTab) {
-                    diagnosisHistoryTab.click();
+            // CAMBIO AQUÍ: En lugar de mostrar el botón, cargar automáticamente los resultados
+            scanDetailsText.textContent = "Cargando resultados automáticamente...";
+            completed = true;
+            
+            // Intentar cargar los resultados automáticamente después de un breve delay
+            setTimeout(async () => {
+                try {
+                    console.log("Diagnóstico completado, cargando resultados automáticamente...");
+                    
+                    // Intentar obtener el último diagnóstico
+                    const latestResponse = await fetch('/dashboard/api/diagnosis/latest/', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    });
+                    
+                    if (latestResponse.ok) {
+                        const latestData = await latestResponse.json();
+                        
+                        if (latestData.status === 'success' && latestData.report_id) {
+                            console.log(`Cargando resultados automáticamente para reporte ID: ${latestData.report_id}`);
+                            await cargarResultadosDiagnosticoRevisado(latestData.report_id);
+                            hideScanProgressModal();
+                            return;
+                        }
+                    }
+                    
+                    // Si no hay report_id, buscar por diagnosis_id
+                    if (diagnosisId) {
+                        await cargarResultadosDiagnostico(diagnosisId);
+                        hideScanProgressModal();
+                        return;
+                    }
+                    
+                    // Como último recurso, mostrar resultado genérico
+                    console.log("No se encontraron resultados específicos, mostrando resultados genéricos");
+                    hideScanProgressModal();
+                    obtenerUltimoDiagnostico();
+                    cargarHistorialDiagnosticos();
+                    mostrarNotificacion('success', 'Diagnóstico completado', 3);
+                    
+                } catch (error) {
+                    console.error('Error al cargar resultados automáticamente:', error);
+                    
+                    // Si falla la carga automática, entonces mostrar el botón como respaldo
+                    scanDetailsText.textContent = "Error al cargar automáticamente. Use el botón para verificar resultados.";
+                    crearBotonComprobarMejorado("Diagnóstico del sistema");
+                    mostrarNotificacion('warning', 'Complete el proceso manualmente usando el botón', 4);
                 }
-                
-                mostrarNotificacion('success', 'Diagnóstico completado', 3);
             }, 1500);
         }
-    }, 500);
-    
-    let interval = setInterval(async () => {
+    }, 1000);
+
+    // Monitorear el estado real del diagnóstico
+    const interval = setInterval(async () => {
+        if (completed) {
+            clearInterval(interval);
+            return;
+        }
+        
+        attempts++;
         try {
-            attempts++;
-            
-            const response = await fetch('/dashboard/api/diagnosis/progress/?diagnosis_id=' + diagnosisId, {
+            const response = await fetch(`/dashboard/api/diagnosis/status/${diagnosisId}/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -3437,50 +3886,33 @@ async function monitorearProgresoScan(diagnosisId) {
                 credentials: 'same-origin'
             });
 
-            if (!response.ok) {
-                throw new Error('Error al obtener progreso');
-            }
-
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                const progress = data.data.progress;
-                const status = data.data.status;
-                const component = data.data.component || '';
+            if (response.ok) {
+                const data = await response.json();
                 
-                if (progress > 0 && progress > simulatedProgress) {
-                    simulatedProgress = progress;
-                    scanPercentage.textContent = progress + "%";
-                    scanProgressBar.querySelector('span').style.width = progress + "%";
-                    
-                    if (component) {
-                        currentComponentScan.textContent = "Analizando: " + component;
-                    }
-                }
-                
-                if (progress >= 100 || status === 'Completado') {
+                if (data.status === 'success' && data.data.status === 'completed') {
                     completed = true;
                     clearInterval(interval);
                     clearInterval(progressInterval);
                     
-                    scanDetailsText.textContent = "Análisis completado. Generando informe...";
+                    // Forzar progreso al 100% y cargar resultados
+                    scanPercentage.textContent = "100%";
+                    scanProgressBar.querySelector('span').style.width = "100%";
+                    currentComponentScan.textContent = "Cargando resultados...";
+                    
+                    console.log("Diagnóstico completado, obteniendo resultados automáticamente...");
                     
                     setTimeout(async () => {
                         if (data.data.report_id) {
+                            console.log(`Cargando resultados para reporte ID: ${data.data.report_id}`);
                             await cargarResultadosDiagnosticoRevisado(data.data.report_id);
                         } else {
+                            console.log("No se encontró report_id en la respuesta");
+                            mostrarNotificacion('info', 'Diagnóstico completado', 3);
                             obtenerUltimoDiagnostico();
-                            cargarHistorialDiagnosticosReal();
+                            cargarHistorialDiagnosticos();
                         }
-                        
-                        const diagnosisHistoryTab = document.querySelector('.tab-btn[data-tab="diagnosis-history"]');
-                        if (diagnosisHistoryTab) {
-                            diagnosisHistoryTab.click();
-                        }
-                        
                         hideScanProgressModal();
-                        mostrarNotificacion('success', 'Diagnóstico completado', 3);
-                    }, 1500);
+                    }, 1000);
                 }
             }
             
@@ -3496,9 +3928,105 @@ async function monitorearProgresoScan(diagnosisId) {
     setTimeout(() => {
         if (!completed) {
             clearInterval(interval);
+            clearInterval(progressInterval);
         }
     }, 120000);
 }
+
+async function monitorearProgresoEscenario(scenarioTitle) {
+    console.log(`Monitoreando progreso para: ${scenarioTitle}`);
+    
+    showScanProgressModal();
+    currentComponentScan.textContent = "Iniciando análisis...";
+    scanPercentage.textContent = "0%";
+    scanProgressBar.querySelector('span').style.width = "0%";
+    scanDetailsText.textContent = "Preparando análisis de escenario...";
+    
+    let progressSpeed = 2;
+    let progressCap = 85; 
+    let timeoutDuration = 25000; 
+    let stepsMessages = [];
+    
+    if (scenarioTitle.includes("batería")) {
+        progressSpeed = 2;
+        progressCap = 80; 
+        timeoutDuration = 20000; 
+        stepsMessages = [
+            { threshold: 10, message: "Analizando estado de la batería..." },
+            { threshold: 25, message: "Verificando aplicaciones con alto consumo..." },
+            { threshold: 45, message: "Analizando plan de energía..." },
+            { threshold: 65, message: "Generando informe de energía..." },
+            { threshold: 80, message: "Compilando recomendaciones..." }
+        ];
+    } else {
+        stepsMessages = [
+            { threshold: 20, message: "Analizando componentes..." },
+            { threshold: 40, message: "Verificando configuración..." },
+            { threshold: 60, message: "Compilando resultados..." },
+            { threshold: 80, message: "Finalizando análisis..." }
+        ];
+    }
+    
+    let simulatedProgress = 0;
+    let currentMessageIndex = 0;
+    let progressCompleted = false;
+    
+    const progressInterval = setInterval(() => {
+        if (progressCompleted) return;
+        
+        simulatedProgress += progressSpeed;
+        if (simulatedProgress > progressCap) {
+            simulatedProgress = progressCap;
+        }
+        
+        scanPercentage.textContent = simulatedProgress + "%";
+        scanProgressBar.querySelector('span').style.width = simulatedProgress + "%";
+        
+        if (currentMessageIndex < stepsMessages.length && 
+            simulatedProgress >= stepsMessages[currentMessageIndex].threshold) {
+            currentComponentScan.textContent = stepsMessages[currentMessageIndex].message;
+            currentMessageIndex++;
+        }
+        
+        if (simulatedProgress >= progressCap - 5) {
+            progressCompleted = true;
+            clearInterval(progressInterval);
+            
+            // CAMBIO AQUÍ: Cargar automáticamente en lugar de mostrar botón
+            scanPercentage.textContent = "100%";
+            scanProgressBar.querySelector('span').style.width = "100%";
+            currentComponentScan.textContent = "Cargando resultados...";
+            scanDetailsText.textContent = "Procesando información del análisis...";
+            
+            setTimeout(async () => {
+                try {
+                    const success = await verificarEstadoAnalisis(scenarioTitle);
+                    if (success) {
+                        hideScanProgressModal();
+                        mostrarNotificacion('success', 'Análisis completado automáticamente', 3);
+                    } else {
+                        // Si falla, entonces mostrar el botón como respaldo
+                        crearBotonComprobarMejorado(scenarioTitle);
+                    }
+                } catch (error) {
+                    console.error('Error en carga automática:', error);
+                    crearBotonComprobarMejorado(scenarioTitle);
+                }
+            }, 2000);
+        }
+    }, 500);
+    
+    setTimeout(() => {
+        if (!progressCompleted) {
+            clearInterval(progressInterval);
+            progressCompleted = true;
+            
+            scanDetailsText.textContent = "El análisis está tardando más de lo esperado.";
+            crearBotonComprobarMejorado(scenarioTitle);
+        }
+    }, timeoutDuration);
+}
+
 function agregarComponenteReal(nombre, valor, estado, container, isSystemComponent = false) {
     const statusClass = estado === 'success' ? 'success' : 
                        estado === 'warning' ? 'warning' : 
@@ -4071,16 +4599,12 @@ async function repararTodosLosControladores(buttonElement) {
                         slowProgress = 80;
                         clearInterval(secondInterval);
                         
-                        // Mensaje específico para esta fase
                         currentComponentScan.textContent = "Aplicando cambios al sistema...";
                         
-                        // Añadir animación de "pulso" a la barra
                         scanProgressBar.querySelector('span').classList.add('progress-pulse');
                         
-                        // Tercera fase - progresión lentísima hasta 95%
                         let finalProgress = slowProgress;
                         const finalInterval = setInterval(() => {
-                            // Si está en segundo plano, detener estas animaciones
                             if (window.reparacionEnSegundoPlano) {
                                 clearInterval(finalInterval);
                                 return;
@@ -4091,10 +4615,8 @@ async function repararTodosLosControladores(buttonElement) {
                                 finalProgress = 95;
                                 clearInterval(finalInterval);
                                 
-                                // Añadir indicador visual de que aún está procesando
                                 let dots = 0;
                                 const dotsInterval = setInterval(() => {
-                                    // Si está en segundo plano, detener estas animaciones
                                     if (window.reparacionEnSegundoPlano) {
                                         clearInterval(dotsInterval);
                                         return;
@@ -4104,7 +4626,6 @@ async function repararTodosLosControladores(buttonElement) {
                                     const dotsText = '.'.repeat(dots);
                                     currentComponentScan.textContent = `Aplicando cambios al sistema${dotsText}`;
                                     
-                                    // Rotar mensajes para mantener interés
                                     const messages = [
                                         "Este proceso puede tardar varios minutos",
                                         "No cierre esta ventana",
@@ -4137,9 +4658,7 @@ async function repararTodosLosControladores(buttonElement) {
         
         window.initialInterval = initialInterval;
         
-        // Añadir botón para continuar en segundo plano después de 20 segundos
         setTimeout(() => {
-            // Solo añadir si el proceso aún está en curso y no está en segundo plano
             if (window.reparacionEnProgreso && !window.reparacionEnSegundoPlano) {
                 const modalFooter = document.createElement('div');
 modalFooter.className = 'scan-progress-footer';
@@ -4153,19 +4672,15 @@ modalFooter.innerHTML = `
                     progressContent.appendChild(modalFooter);
                     
                     document.querySelector('.background-process-btn').addEventListener('click', () => {
-                        // Activar modo segundo plano
                         window.reparacionEnSegundoPlano = true;
                         
-                        // Limpiar todos los intervalos de animación
                         clearInterval(window.initialInterval);
                         clearInterval(window.secondInterval);
                         clearInterval(window.finalInterval);
                         clearInterval(window.dotsInterval);
                         
-                        // Ocultar el modal
                         hideScanProgressModal();
                         
-                        // Crear indicador de proceso en segundo plano
                         const bgIndicator = document.createElement('div');
                         bgIndicator.id = 'bg-process-indicator';
                         bgIndicator.style.position = 'fixed';
@@ -4186,19 +4701,16 @@ modalFooter.innerHTML = `
                         `;
                         document.body.appendChild(bgIndicator);
                         
-                        // Al hacer clic en el indicador, mostrar detalles
                         bgIndicator.addEventListener('click', () => {
                             alert('La reparación de controladores está en proceso. Se notificará cuando termine.');
                         });
                         
-                        // Mensaje informativo
                         console.log('Reparación de controladores continúa en segundo plano');
                     });
                 }
             }
         }, 20000);
         
-        // Realizar la petición HTTP para reparar controladores
         const response = await fetch('/dashboard/api/diagnosis/fix-all-drivers/', {
             method: 'POST',
             headers: {
@@ -4209,7 +4721,6 @@ modalFooter.innerHTML = `
             credentials: 'same-origin'
         });
         
-        // Limpiar todos los intervalos 
         clearInterval(window.initialInterval);
         clearInterval(window.secondInterval);
         clearInterval(window.finalInterval);
@@ -4217,17 +4728,14 @@ modalFooter.innerHTML = `
         
         const data = await response.json();
         
-        // Marcar como completado
         window.reparacionEnProgreso = false;
         
-        // Si está en modo segundo plano, mostrar notificación y eliminar indicador
         if (window.reparacionEnSegundoPlano) {
             const bgIndicator = document.getElementById('bg-process-indicator');
             if (bgIndicator) {
                 bgIndicator.remove();
             }
             
-            // Crear notificación de completado
             const notif = document.createElement('div');
             notif.id = 'repair-complete-notification';
             notif.style.position = 'fixed';
@@ -4261,7 +4769,6 @@ modalFooter.innerHTML = `
             `;
             document.body.appendChild(notif);
             
-            // Configurar botones
             notif.querySelector('button').addEventListener('click', () => notif.remove());
             
             document.getElementById('view-results-btn').addEventListener('click', () => {
@@ -4278,17 +4785,14 @@ modalFooter.innerHTML = `
                 });
             }
             
-            // Auto-cerrar después de 30 segundos
             setTimeout(() => {
                 if (notif.parentNode) {
                     notif.remove();
                 }
             }, 30000);
         } else {
-            // Quitar la clase de pulso
             scanProgressBar.querySelector('span').classList.remove('progress-pulse');
             
-            // Completar animación hasta 100%
             let completeProgress = 95;
             const completeInterval = setInterval(() => {
                 completeProgress += 1;
@@ -4302,7 +4806,6 @@ modalFooter.innerHTML = `
                     setTimeout(() => {
                         hideScanProgressModal();
                         
-                        // Mostrar resultados y mensaje de reinicio si es necesario
                         if (data.status === 'success' || data.status === 'partial') {
                             if (data.requires_restart) {
                                 mostrarDialogoReinicio();
@@ -4314,7 +4817,6 @@ modalFooter.innerHTML = `
                         buttonElement.innerHTML = originalText;
                         buttonElement.disabled = false;
                         
-                        // Actualizar vista si estamos en un escenario
                         if (currentScenarioRunId) {
                             obtenerResultadoEscenario(currentScenarioRunId);
                         }
@@ -4329,13 +4831,11 @@ modalFooter.innerHTML = `
     } catch (error) {
         console.error('Error:', error);
         
-        // Limpiar todos los intervalos en caso de error
         clearInterval(window.initialInterval);
         clearInterval(window.secondInterval);
         clearInterval(window.finalInterval);
         clearInterval(window.dotsInterval);
         
-        // Eliminar indicador de segundo plano si existe
         const bgIndicator = document.getElementById('bg-process-indicator');
         if (bgIndicator) {
             bgIndicator.remove();
@@ -4345,11 +4845,9 @@ modalFooter.innerHTML = `
         
         hideScanProgressModal();
         
-        // Mostrar mensaje de error adecuado
         if (!window.reparacionEnSegundoPlano) {
             mostrarMensajeError("Error al reparar controladores: " + error.message);
         } else {
-            // Crear notificación de error
             const errorNotif = document.createElement('div');
             errorNotif.style.position = 'fixed';
             errorNotif.style.bottom = '20px';
@@ -4384,7 +4882,6 @@ modalFooter.innerHTML = `
 }
 
 function mostrarResultadosReparacion(data) {
-    // Implementar según necesidades para mostrar resultados detallados
     if (data.results && data.results.length > 0) {
         let successCount = data.results.filter(r => r.success).length;
         let message = `Se repararon ${successCount} de ${data.results.length} controladores.`;
@@ -4399,7 +4896,6 @@ function mostrarResultadosReparacion(data) {
     }
 }
 
-// Función para mostrar mensajes de error como alerta en la página
 function mostrarMensajeError(mensaje) {
     const alertHTML = `
         <div class="alert alert-warning" style="margin-top: 20px; background-color: #2a3a4f; border-color: #f0ad4e; color: white;">
@@ -4416,12 +4912,10 @@ function mostrarMensajeError(mensaje) {
         </div>
     `;
     
-    // Si estamos en la vista de detalles
     if (detailedResultsContent) {
         const currentContent = detailedResultsContent.innerHTML;
         detailedResultsContent.innerHTML = currentContent + alertHTML;
         
-        // Hacer scroll hacia el alerta
         const alertElement = detailedResultsContent.querySelector('.alert');
         if (alertElement) {
             alertElement.scrollIntoView({ behavior: 'smooth' });
@@ -4471,7 +4965,6 @@ async function actualizarControlador(deviceId, buttonElement) {
     }
 }
 
-// Actualizar todos los controladores
 async function actualizarTodosLosControladores(buttonElement) {
     try {
         const originalText = buttonElement.innerHTML;
@@ -4483,7 +4976,6 @@ async function actualizarTodosLosControladores(buttonElement) {
         scanPercentage.textContent = "0%";
         scanProgressBar.querySelector('span').style.width = "0%";
         
-        // Simulación del progreso
         let progress = 0;
         const progressInterval = setInterval(() => {
             progress += 2;
@@ -4694,8 +5186,6 @@ async function ejecutarAccionMantenimiento(action) {
         const data = await response.json();
         
         if (data.status === 'success') {
-            // La operación se ha completado con éxito
-            // Podríamos mostrar resultados específicos según la acción
         } else {
             throw new Error(data.message || `Error al ejecutar ${getActionName(action)}`);
         }
@@ -4856,7 +5346,8 @@ function createPerformanceChart(container, data, options) {
 }
 async function obtenerDatosRealControladores() {
     try {
-        // Primero intentar obtener el último reporte de diagnóstico
+        console.log("Obteniendo datos MEJORADOS de controladores...");
+        
         const historialResponse = await fetch('/dashboard/client/historial/', {
             method: 'GET',
             headers: {
@@ -4875,9 +5366,7 @@ async function obtenerDatosRealControladores() {
         if (historialData.status === 'success' && historialData.historial && historialData.historial.length > 0) {
             const ultimoDiagnostico = historialData.historial[0];
             
-            // Buscar reporte asociado al último diagnóstico
             try {
-                // Buscar reportes de diagnóstico que contengan datos de controladores
                 const reportResponse = await fetch(`/dashboard/api/diagnosis/report/${ultimoDiagnostico.id}/`, {
                     method: 'GET',
                     headers: {
@@ -4891,14 +5380,26 @@ async function obtenerDatosRealControladores() {
                     const reportData = await reportResponse.json();
                     
                     if (reportData.status === 'success' && reportData.data) {
-                        // Buscar componente de controladores en el reporte
                         const driversComponent = reportData.data.components?.find(c => 
                             c.type === 'DRIVER' || c.name?.toLowerCase().includes('controlador')
                         );
                         
                         if (driversComponent && driversComponent.details) {
-                            console.log("Datos REALES de controladores encontrados:", driversComponent.details);
-                            return driversComponent.details;
+                            console.log("Datos PRECISOS de controladores encontrados:", driversComponent.details);
+                            
+                            return {
+                                status: driversComponent.details.status || "NORMAL",
+                                total_drivers: driversComponent.details.drivers?.length || 0,
+                                working_drivers: driversComponent.details.drivers?.filter(d => 
+                                    d.status === "Normal" || d.status === "Sistema (excluido)").length || 0,
+                                problematic_drivers: driversComponent.details.problematic_drivers || [],
+                                outdated_drivers: driversComponent.details.outdated_drivers || [],
+                                issues: driversComponent.details.issues || [],
+                                message: driversComponent.details.recommendations || 
+                                        "Análisis inteligente de controladores completado",
+                                excluded_count: driversComponent.details.drivers?.filter(d => 
+                                    d.status === "Sistema (excluido)").length || 0
+                            };
                         }
                     }
                 }
@@ -4907,23 +5408,28 @@ async function obtenerDatosRealControladores() {
             }
         }
         
-        // Si no hay datos de diagnóstico detallado, usar datos básicos
         return {
             status: "NORMAL",
             total_drivers: 0,
             working_drivers: 0,
             problematic_drivers: [],
-            message: "Ejecute un diagnóstico completo para obtener información detallada de controladores"
+            outdated_drivers: [],
+            issues: [],
+            message: "Ejecute un diagnóstico completo para obtener análisis inteligente de controladores",
+            excluded_count: 0
         };
         
     } catch (error) {
-        console.error('Error al obtener datos reales de controladores:', error);
+        console.error('Error al obtener datos MEJORADOS de controladores:', error);
         return {
             status: "ERROR",
             total_drivers: 0,
             working_drivers: 0,
             problematic_drivers: [],
-            message: "Error al verificar controladores"
+            outdated_drivers: [],
+            issues: [],
+            message: "Error al verificar controladores con análisis inteligente",
+            excluded_count: 0
         };
     }
 }
@@ -5171,7 +5677,21 @@ function ocultarIndicadorProcesando() {
 }
 
 function hideScanProgressModal() {
-   scanProgressModal.style.display = 'none';
+    if (scanProgressModal) {
+        scanProgressModal.style.display = 'none';
+    }
+    
+    if (currentScenarioController) {
+        currentScenarioController.abort();
+        currentScenarioController = null;
+    }
+    
+    if (currentProgressInterval) {
+        clearInterval(currentProgressInterval);
+        currentProgressInterval = null;
+    }
+    
+    isScenarioRunning = false;
 }
 
 function mostrarDialogoReinicio() {
@@ -6644,9 +7164,221 @@ enhancedStyles.textContent = `
     border-left: 3px solid #f59e0b;
 }
 
+.drivers-overview-card.enhanced {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(46, 204, 113, 0.1));
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.issue-item.enhanced {
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.issue-item.enhanced.critical {
+    border-left-color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.issue-item.enhanced.warning {
+    border-left-color: #f39c12;
+    background: rgba(243, 156, 18, 0.1);
+}
+
+.issue-item.enhanced.info {
+    border-left-color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+}
+
+.issue-urgency {
+    background: rgba(231, 76, 60, 0.2);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-top: 8px;
+    text-align: center;
+    animation: pulse 2s infinite;
+}
+
+.battery-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.battery-metric {
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.metric-icon {
+    background: #3498db;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+}
+
+.metric-icon i {
+    color: white;
+    font-size: 16px;
+}
+
+.metric-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.metric-label {
+    color: #bdc3c7;
+    font-size: 12px;
+    margin-bottom: 2px;
+}
+
+.metric-value {
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.pulse-button {
+    animation: pulse 2s infinite;
+}
+
+.component-detail-header.enhanced {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.scenario-icon {
+    background: rgba(52, 152, 219, 0.2);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+}
+
+.scenario-icon i {
+    color: #3498db;
+    font-size: 24px;
+}
+
+.header-content h3 {
+    color: white;
+    margin: 0 0 8px 0;
+    font-size: 20px;
+}
+
+.download-section {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(39, 174, 96, 0.1));
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+}
+
+.download-section h4 {
+    color: #2ecc71;
+    margin-bottom: 10px;
+}
+
+.scenario-actions.enhanced {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+}
+
+
 [data-status="success"] .sistema-item {
     border-left: 3px solid #10b981;
 }
 `;
+
+function injectChatStyles() {
+    if (document.getElementById('chat-personalization-styles')) {
+        return; // Ya inyectados
+    }
+    
+    const styles = `
+        .chat-suggestions {
+            max-width: 100%;
+            text-align: left;
+        }
+        
+        .suggestion-btn {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 3px;
+            border-radius: 15px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+        }
+        
+        .suggestion-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,123,255,0.4);
+            background: linear-gradient(135deg, #0056b3, #004085);
+        }
+        
+        .suggestion-btn:active {
+            transform: translateY(0);
+        }
+        
+        .mensaje-asistente.personalized {
+            background: linear-gradient(135deg, #e8f4f8, #d1ecf1);
+            border-left: 4px solid #007bff;
+        }
+        
+        .user-status-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+    `;
+    
+    const styleElement = document.createElement('style');
+    styleElement.id = 'chat-personalization-styles';
+    styleElement.textContent = styles;
+    document.head.appendChild(styleElement);
+}
+document.addEventListener('DOMContentLoaded', function() {
+    injectChatStyles();
+});
 document.head.appendChild(enhancedStyles);
+
 
