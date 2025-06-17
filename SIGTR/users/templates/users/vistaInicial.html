@@ -124,7 +124,7 @@
                                     <input id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA">
                                 </div>
                                 <div class="contentChatBtn">
-                                    <button class="btnChat" id="audioSend">
+                                    <button class="btnChat" id="audioSend" onclick="login()">
                                         <i class="fa-solid fa-microphone microfono"></i>
                                     </button>
                                     <button class="btnChat" id="sendChat" style="display: none;">
@@ -154,18 +154,6 @@
                             </div>
                         </button>
                     </div>
-                    <div class="red">
-                        <button id="btnRed" class="btnUlt" onclick="login()">
-                            <div class="textDiag">COMPROBACIÓN DE RED</div>
-                            <div class="graficoMonit"><img src="{% static 'dashboard/img/red.webp' %}" alt=""
-                                    class="imgDiagnostico" id="imgRed"></div>
-                            <div class="progress-bar" id="progressBarRed">
-                                <span data-width="100%"></span>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-                <div class="ultimo">
                     <div class="detdiagnostico">
                         <button id="btnAbrirModalDiagnostico" class="btnUlt" onclick="login()">
                             <div class="textDiag">DIAGNÓSTICO</div>
@@ -179,7 +167,10 @@
                             </div>
                         </button>
                     </div>
-                    <div class="antivirus">
+                </div>
+                <div class="ultimo">
+                    
+                    <div class="functionAdd">
                         <button class="btnUlt" id="btnAbrirModalAntivirus" onclick="login()">
                             <div class="textDiag">ANTIVIRUS</div>
                             <div class="imgDetDiag" id="imgAntivirusDet">
@@ -190,7 +181,7 @@
                             </div>
                         </button>
                     </div>
-                    <div class="ultMant">
+                    <div class="functionAdd">
                         <button class="btnUlt" id="btnAbrirModalMantenimiento" onclick="login()">
                             <div class="textDiag">MANTENIMIENTO</div>
                             <div class="imgDetDiag" id="imgMantDet"><img class="imgDiagnostico"
@@ -203,7 +194,19 @@
                             </div>
                         </button>
                     </div>
-                    <div class="ultHist">
+
+                    <div class="functionAdd" id="cardRed">
+                        <button id="btnRed" class="btnUlt" onclick="login()">
+                            <div class="textDiag">TESTEO DE RED</div>
+                            <div class="graficoMonit"><img src="{% static 'dashboard/img/red.webp' %}" alt=""
+                                    class="imgDiagnostico" id="imgRed"></div>
+                            <div class="progress-bar" id="progressBarRed">
+                                <span data-width="100%"></span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="functionAdd">
                         <button class="btnUlt" id="btnHist" onclick="login()">
                             <div class="textDiag">HISTORIAL</div>
                             <div class="imgDetDiag" id="imgHistDet">

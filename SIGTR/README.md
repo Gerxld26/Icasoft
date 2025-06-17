@@ -50,3 +50,4 @@ del template a las views, de ahí urls.
 ## INSTALAR:
 npm i bootstrap-icons
 pip install django-widget-tweaks
+pip install twilio

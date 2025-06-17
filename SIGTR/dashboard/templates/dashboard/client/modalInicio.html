@@ -195,9 +195,6 @@
     </div>
 </div>
 
-<!-- Contenedor de notificaciones -->
-<div id="notificaciones" class="notificaciones-container"></div>
-
 <!--MODAL ANTIVIRUS-->
 <div id="modalAntivirus" class="modal antivirus-modal">
     <div class="modal-content antivirus-modal-content">
@@ -573,6 +570,26 @@
         </div>
         <div class="contentData" id="contentConsej">
             <!--Contenido dinámico-->
+        </div>
+    </div>
+</div>
+
+<div id="modalDownland" class="modal">
+    <div class="modal-content">
+        <div class="headerModal">
+            ¿Desea eliminar el contenido de la carpeta de DESCARGAS?
+        </div>
+        <div class="contentData">
+            <div  class="textModal" style="color:#ba1212; font-weight:700; font-size: xx-large; text-shadow: -2px -1px 9px #9a0b0b;">
+                Advertencia
+            </div>
+            <div class="textModal">
+                Estos archivos son de su carpeta personal de descargas, al aceptar se eliminará todo el contenido de la carpeta, caso contrario se eliminará distintos archivos
+            </div>
+            <div class="buttonModal">
+                <button class="asistenciaButton" style="background:#ba1212;" onclick="eliminarDownland(this)">Sí</button>
+                <button class="asistenciaButton" style="background:rgb(18, 18, 109);" onclick="eliminarArchivos(this)">No</button>
+            </div>
         </div>
     </div>
 </div>

@@ -20,19 +20,16 @@ function addCategory() {
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();
-        //mostrar los tooltips del formulario 
         if (!form.checkValidity()) {
             form.reportValidity();
             return;
         }
-        const formData = new FormData(form);
-        formData.forEach((value, key) => {
-            console.log(`${key}: ${value}`);
-        });
 
+        const formData = new FormData(form);
+        formData.append('action', 'create'); 
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-        fetch("/dashboard/categories/create/", {
+        fetch("/dashboard/categories/crud/", {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken,
@@ -40,28 +37,96 @@ function addCategory() {
             },
             body: formData
         })
-            .then(response => {
-                if (!response.ok) return response.json().then(data => Promise.reject(data));
-                return response.json();
-            })
-            .then(data => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Categoría agregada',
-                    text: data.message,
-                    timer: 3000,
-                    showConfirmButton: false
-                }).then(() => {
-                    location.reload();
-                });
-                form.reset();
-                modal.hide();
-
-            })
-            .catch(error => {
-                console.error("Error en la petición:", error);
+        .then(response => {
+            if (!response.ok) return response.json().then(data => Promise.reject(data));
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Éxito',
+                text: data.message,
+                timer: 3000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
             });
+            form.reset();
+            modal.hide();
+        })
+        .catch(error => {
+            console.error("Error en la petición:", error);
+        });
     });
+}
+function editCategory(categoryId) {
+    const form = document.getElementById('edit-category-form');
+    const modalElementEdit = document.getElementById('editCategoryModal');
+    const modalEdit = bootstrap.Modal.getOrCreateInstance(modalElementEdit);
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // GET: obtener datos
+    fetch(`/dashboard/categories/crud/${categoryId}/?action=update`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        Object.entries(data).forEach(([key, value]) => {
+            const field = form.querySelector(`[name="${key}"]`);
+            if (field && field.type !== "file") {
+                field.value = value;
+            }
+        });
+        form.setAttribute('data-id', categoryId);
+        modalEdit.show();
+    })
+    .catch(error => {
+        console.error('Error al cargar datos de la categoría:', error);
+    });
+
+    form.onsubmit = function (e) {
+        e.preventDefault();
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const formData = new FormData(form);
+        formData.append('action', 'update');
+
+        fetch(`/dashboard/categories/crud/${categoryId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) return response.json().then(data => Promise.reject(data));
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Éxito',
+                text: data.message,
+                timer: 3000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+            form.reset();
+            modalEdit.hide();
+        })
+        .catch(error => {
+            console.error('Error al actualizar la categoría:', error);
+        });
+    };
 }
 // Eliminar categoria:
 function deleteCategory(categoryId) {
@@ -74,25 +139,31 @@ function deleteCategory(categoryId) {
         confirmButtonText: 'Sí, eliminar!'
     }).then((result) => {
         if (result.isConfirmed) {
-            fetch(`/dashboard/categories/delete/${categoryId}/`, {
+            const csrfToken = getCSRFToken();
+            const formData = new URLSearchParams();
+            formData.append('action', 'delete');
+
+            fetch(`/dashboard/categories/crud/${categoryId}/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
+                body: formData
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        Swal.fire('¡Hecho!', data.message, 'success').then(() => location.reload());
-                    } else {
-                        Swal.fire('Error', data.message, 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire('Error', 'Ocurrió un error al eliminar la categoría.', 'error');
-                });
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire('¡Éxito!', data.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Aviso', data.message, 'warning');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Ocurrió un error al eliminar la categoría.', 'error');
+            });
         }
     });
 }

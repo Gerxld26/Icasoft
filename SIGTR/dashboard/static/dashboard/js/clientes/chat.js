@@ -4,10 +4,6 @@ $(document).ready(function () {
     const $bodyChat = $('#body-chat');
     const $asistenteSoporte = $('#asistenteSoporte');
 
-    const audioButton = document.getElementById('audioSend');
-    const sendChat = document.getElementById('sendChat');
-    const audioSend = document.getElementById('audioSend');
-
     const mensajeIA = document.getElementById('mensajeIA');
     const divChatAudio = document.getElementById('contentFooterAudio');
     const divChatText = document.getElementById('contentFootertext');
@@ -17,12 +13,28 @@ $(document).ready(function () {
     const robotGIF = document.getElementById('robotGIF');
     const robotGIFOjos = document.getElementById('robotGIFOjos');
 
+    const sendChat = document.getElementById('sendChat');
+    const audioSend = document.getElementById('audioSend');
+    const audioSendText = document.getElementById('audioSendText')
     const $mostrarChat = $('#mostrarChat');
     const $cerrarChat = $('#cerrarChat');
 
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
+
+    function mostrarEstadoIA(estado) {
+        if (estado === 'escuchando') {
+            videoOjos.style.display = 'flex';
+            videoHablando.style.display = 'none';
+        } else if (estado === 'hablando') {
+            videoHablando.style.display = 'flex';
+            videoOjos.style.display = 'none';
+        } else {
+            videoHablando.style.display = 'none';
+            videoOjos.style.display = 'flex';
+        }
+    }
 
     function formatMarkdownToHTML(text) {
         if (!text) return text;
@@ -54,7 +66,6 @@ $(document).ready(function () {
 
     function speakText(text) {
         const cleanedText = cleanTextForSpeech(text);
-
         // Si el chat está en modo activo, no hablar
         if ($asistenteSoporte.hasClass('modo-chat-activo')) {
             return;
@@ -75,7 +86,8 @@ $(document).ready(function () {
             utterance.pitch = 1.3;
 
             // Mostrar y reproducir el video mientras habla
-            videoHablando.style.display = 'flex';
+            // Mostrar hablando
+            mostrarEstadoIA('hablando');
             imgIa.style.display = 'none';
 
             robotGIF.currentTime = 0;
@@ -87,10 +99,11 @@ $(document).ready(function () {
             utterance.onend = () => {
                 robotGIF.pause();
                 robotGIF.currentTime = 0;
-                videoHablando.style.display = 'none';
+                mostrarEstadoIA();
+                //videoHablando.style.display = 'none';
                 imgIa.style.display = 'none';
 
-                videoOjos.style.display = 'flex';
+                //videoOjos.style.display = 'flex';
                 robotGIFOjos.currentTime = 0;
                 robotGIFOjos.muted = true;
                 robotGIFOjos.play().catch(e => {
@@ -191,11 +204,11 @@ $(document).ready(function () {
 
         if (mensaje === "") {
             sendChat.style.display = 'none';
-            audioSend.style.display = 'inline';
+            audioSendText.style.display = 'inline';
         } else {
             $asistenteSoporte.addClass('modo-chat-activo');
             sendChat.style.display = 'grid';
-            audioSend.style.display = 'none';
+            audioSendText.style.display = 'none';
         }
     });
 
@@ -207,25 +220,53 @@ $(document).ready(function () {
     });
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        $(audioButton).on('click', function () {
-            if (isRecording) {
-                stopRecording();
-            } else {
+        $(audioSendText).on('click', function () {
+            if (!isRecording) {
+                isRecording = true;
+
+                // Mostrar estado previo a grabación
+                divChatAudio.style.display = 'flex';
+                divChatText.style.display = 'none';
+                mensajeIA.style.background = 'none';
+                imgIa.style.display = 'none';
+                videoOjos.style.display = 'flex';
+                videoHablando.style.display = 'none';
+
+                // Mostrar ícono de grabando (esperando permiso)
+                audioSend.innerHTML = '<i class="fa-solid fa-microphone microfono fa-beat" style="color: #ff0000;"></i>';
+                $asistenteSoporte.removeClass('modo-chat-activo');
+                startRecording();
+            }
+        });
+        $(audioSend).on('click', function () {
+            if (!isRecording) {
+                isRecording = true;
+
+                // Mostrar estado previo a grabación
+                divChatAudio.style.display = 'flex';
+                divChatText.style.display = 'none';
+                mensajeIA.style.background = 'none';
+                imgIa.style.display = 'none';
+                videoOjos.style.display = 'flex';
+                videoHablando.style.display = 'none';
+
+                // Mostrar ícono de grabando (esperando permiso)
+                audioSend.innerHTML = '<i class="fa-solid fa-microphone microfono fa-beat" style="color: #ff0000;"></i>';
+
                 startRecording();
             }
         });
     } else {
-        $(audioButton).prop('disabled', true);
+        $(audioSendText).prop('disabled', true);
+        $(audioSend).prop('disabled', true);
     }
 
     function startRecording() {
+        // MOSTRAR ESCUCHANDO (grabando)
+        mostrarEstadoIA('escuchando');
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
-                audioButton.innerHTML = '<i class="fa-solid fa-microphone microfono fa-beat" style="color: #ff0000;"></i>';
-                $textInput.attr('placeholder', 'Hablando...');
-                isRecording = true;
                 audioChunks = [];
-
                 mediaRecorder = new MediaRecorder(stream);
 
                 mediaRecorder.ondataavailable = (event) => {
@@ -237,22 +278,19 @@ $(document).ready(function () {
                 mediaRecorder.onstop = () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                     sendAudioToServer(audioBlob);
-
                     stream.getTracks().forEach(track => track.stop());
                 };
 
                 mediaRecorder.start();
 
+                // Cortar grabación automáticamente a los 10 segundos
                 setTimeout(() => {
-                    if (isRecording) {
-                        stopRecording();
-                    }
+                    if (isRecording) stopRecording();
                 }, 10000);
             })
             .catch(error => {
                 isRecording = false;
-                audioButton.innerHTML = '<i class="fa-solid fa-microphone microfono"></i>';
-                $textInput.attr('placeholder', 'Envía un mensaje a ICASOFT IA');
+                audioSend.innerHTML = '<i class="fa-solid fa-microphone microfono"></i>';
                 alert('No se pudo acceder al micrófono. Verifica los permisos de tu navegador.');
             });
     }
@@ -261,8 +299,13 @@ $(document).ready(function () {
         if (mediaRecorder && isRecording) {
             mediaRecorder.stop();
             isRecording = false;
-            audioButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            $textInput.attr('placeholder', 'Transcribiendo...');
+
+            // Mientras transcribe, volver al estado de espera
+            mostrarEstadoIA(); 
+            divChatAudio.style.display = 'flex';
+            divChatText.style.display = 'none';
+            mensajeIA.style.background = 'none';
+            imgIa.style.display = 'none';
         }
     }
 
@@ -271,16 +314,14 @@ $(document).ready(function () {
 
         fetch('https://api.assemblyai.com/v2/upload', {
             method: 'POST',
-            headers: {
-                'authorization': assemblyApiKey
-            },
+            headers: { 'authorization': assemblyApiKey },
             body: audioBlob
         })
             .then(response => response.json())
             .then(data => {
                 const uploadUrl = data.upload_url;
 
-                fetch('https://api.assemblyai.com/v2/transcript', {
+                return fetch('https://api.assemblyai.com/v2/transcript', {
                     method: 'POST',
                     headers: {
                         'authorization': assemblyApiKey,
@@ -290,17 +331,14 @@ $(document).ready(function () {
                         audio_url: uploadUrl,
                         language_code: 'es'
                     })
-                })
-                    .then(response => response.json())
-                    .then(transcriptData => {
-                        const transcriptId = transcriptData.id;
-                        checkTranscriptionStatus(transcriptId, assemblyApiKey);
-                    })
-                    .catch(error => {
-                        finishRecording(false);
-                    });
+                });
             })
-            .catch(error => {
+            .then(response => response.json())
+            .then(transcriptData => {
+                const transcriptId = transcriptData.id;
+                checkTranscriptionStatus(transcriptId, assemblyApiKey);
+            })
+            .catch(() => {
                 finishRecording(false);
             });
     }
@@ -308,9 +346,7 @@ $(document).ready(function () {
     function checkTranscriptionStatus(transcriptId, apiKey) {
         const checkInterval = setInterval(() => {
             fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
-                headers: {
-                    'authorization': apiKey
-                }
+                headers: { 'authorization': apiKey }
             })
                 .then(response => response.json())
                 .then(data => {
@@ -319,11 +355,15 @@ $(document).ready(function () {
 
                         if (data.text && data.text.trim() !== '') {
                             $textInput.val(data.text);
+
+                            // Mostrar solo "hablando" al responder
                             divChatAudio.style.display = 'flex';
                             divChatText.style.display = 'none';
                             mensajeIA.style.background = 'none';
                             imgIa.style.display = 'none';
                             videoHablando.style.display = 'flex';
+                            videoOjos.style.display = 'none';
+
                             setTimeout(() => {
                                 sendMessage();
                             }, 300);
@@ -335,7 +375,7 @@ $(document).ready(function () {
                         finishRecording(false);
                     }
                 })
-                .catch(error => {
+                .catch(() => {
                     clearInterval(checkInterval);
                     finishRecording(false);
                 });
@@ -348,14 +388,11 @@ $(document).ready(function () {
     }
 
     function finishRecording(success) {
-        audioButton.innerHTML = '<i class="fa-solid fa-microphone microfono"></i>';
-        if (!success) {
-            $textInput.attr('placeholder', 'Error de transcripción. Intenta de nuevo.');
-            setTimeout(() => {
-                $textInput.attr('placeholder', 'Envía un mensaje a ICASOFT IA');
-            }, 3000);
-        } else {
-            $textInput.attr('placeholder', 'Envía un mensaje a ICASOFT IA');
-        }
+        audioSend.innerHTML = '<i class="fa-solid fa-microphone microfono"></i>';
+        divChatAudio.style.display = 'flex';
+        divChatText.style.display = 'none';
+        mensajeIA.style.background = 'none';
+        imgIa.style.display = 'none';
+        mostrarEstadoIA(); 
     }
 });

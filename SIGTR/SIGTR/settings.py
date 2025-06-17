@@ -57,6 +57,11 @@ MESSAGE_TAGS = {
 OPENAI_API_KEY = config("OPENAI_API_KEY", default=None)
 GOOGLE_API_KEY = config('API_KEY_MAPS')
 
+#Enviar SMW TWILIO:
+TWILIO_ACCOUNT_SID = config('API_SDI')
+TWILIO_AUTH_TOKEN = config('API_TOKEN_TWILIO')
+TWILIO_PHONE_NUMBER = 'whatsapp:+14155238886'
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 

@@ -2,8 +2,31 @@
 <link rel="stylesheet" href="{% static 'dashboard/css/notificaciones.css' %}">
 
 <div class="notificaciones" id="notificaciones">
-
+    <div id="success" style="display: none;">
+        <span><i class="fa-solid fa-circle-check iconNotification"></i></span>
+        <div>
+            <h3>ÉXITO</h3>
+            <p class="contentNoti" style="white-space: pre-line;"></p>
+        </div>
+        <span class="closeNotification closeSucess"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
+    </div>
+    <div id="advertencia" style="display: none;">
+        <span><i class="fa-solid fa-triangle-exclamation iconNotification"></i></span>
+        <div>
+            <h3>ADVERTENCIA</h3>
+            <p class="contentNoti" style="white-space: pre-line;"></p>
+        </div>
+        <span class="closeNotification closeAdvert"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
+    </div>
+    <div id="danger" style="display: none;">
+        <span><i class="fa-solid fa-circle-xmark iconNotification"></i></span>
+        <div>
+            <h3>ALERTA</h3>
+            <p class="contentNoti" style="white-space: pre-line;"></p>
+        </div>
+        <span class="closeNotification closeDanger"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
+    </div>
 </div>
-<div class="notificaciones" id="notificacionesDevice">
 
+<div class="notificaciones" id="notificacionesDevice">
 </div>

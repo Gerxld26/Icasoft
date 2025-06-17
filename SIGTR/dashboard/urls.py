@@ -19,16 +19,12 @@ from .views import (
     update_technician,
     count_tech,
     list_technician,
+    
     # Client-crud
     add_client,
     read_client, 
     update_client,
-    #manage_users, #borrar
-    inactive_users,
-    deactivate_user,
     toggle_user_status,
-    delete_user,
-    delete_inactive_user,
 
     # Tickets
     status_tickets,
@@ -55,13 +51,11 @@ from .views import (
     speed_test,
 
     # Maintenance-specific views
+    client_get_arch,
     client_clear_space,
     client_update_software,
     client_defragment_disk,
     client_repair_disk, 
-    get_largest_temp_files,
-    get_system_temp_info,
-    client_clear_specific_temp, 
 
     #Mapa
     google_maps,
@@ -109,14 +103,16 @@ from .views import (
     restart_system,
     speech_to_text,
     transcribe_audio,
-    product_create,
-    product_update,
-    product_delete,
-    product_list,
-    category_create,
-    category_update,
-    category_delete,
+
+    #CRUD PRODUCTO
+    read_product,
+    product_crud,
+
+    #CATEGORÍA CRUD
+    category_crud,
     category_list,
+
+    #VENTAS CRUD
     sales_report,
     client_recommendations_api,
     add_to_cart,
@@ -138,11 +134,8 @@ urlpatterns = [
     # Admin routes
     path("tecnicos/", read_technician, name = "read_technician"),
     path("add-admin/", add_admin, name="add_admin"),
-    path("inactive-users/", inactive_users, name="inactive_users"),
-    path("deactivate-user/<int:user_id>/", deactivate_user, name="deactivate_user"),
     path("toggle-user-status/<int:user_id>/", toggle_user_status, name="toggle_user_status"),
-    path("delete-user/<int:user_id>/", delete_user, name="delete_user"),
-    path("delete-inactive-user/<int:user_id>/", delete_inactive_user, name="delete_inactive_user"),
+    
     # Clientes
     path("clientes/", read_client, name="read_client"),
     path("clientes/agregar/", add_client, name = "add_client"),
@@ -155,7 +148,6 @@ urlpatterns = [
     #Tickets
     path("tickets/conteo/<int:year>/<int:idTech>/", status_tickets, name="status_tickets"), 
     path('tickets/conteo/<int:year>/', status_tickets, name='status_tickets_general'),
-    #path("manage-users/", manage_users, name="manage_users"), #borrar
 
     # Location routes
     path("load-countries/", load_countries, name="load_countries"),
@@ -179,14 +171,11 @@ urlpatterns = [
     path('speed-test/', speed_test, name='speed_test'),
 
     # Mantenimiento y limpieza de archivos
-    path("client/maintenance/clear-space/", client_clear_space, name="client_maintenance_clear_space"),
     path("client/maintenance/update-software/", client_update_software, name="client_update_software"),
     path("client/maintenance/defragment-disk/", client_defragment_disk, name="client_defragment_disk"),
     path("client/maintenance/repair-disk/", client_repair_disk, name="client_repair_disk"),
+    path('client/getArchivos/', client_get_arch, name='client_get_arch'),
     path('client/clear-space/', client_clear_space, name='client_clear_space'),
-    path('client/get-largest-temp-files/', get_largest_temp_files, name='get_largest_temp_files'),
-    path('client/clear-specific-temp/', client_clear_specific_temp, name='client_clear_specific_temp'),
-    path('client/get-system-temp-info/', get_system_temp_info, name='get_system_temp_info'),
     path('system/virus-scan/', system_virus_scan, name='system_virus_scan'),
     path('system/security-info/', system_security_info, name='system_security_info'),
         
@@ -239,16 +228,14 @@ urlpatterns = [
     path('api/speech-to-text/', speech_to_text, name='speech_to_text'),
     
     #Carrito de compras
-    path('products/', product_list, name='product_list'),
-    path('products/create/', product_create, name='product_create'),
-    path('products/<int:pk>/update/', product_update, name='product_update'),
-    path('products/<int:pk>/delete/', product_delete, name='product_delete'),
+    path('products/', read_product, name='read_product'),
+    path('products/crud/', product_crud, name='product_create'),
+    path('products/crud/<int:pk>/', product_crud, name='product_crud'),
     
     # Categorías
     path('categories/', category_list, name='category_list'),
-    path('categories/create/', category_create, name='category_create'),
-    path('categories/<int:pk>/update/', category_update, name='category_update'),
-    path('categories/delete/<int:pk>/', category_delete, name='category_delete'),
+    path('categories/crud/', category_crud, name='category_create'),
+    path('categories/crud/<int:pk>/', category_crud, name='category_crud'),
     
     # Reporte de ventas
     path('sales/report/', sales_report, name='sales_report'),

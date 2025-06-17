@@ -308,7 +308,7 @@ function AntivirusFunction() {
 
 openModalAntivirus.addEventListener('click', function () {
     modalOpen = true;
-    const contenedorAnt = document.querySelector(".antivirus");
+    const contenedorAnt = document.getElementById("cardAntivirus");
     contenedorAnt.classList.add("borde-animado");
     if (btnPressAnalisis) {
         modalAntivirus.style.display = 'flex';

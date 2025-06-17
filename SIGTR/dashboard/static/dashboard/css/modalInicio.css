@@ -2,6 +2,7 @@
 
 :root {
     --fondoDiv: linear-gradient(180deg, rgb(37, 36, 36), rgb(43, 67, 84), rgb(37, 36, 36));
+    --colortitulo: #003f97;
 }
 
 .modal {
@@ -72,9 +73,11 @@
     margin-bottom: 20px;
     position: relative;
 }
-.headerModal .textHW{
+
+.headerModal .textHW {
     font-size: x-large;
 }
+
 .close {
     position: absolute;
     right: 10px;
@@ -341,7 +344,7 @@ div#cpu-name {
     border-radius: 15px;
     width: 80%;
     max-height: 80vh !important;
-    overflow-y: auto !important; 
+    overflow-y: auto !important;
     display: flex !important;
     flex-direction: column !important;
     max-width: 800px;
@@ -371,6 +374,7 @@ div#cpu-name {
     max-height: 80vh !important;
     overflow-y: auto !important;
 }
+
 @keyframes modalopen {
     from {
         opacity: 0;
@@ -1030,7 +1034,8 @@ div#cpu-name {
     color: #f44336;
 }
 
-.diagnosis-issues, .diagnosis-components {
+.diagnosis-issues,
+.diagnosis-components {
     margin-top: 30px;
 }
 
@@ -1251,17 +1256,21 @@ div#cpu-name {
     background-color: rgba(76, 175, 80, 0.2);
 }
 
-.scenario-recommendations, .scenario-issues {
+.scenario-recommendations,
+.scenario-issues {
     margin-top: 20px;
 }
 
-.scenario-issues h4, .scenario-recommendations h4 {
+.scenario-issues h4,
+.scenario-recommendations h4 {
     color: #03a9f4;
     margin-bottom: 15px;
     font-size: 16px;
 }
 
-.loading, .no-data, .error {
+.loading,
+.no-data,
+.error {
     text-align: center;
     padding: 20px;
     color: #cccccc;
@@ -1277,6 +1286,7 @@ div#cpu-name {
         width: 95%;
         padding: 15px;
     }
+
     .textComponente,
     .resultComponente {
         font-size: 16px;
@@ -1500,15 +1510,18 @@ div#cpu-name {
     color: #6c757d;
 }
 
-.fix-driver-btn, .update-driver-btn {
+.fix-driver-btn,
+.update-driver-btn {
     transition: all 0.3s ease;
 }
 
-.fix-driver-btn:hover, .update-driver-btn:hover {
+.fix-driver-btn:hover,
+.update-driver-btn:hover {
     transform: scale(1.05);
 }
 
-.fix-driver-btn.btn-success, .update-driver-btn.btn-success {
+.fix-driver-btn.btn-success,
+.update-driver-btn.btn-success {
     pointer-events: none;
 }
 
@@ -1549,11 +1562,15 @@ div#cpu-name {
     margin-top: 10px;
 }
 
-.fix-driver-issue-btn, .fix-all-driver-issues-btn, .fix-all-scenario-drivers-btn {
+.fix-driver-issue-btn,
+.fix-all-driver-issues-btn,
+.fix-all-scenario-drivers-btn {
     transition: all 0.3s ease;
 }
 
-.fix-driver-issue-btn:hover, .fix-all-driver-issues-btn:hover, .fix-all-scenario-drivers-btn:hover {
+.fix-driver-issue-btn:hover,
+.fix-all-driver-issues-btn:hover,
+.fix-all-scenario-drivers-btn:hover {
     transform: scale(1.03);
 }
 
@@ -1638,9 +1655,17 @@ div#cpu-name {
 }
 
 @keyframes progress-pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 .progress-pulse {
@@ -1771,9 +1796,17 @@ div#cpu-name {
 
 /* Animación para botones */
 @keyframes pulse-button {
-    0% { box-shadow: 0 0 0 0 rgba(123, 181, 255, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(123, 181, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(123, 181, 255, 0); }
+    0% {
+        box-shadow: 0 0 0 0 rgba(123, 181, 255, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(123, 181, 255, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(123, 181, 255, 0);
+    }
 }
 
 .btn-pulse {
@@ -2944,6 +2977,54 @@ iframe.videoYt {
     font-style: normal;
     box-shadow: inset 0px 0px 11px 1px #263080;
     cursor: pointer;
+}
+
+/*modal descargas*/
+#modalDownland {
+    background: rgb(0 0 0 / 72%);
+}
+
+#modalDownland .modal-content {
+    width: 100%;
+    height: 100%;
+    max-width: 400px;
+    max-height: 300px;
+    display: grid;
+    grid-template-rows: 25% auto;
+}
+
+#modalDownland .headerModal {
+    text-align: center;
+    font-weight: 800;
+    font-size: x-large;
+    text-shadow: 1px 6px 4px var(--colortitulo);
+    color: white;
+}
+
+.textModal {
+    text-align: center;
+    font-weight: 400;
+    font-size: medium;
+}
+
+#modalDownland .contentData {
+    display: grid;
+    grid-template-rows: 20% auto 30%;
+    gap: 10px;
+    align-items: center;
+}
+
+.buttonModal {
+    display: grid;
+    grid-template-columns: 50% 50%;
+    gap: 10px;
+    width: 100%;
+    justify-items: center;
+}
+
+.buttonModal .asistenciaButton {
+    width: 80%;
+    border: 2px solid white;
 }
 
 /* Responsive */

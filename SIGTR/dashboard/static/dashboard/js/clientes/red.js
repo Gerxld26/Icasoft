@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnRed) {
         btnRed.addEventListener('click', (e) => {
             deshabilitarBotones('red');
-            const contenedorRed = document.querySelector(".red");
+            const contenedorRed = document.getElementById("cardRed");
             contenedorRed.classList.add("borde-animado");
             e.preventDefault();
             RedFunction();

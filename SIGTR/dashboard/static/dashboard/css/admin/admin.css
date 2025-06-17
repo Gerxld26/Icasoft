@@ -469,6 +469,7 @@ div#usuarios {
 }
 div#mapaTech {
     border-radius: 20px;
+    position: sticky !important;
 }
 .contentMapa {
     padding-left: 20px;

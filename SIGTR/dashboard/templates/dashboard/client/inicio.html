@@ -10,7 +10,7 @@
     <link rel="icon" type="image/x-icon" href="{% static 'dashboard/icon/iconICASOFT.ico' %}">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    
+
 </head>
 
 <body>
@@ -21,7 +21,7 @@
                     ¡Hola, {{ request.user.username }}!
                 </div>
                 <div class="contactos">
-                    <div class="correo"><a href="mailto:company.icasofti21@gmail.com" class="linkCorreo">Correo</a>
+                    <div class="correo"><a href="mailto:company.icasofti21@gmail.com" class="linkCorreo"><i class="fa-solid fa-envelope"></i> Contactar </a>
                     </div>
                     <div class="wstp"><a href="https://goo.su/V3JAvi" target="_blank"><i
                                 class="fa-brands fa-whatsapp fa-fade iconWstp"></i></a></div>
@@ -64,7 +64,8 @@
                             <div class="IconHW"><i class="fa-regular fa-file temperaturaRAM"></i></div>
                             <div>
                                 <div class="valorHW" id="archTemp"></div>
-                                <div class="valorHW" id="archUso" style="font-size: small; color: rgb(255 255 255 / 45%);"></div>
+                                <div class="valorHW" id="archUso"
+                                    style="font-size: small; color: rgb(255 255 255 / 45%);"></div>
                             </div>
                         </div>
                     </div>
@@ -119,7 +120,7 @@
                                     <input id="textIAID" type="text" placeholder="Envía un mensaje a ICASOFT IA">
                                 </div>
                                 <div class="contentChatBtn">
-                                    <button class="btnChat" id="audioSend">
+                                    <button class="btnChat" id="audioSendText">
                                         <i class="fa-solid fa-microphone microfono"></i>
                                     </button>
                                     <button class="btnChat" id="sendChat" style="display: none;">
@@ -159,18 +160,6 @@
                             </div>
                         </button>
                     </div>
-                    <div class="red">
-                        <button id="btnRed" class="btnUlt">
-                            <div class="textDiag">COMPROBACIÓN DE RED</div>
-                            <div class="graficoMonit"><img src="{% static 'dashboard/img/red.webp' %}" alt=""
-                                    class="imgDiagnostico" id="imgRed"></div>
-                            <div class="progress-bar" id="progressBarRed">
-                                <span data-width="100%"></span>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-                <div class="ultimo">
                     <div class="detdiagnostico">
                         <button id="btnAbrirModalDiagnostico" class="btnUlt">
                             <div class="textDiag">DIAGNÓSTICO</div>
@@ -184,7 +173,9 @@
                             </div>
                         </button>
                     </div>
-                    <div class="antivirus">
+                </div>
+                <div class="ultimo">
+                    <div class="functionAdd" id="cardAntivirus">
                         <button class="btnUlt" id="btnAbrirModalAntivirus">
                             <div class="textDiag">ANTIVIRUS</div>
                             <div class="imgDetDiag" id="imgAntivirusDet">
@@ -195,7 +186,7 @@
                             </div>
                         </button>
                     </div>
-                    <div class="ultMant">
+                    <div class="functionAdd"  id="cardMantenimiento">
                         <button class="btnUlt" id="btnAbrirModalMantenimiento">
                             <div class="textDiag">MANTENIMIENTO DEL SISTEMA</div>
                             <div class="imgDetDiag" id="imgMantDet"><img class="imgDiagnostico"
@@ -208,7 +199,17 @@
                             </div>
                         </button>
                     </div>
-                    <div class="ultHist">
+                    <div class="functionAdd" id="cardRed">
+                        <button id="btnRed" class="btnUlt">
+                            <div class="textDiag">TESTEO DE RED</div>
+                            <div class="graficoMonit"><img src="{% static 'dashboard/img/red.webp' %}" alt=""
+                                    class="imgDiagnostico" id="imgRed"></div>
+                            <div class="progress-bar" id="progressBarRed">
+                                <span data-width="100%"></span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="functionAdd" id="cardHistorial">
                         <button class="btnUlt" id="btnHist">
                             <div class="textDiag">HISTORIAL</div>
                             <div class="imgDetDiag" id="imgHistDet">
@@ -236,7 +237,7 @@
     <script src="https://kit.fontawesome.com/233c0f00ee.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
     <script src="{% static 'dashboard/js/clientes/inicio.js' %}"></script>
-    <script src="{% static 'dashboard/js/clientes/mapa.js' %}"></script> 
+    <script src="{% static 'dashboard/js/clientes/mapa.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/monitoreo.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/antivirus.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/diagnostico.js' %}"></script>
@@ -248,7 +249,7 @@
     <script src="{% static 'dashboard/js/clientes/red.js' %}"></script>
     <script src="{% static 'dashboard/js/clientes/chat.js' %}"></script>
     <!-- <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=marker,geometry&callback=initMap"
-    async defer></script> -->
+        async defer></script> -->
 </body>
 
 </html>

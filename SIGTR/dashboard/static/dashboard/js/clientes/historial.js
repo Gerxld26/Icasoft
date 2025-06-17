@@ -26,7 +26,7 @@ openModalHistorial.style.cursor = 'pointer';
 openModalHistorial.addEventListener('click', function () {
     deshabilitarBotones('historial');
     modalOpen = true;
-    const contenedorHis = document.querySelector(".ultHist");
+    const contenedorHis = document.getElementById("cardHistorial");
     contenedorHis.classList.add("borde-animado");
     obtenerHistorial(); 
     if (btnPressAnalisis) { 

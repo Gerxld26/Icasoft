@@ -1,0 +1,109 @@
+{% load widget_tweaks %}
+<!-- Modal para agregar categoría -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addProductModalLabel">Agregar Categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-product-form" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nombreProducto.id_for_label }}" class="form-label">Nombre del Producto</label>
+                            {{ form.nombreProducto|add_class:"form-control" }}
+                            {% if form.nombreProducto.errors %}
+                            <div class="text-danger">
+                                {{ form.nombreProducto.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.idCategoria.id_for_label }}" class="form-label">Categoría</label>
+                            {{ form.idCategoria|add_class:"form-select" }}
+                            {% if form.idCategoria.errors %}
+                            <div class="text-danger">
+                                {{ form.idCategoria.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.descripcionProducto.id_for_label }}" class="form-label">Descripción</label>
+                        {{ form.descripcionProducto|add_class:"form-control" }}
+                        {% if form.descripcionProducto.errors %}
+                        <div class="text-danger">
+                            {{ form.descripcionProducto.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.stock.id_for_label }}" class="form-label">Stock</label>
+                            {{ form.stock|add_class:"form-control" }}
+                            {% if form.stock.errors %}
+                            <div class="text-danger">
+                                {{ form.stock.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.precioVenta.id_for_label }}" class="form-label">Precio de Venta</label>
+                            {{ form.precioVenta|add_class:"form-control" }}
+                            {% if form.precioVenta.errors %}
+                            <div class="text-danger">
+                                {{ form.precioVenta.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.precioCompra.id_for_label }}" class="form-label">Precio de Compra</label>
+                            {{ form.precioCompra|add_class:"form-control" }}
+                            {% if form.precioCompra.errors %}
+                            <div class="text-danger">
+                                {{ form.precioCompra.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.imagenProducto.id_for_label }}" class="form-label">Imagen del Producto</label>
+                            {{ form.imagenProducto|add_class:"form-control" }}
+                            {% if form.imagenProducto.errors %}
+                            <div class="text-danger">
+                                {{ form.imagenProducto.errors }}
+                            </div>
+                            {% endif %}
+                            {% if producto.imagenProducto %}
+                            <div class="mt-2">
+                                <img src="{{ producto.imagenProducto.url }}" alt="{{ producto.nombreProducto }}" style="max-height: 100px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fechaCaducidad.id_for_label }}" class="form-label">Fecha de Caducidad</label>
+                            {{ form.fechaCaducidad|add_class:"form-control" }}
+                            {% if form.fechaCaducidad.errors %}
+                            <div class="text-danger">
+                                {{ form.fechaCaducidad.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                    </div>
+                
+                    <button type="submit" class="btn btn-primary mt-3 w-100">Guardar Categoría</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

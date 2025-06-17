@@ -1,7 +1,8 @@
 const ctxBarra = document.getElementById('barraAtenciones');
 const labels = ['Ica', 'Lima', 'Arequipa', 'Piura'];
 let mapTech;
-let markersTech = [];
+let markersTechAsig = [];
+let markersTechDisp = [];
 let chart;
 let chartService;
 let chartUbicaciones;
@@ -34,30 +35,65 @@ function initMap() {
     }).addTo(mapTech);
 }
 // Añadir marcadores al mapa
-function mostrarTecnicosEnMapa(listaTech) {
-    markersTech.forEach(m => mapTech.removeLayer(m));
-    markersTech = [];
+function mostrarTecnicosEnMapa(listaTechDisp = [], listaTechAsig = []) {
+    markersTechAsig.forEach(m => mapTech.removeLayer(m));
+    markersTechDisp.forEach(m => mapTech.removeLayer(m));
+    markersTechAsig = [];
+    markersTechDisp = [];
 
     let lat, lng;
+    // Icono azul para técnicos disponibles
+    const iconTechDisp = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
 
-    listaTech.forEach(tech => {
-        lat = parseFloat(tech['profile__latitude']);
-        lng = parseFloat(tech['profile__longitude']);
+    // Icono verde para técnicos asignados
+    const iconTechAsig = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+    listaTechDisp.forEach(tech => {
+        lat = parseFloat(tech['latitude']);
+        lng = parseFloat(tech['longitude']);
 
         if (!isNaN(lat) && !isNaN(lng)) {
-            const marker = L.marker([lat, lng])
+            const markerDisp = L.marker([lat, lng], { icon: iconTechDisp })
                 .addTo(mapTech)
-                .bindPopup(`<strong>${tech.username}</strong>`);
-            markersTech.push(marker);
+                .bindPopup(`<strong>${tech.full_name}</strong>`);
+            markersTechDisp.push(markerDisp);
         }
     });
 
+    listaTechAsig.forEach(tech => {
+        lat = parseFloat(tech['latitude']);
+        lng = parseFloat(tech['longitude']);
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+            const markerAsig = L.marker([lat, lng], { icon: iconTechAsig })
+                .addTo(mapTech)
+                .bindPopup(`<strong>${tech.full_name}</strong>`);
+            markersTechAsig.push(markerAsig);
+        }
+    });
+ 
     // Mover el mapa si hay solo uno
-    if (listaTech.length === 1 && !isNaN(lat) && !isNaN(lng)) {
+    if ((listaTechAsig.length === 1 && !isNaN(lat) && !isNaN(lng)) ||
+        (listaTechDisp.length === 1 && !isNaN(lat) && !isNaN(lng))) {
         mapTech.setView([lat, lng], 15); // Zoom cercano
     }
+
     // Ajustar el mapa para mostrar todos los marcadores
-    if (markersTech.length > 1) {
+    if (markersTechAsig.length > 1 || markersTechDisp.length > 1) {
+        const markersTech = [...markersTechAsig, ...markersTechDisp];
         const group = new L.featureGroup(markersTech);
         mapTech.fitBounds(group.getBounds());
     }
@@ -89,7 +125,6 @@ function listYear() {
 async function listTech() {
     const responseListTech = await fetch('/dashboard/tecnicos/listar/');
     const dataListTech = await responseListTech.json();
-    console.log(dataListTech);
     const optionTech = document.getElementById('listTech');
     optionTech.innerHTML = '';
 
@@ -106,18 +141,22 @@ async function listTech() {
         option.textContent = tech.username;
         optionTech.appendChild(option);
     });
-    mostrarTecnicosEnMapa(dataListTech.listaTech);
-
+    mostrarTecnicosEnMapa(dataListTech.coord_tech_disp, dataListTech.coord_tech_Asig);
     optionTech.addEventListener('change', function () {
         const selectedTechId = this.value || null;
         const selectedYear = document.getElementById('listYear').value || new Date().getFullYear();
         conteoTickets(selectedTechId, selectedYear);
 
         // Filtrar técnicos según la selección
-        const filteredTechs = selectedTechId
-        ? dataListTech.listaTech.filter(tech => tech.id == selectedTechId)
-        : dataListTech.listaTech;
-        mostrarTecnicosEnMapa(filteredTechs);
+        const filteredDisp = selectedTechId
+            ? dataListTech.coord_tech_disp.filter(tech => tech.user_id == selectedTechId)
+            : dataListTech.coord_tech_disp;
+
+        const filteredAsig = selectedTechId
+            ? dataListTech.coord_tech_Asig.filter(tech => tech.user_id == selectedTechId)
+            : dataListTech.coord_tech_Asig;
+
+        mostrarTecnicosEnMapa(filteredDisp, filteredAsig);
     });
 }
 
@@ -130,7 +169,6 @@ async function conteoTickets(id = null, year = new Date().getFullYear()) {
 
     const responseTickets = await fetch(url);
     const dataTickets = await responseTickets.json();
-    console.log(dataTickets);
     // Conteo tickets de clientes y total clientes
     const ticketClienteElement = document.getElementById('ticketClient');
     const countClientElement = document.getElementById('cantClient');
@@ -298,7 +336,7 @@ linealCanvas.forEach((canvas, index) => {
             labels: [],
             datasets: [{
                 label: 'Cantidad por mes',
-                data: [0,0,0],
+                data: [0, 0, 0],
                 fill: false,
                 borderColor: 'rgb(75, 192, 192)',
                 tension: 0.1

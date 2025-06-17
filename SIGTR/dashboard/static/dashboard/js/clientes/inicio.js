@@ -4,7 +4,6 @@ let video = document.getElementById('robotGIF');
 let videOjos = document.getElementById('robotGIFOjos');
 audio.muted = true;
 
-const notificacionesContainer = document.getElementById('notificaciones');
 const notificationDevice = document.getElementById('notificacionesDevice');
 const advertencia = document.createElement('div');
 const success = document.createElement('div');
@@ -23,52 +22,44 @@ let contador = 0;
 
 function mostrarNotificacion(tipo = 'success', mensaje = 'Mensaje por defecto') {
     const mensajeFormateado = mensaje.replace(/<br>/g, '\n');
-    let elemento;
+
+    const successN = document.getElementById('success');
+    const advertenciaN = document.getElementById('advertencia');
+    const dangerN = document.getElementById('danger');
+    const notificacionesContainer = document.getElementById('notificaciones');
+
+    // Ocultar todos primero
+    successN.style.display = 'none';
+    advertenciaN.style.display = 'none';
+    dangerN.style.display = 'none';
+
+    // Seleccionar el contenedor correcto
+    let targetDiv;
     if (tipo === 'success') {
-        success.innerHTML = `
-        <div id="success">
-            <span><i class="fa-solid fa-circle-check iconNotification"></i></span>
-            <div>
-                <h3>ÉXITO</h3>
-                <p style="white-space: pre-line;">${mensajeFormateado}</p>
-            </div>
-            <span class="closeSucess" id="closeNotification"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
-        </div>`;
-        elemento = success;
-        success.style.animation = 'fadeOut 400ms ease-out 3s';
+        targetDiv = successN;
     } else if (tipo === 'advertencia') {
-        advertencia.innerHTML = `
-        <div id="advertencia">
-            <span><i class="fa-solid fa-triangle-exclamation iconNotification"></i></span>
-            <div>
-                <h3>ADVERTENCIA</h3>
-                <p style="white-space: pre-line;">${mensajeFormateado}</p>
-            </div>
-            <span class="closeAdvert" id="closeNotification"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
-        </div>`;
-        elemento = advertencia;
-        advertencia.style.animation = 'fadeOut 400ms ease-out 3s';
+        targetDiv = advertenciaN;
     } else if (tipo === 'danger') {
-        danger.innerHTML = `
-        <div id="danger">
-            <span><i class="fa-solid fa-circle-xmark iconNotification"></i></span>
-            <div>
-                <h3>ALERTA</h3>
-                <p style="white-space: pre-line;">${mensajeFormateado}</p>
-            </div>
-            <span class="closeDanger" id="closeNotification"><i class="fa-solid fa-xmark iconNotifClose"></i></span>
-        </div>`;
-        elemento = danger;
-        danger.style.animation = 'fadeOut 400ms ease-out 3s';
+        targetDiv = dangerN;
     }
 
-    notificacionesContainer.appendChild(elemento);
+    // Asignar mensaje
+    if (targetDiv) {
+        const content = targetDiv.querySelector('.contentNoti');
+        content.innerText = mensajeFormateado;
+        targetDiv.style.display = 'flex';
+        targetDiv.style.animation = 'fadeOut 400ms ease-out 3s';
+    }
+
     notificacionesContainer.style.display = 'flex';
-    // setTimeout(() => {
-    //     notificacionesContainer.style.display = 'none';
-    // }, 2000);
-    $("#closeNotification").on("click", function () {
-        notificacionesContainer.style.display = 'none';
+
+    // Cerrar notificación al hacer clic
+    const closeButtons = targetDiv.querySelectorAll('.closeNotification');
+    closeButtons.forEach(btn => {
+        btn.onclick = () => {
+            notificacionesContainer.style.display = 'none';
+            targetDiv.style.display = 'none';
+        };
     });
 }
 function notificacionDetalle(mensaje = 'Mensaje por defecto') {
@@ -126,19 +117,21 @@ async function fetchCpuUse() {
 
     }
 }
+async function getArch() {
+    try {
+        const responseArch = await fetch('/dashboard/client/getArchivos/');
+        const dataArch = await responseArch.json();
+        const archTemp = document.getElementById('archTemp');
+        const archUso = document.getElementById('archUso');
+        archTemp.textContent = `Archivos temporales: ${dataArch.total_scanned_size}`;
+        archUso.textContent = `Archivos en uso: ${dataArch.files_in_use}`;
+    } catch (error) {
 
+    }
+}
 $(document).ready(function () {
     fetchCpuUse();
-    getCache();
-    const btnLiberarEspacio = document.getElementById('liberarEspacio');
-    if (btnLiberarEspacio) {
-        btnLiberarEspacio.addEventListener('click', clearTempSpace);
-    }
-
-    const btnMostrarGrandes = document.getElementById('mostrarGrandes');
-    if (btnMostrarGrandes) {
-        btnMostrarGrandes.addEventListener('click', mostrarArchivosMasGrandes);
-    }
+    getArch();
 
     const robotImg = document.getElementById("robotimg");
     const videoRobot = document.getElementById("video-container");
@@ -157,7 +150,8 @@ $(document).ready(function () {
         mensajeIA.style.opacity = '0.4';
     });
 
-    video.addEventListener('ended', function () {
+    audio.addEventListener('ended', function () {
+        video.pause();
         videoRobot.style.display = "none";
         robotImg.style.display = "flex";
         input.style.pointerEvents = 'auto';
@@ -237,3 +231,105 @@ $(document).ready(function () {
 
 });
 
+function habilitarBotones(type) {
+    switch (type) {
+        case 'monitoreo':
+            btnAbrirModalDiagnostico.disabled = false;
+            openModalMantenimiento.disabled = false;
+            openModalAntivirus.disabled = false;
+            openModalHistorial.disabled = false;
+            btnRed.disabled = false;
+            break;
+        case 'diagnostico':
+            openModalMonitoreo.disabled = false;
+            openModalMantenimiento.disabled = false;
+            openModalAntivirus.disabled = false;
+            openModalHistorial.disabled = false;
+            btnRed.disabled = false;
+            break;
+        case 'mantenimiento':
+            openModalMonitoreo.disabled = false;
+            btnAbrirModalDiagnostico.disabled = false;
+            openModalAntivirus.disabled = false;
+            openModalHistorial.disabled = false;
+            btnRed.disabled = false;
+            break;
+        case 'antivirus':
+            openModalMonitoreo.disabled = false;
+            openModalMantenimiento.disabled = false;
+            btnAbrirModalDiagnostico.disabled = false;
+            openModalHistorial.disabled = false;
+            btnRed.disabled = false;
+            break;
+        case 'historial':
+            openModalMonitoreo.disabled = false;
+            openModalMantenimiento.disabled = false;
+            openModalAntivirus.disabled = false;
+            btnAbrirModalDiagnostico.disabled = false;
+            btnRed.disabled = false;
+            break;
+        case 'red':
+            openModalMonitoreo.disabled = false;
+            openModalMantenimiento.disabled = false;
+            btnAbrirModalDiagnostico.disabled = false;
+            openModalAntivirus.disabled = false;
+            openModalHistorial.disabled = false;
+            break;
+        default:
+
+            break;
+    }
+}
+function deshabilitarBotones(type) {
+    switch (type) {
+        case 'monitoreo':
+            btnAbrirModalDiagnostico.disabled = true;
+            openModalMantenimiento.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalHistorial.disabled = true;
+            btnRed.disabled = true;
+            break;
+        case 'diagnostico':
+            openModalMonitoreo.disabled = true;
+            openModalMantenimiento.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalHistorial.disabled = true;
+            btnRed.disabled = true;
+            break;
+        case 'mantenimiento':
+            openModalMonitoreo.disabled = true;
+            btnAbrirModalDiagnostico.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalHistorial.disabled = true;
+            btnRed.disabled = true;
+            break;
+        case 'antivirus':
+            openModalMonitoreo.disabled = true;
+            openModalMantenimiento.disabled = true;
+            btnAbrirModalDiagnostico.disabled = true;
+            openModalHistorial.disabled = true;
+            btnRed.disabled = true;
+            break;
+        case 'historial':
+            openModalMonitoreo.disabled = true;
+            openModalMantenimiento.disabled = true;
+            openModalAntivirus.disabled = true;
+            btnAbrirModalDiagnostico.disabled = true;
+            btnRed.disabled = true;
+            break;
+        case 'red':
+            openModalMonitoreo.disabled = true;
+            openModalMantenimiento.disabled = true;
+            btnAbrirModalDiagnostico.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalHistorial.disabled = true;
+            break;
+        default:
+            btnAbrirModalDiagnostico.disabled = true;
+            openModalMantenimiento.disabled = true;
+            openModalAntivirus.disabled = true;
+            openModalHistorial.disabled = true;
+            btnRed.disabled = true;
+            break;
+    }
+}

@@ -122,6 +122,7 @@
     grid-template-areas: "contentForm" "botonesAsistencia";
     grid-template-rows: 90% auto;
     height: 100%;
+    gap: 10px;
 }
 
 #modalAsistencia .contentForm {
@@ -221,4 +222,28 @@ div#contentMapaAsis {
 .botonesAsistencia {
     display: grid;
     align-items: center;
+    justify-items: center;
+    grid-template-columns: 50% 50%;
+    gap: 10px;
+}
+
+.botonesOpcion {
+    width: 80%;
+    border-radius: 10px;
+    height: 40px;
+    background: rgb(3, 101, 140);
+    color: white;
+    cursor: pointer;
+    display: grid;
+    align-items: center;
+}
+
+a.btnAsistencia {
+    grid-template-columns: 10% auto;
+    align-items: center;
+    justify-content: center;
+    text-decoration-line: none;
+}
+#modalAsistencia .btnAsistencia:hover{
+    border-radius: 50px;
 }

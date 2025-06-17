@@ -83,17 +83,19 @@ body {
     grid-template-areas: "correo wstp";
     justify-content: end;
     gap: 20px;
+    align-items: center;
 }
 
 .linkCorreo {
     color: white;
     font-style: normal;
-    text-decoration: none;
+    font-size: larger;
 }
 
 .iconWstp {
     color: green;
-    font-size: 20px;
+    font-size:x-large;
+    text-shadow: white;
 }
 
 .footer {
@@ -835,7 +837,7 @@ body {
     grid-template-areas:
         "analisisCompleto"
         "monitoreo"
-        "red";
+        "detdiagnostico";
     text-align: center;
 
     .analisisCompleto {
@@ -933,10 +935,7 @@ body {
     grid-area: ultimo;
     display: grid;
     grid-template-areas:
-        "detdiagnostico"
-        "antivirus"
-        "ultMant"
-        "ultHist";
+        "functionAdd";
     text-align: center;
     gap: 10px;
     grid-template-rows: auto;
@@ -982,11 +981,8 @@ body {
 }
 
 .monitoreo,
-.red,
 .detdiagnostico,
-.antivirus,
-.ultMant,
-.ultHist {
+.functionAdd {
     position: relative;
     width: 100%;
     gap: 10px;
@@ -998,11 +994,8 @@ body {
 
 /* ::before sin nada visible al inicio */
 .monitoreo::before,
-.red::before,
 .detdiagnostico::before,
-.antivirus::before,
-.ultMant::before,
-.ultHist::before {
+.functionAdd::before {
     content: "";
     position: absolute;
     top: -2px;
@@ -1016,11 +1009,8 @@ body {
 
 /* Fondo interior */
 .monitoreo::after,
-.red::after,
 .detdiagnostico::after,
-.antivirus::after,
-.ultMant::after,
-.ultHist::after {
+.functionAdd::after {
     content: "";
     position: absolute;
     top: 2px;
@@ -1180,7 +1170,7 @@ body {
 
     .graficoMonit {
         display: flex;
-        height: 80px;
+        height: 100px;
         justify-content: center;
     }
 
@@ -1320,10 +1310,7 @@ body {
     .ultimo {
         display: grid;
         grid-template-areas:
-            "detdiagnostico"
-            "antivirus"
-            "ultMant"
-            "ultHist";
+            "functionAdd";
         grid-template-rows: auto !important;
         text-align: center;
         gap: 10px;
@@ -1343,7 +1330,12 @@ body {
         justify-content: center;
         border-radius: 30px;
     }
-
+    #btnAbrirModalMantenimiento .textDiag{
+        font-size: large;
+    }
+    #btnAbrirModalDiagnostico .textDiag{
+        font-size: x-large;
+    }
     .ultimo .btnUlt .textDiag {
         font-size: 20px;
     }
@@ -1353,7 +1345,9 @@ body {
         height: 90px;
         justify-content: center;
     }
-
+    #imgDiagnosticoDet {
+        height: 120px;
+    }
     .imgDiagnostico,
     .imgMantGIF,
     .imgDiagnosticoGIF {

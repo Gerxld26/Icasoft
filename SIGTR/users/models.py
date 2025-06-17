@@ -42,7 +42,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
     telefono = models.CharField(
-        max_length=9,
+        max_length=20,
         null=True,
         blank=True,
     )

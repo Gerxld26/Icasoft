@@ -1,5 +1,4 @@
 const actionUrls = window.ACTION_URLS = {
-    getcache: "/dashboard/client/clear-space/",  // Cambiado para obtener solo información sin limpiar
     cleanup: "/dashboard/client/clear-space/",
     update: "/dashboard/client/maintenance/update-software/",
     defrag: "/dashboard/client/maintenance/defragment-disk/",
@@ -41,7 +40,7 @@ openModalMantenimiento.style.cursor = 'pointer';
 openModalMantenimiento.addEventListener('click', function () {
     deshabilitarBotones('mantenimiento');
     modalOpen = true;
-    const contenedorMant = document.querySelector(".ultMant");
+    const contenedorMant = document.getElementById('cardMantenimiento');
     contenedorMant.classList.add("borde-animado");
     if (btnPressAnalisis) {
         modalMantenimiento.style.display = 'flex';
@@ -76,22 +75,44 @@ function mostrarResultado(mensaje, tipo = 'info') {
     if (tipo === 'success') {
         icono = 'success';
         titulo = 'Éxito';
+        Swal.fire({
+            icon: icono,
+            title: titulo,
+            html: mensaje,
+            showConfirmButton: true,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                location.reload();
+            }
+        });
     } else if (tipo === 'error') {
         icono = 'error';
         titulo = 'Error';
+        Swal.fire({
+            icon: icono,
+            title: titulo,
+            html: mensaje,
+            showConfirmButton: true,
+        })
     } else if (tipo === 'warning') {
         icono = 'warning';
         titulo = 'Advertencia';
-    } else if (tipo == 'info'){
+        Swal.fire({
+            icon: icono,
+            title: titulo,
+            html: mensaje,
+            showConfirmButton: true,
+        })
+    } else if (tipo == 'info') {
         icono = 'info';
         titulo = 'Información';
+        Swal.fire({
+            icon: icono,
+            title: titulo,
+            html: mensaje,
+            showConfirmButton: true,
+        })
     }
-    Swal.fire({
-        icon: `${icono}`,
-        title: `${titulo}`,
-        html: `${mensaje}`,
-        showConfirmButton: true,
-    })
 }
 
 function limpiarContador() {
@@ -181,7 +202,7 @@ function manejarEstadoRespuesta(data) {
             break;
         case 'info':
             mostrarResultado(`${data.message}`, 'info');
-        break;
+            break;
         case 'error':
         default:
             mostrarResultado(`${data.message || "Error desconocido"}`, 'error');
@@ -227,39 +248,66 @@ async function ejecutarAccion(accion, boton) {
         mostrarCargando(boton, false);
     }
 }
+async function eliminarDownland(boton) {
+    limpiarContador();
+    mostrarCargando(boton, true);
 
-async function getCache() {
-    const url = actionUrls['getcache'];
     try {
-        const archTemp = document.getElementById('archTemp');
-        const archUso = document.getElementById('archUso');
-        const response = await fetch(url, {
+        const response = await fetch(actionUrls['cleanup'], {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
             },
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            body: JSON.stringify({ include_downloads: true })
         });
 
-        if (!response.ok) {
-            throw new Error(`Error del servidor (HTTP ${response.status})`);
-        }
+        if (!response.ok) throw new Error(`Error del servidor (HTTP ${response.status})`);
 
         const data = await response.json();
-        archTemp.textContent = `Archivos temporales: ${data.total_scanned_size}`;
-        archUso.textContent = `Archivos en uso: ${data.files_in_use}`;
+        manejarEstadoRespuesta(data);
     } catch (error) {
         console.error('Error:', error);
-    } 
+        mostrarResultado(`${error.message || "No se pudo ejecutar la acción."}`, 'error');
+    } finally {
+        mostrarCargando(boton, false);
+    }
 }
 
+async function eliminarArchivos(boton) {
+    limpiarContador();
+    mostrarCargando(boton, true);
+
+    try {
+        const response = await fetch(actionUrls['cleanup'], {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ include_downloads: false })
+        });
+
+        if (!response.ok) throw new Error(`Error del servidor (HTTP ${response.status})`);
+
+        const data = await response.json();
+        manejarEstadoRespuesta(data);
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarResultado(`${error.message || "No se pudo ejecutar la acción."}`, 'error');
+    } finally {
+        mostrarCargando(boton, false);
+    }
+}
 document.addEventListener('DOMContentLoaded', function () {
-    getCache();
     if (btnLiberarEspacio) {
         btnLiberarEspacio.addEventListener('click', function () {
-            ejecutarAccion('cleanup', this);
+            const modalDowland = document.getElementById('modalDownland')
+            modalDowland.style.display = 'flex';
         });
     }
 

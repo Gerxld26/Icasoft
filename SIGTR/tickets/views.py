@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.urls import reverse
+from twilio.rest import Client
+from django.conf import settings
 from django.contrib.auth import get_user_model
 import logging
 import json
@@ -17,6 +19,7 @@ from django.http import JsonResponse, HttpResponseNotAllowed
 
 # Definir constantes para la lógica de proximidad - Un solo límite
 MAX_DISTANCE_KM = 2  # Distancia máxima para considerar a un técnico como "cercano" y permitir crear tickets
+
 @login_required
 @user_passes_test(lambda user: user.role == "client")
 def asistencia(request):
@@ -44,7 +47,8 @@ def asistencia(request):
             })
 
         technician_id = data["tecnico"]
-        tipo_asistencia_id =  int(data["tipoAsistencia"])
+        tipo_asistencia_id = int(data["tipoAsistencia"])
+
         try:
             technician = User.objects.get(id=technician_id)
             tech_profile = UserProfile.objects.get(user=technician)
@@ -62,8 +66,9 @@ def asistencia(request):
             if distance > MAX_DISTANCE_KM:
                 return JsonResponse({
                     "status": "error",
-                    "message": f"El técnico seleccionado está a {distance:.1f} km, lo cual excede el límite permitido de {MAX_DISTANCE_KM} km."
+                    "message": f"El técnico está a {distance:.1f} km, fuera del rango permitido."
                 })
+
             try:
                 tipo_asistencia = TipoAsistencia.objects.get(id=tipo_asistencia_id)
             except TipoAsistencia.DoesNotExist:
@@ -71,16 +76,31 @@ def asistencia(request):
                     "status": "error",
                     "message": "El tipo de asistencia seleccionado no existe."
                 })
-            
-            # Crear el ticket
+
             ticket = Ticket.objects.create(
                 client=request.user,
                 assigned_to=technician,
                 description=data["descripcion"],
                 latitude=latitude,
                 longitude=longitude,
-                tipo_asistencia = tipo_asistencia
+                tipo_asistencia=tipo_asistencia
             )
+
+            # Enviar mensaje por WhatsApp al cliente
+            numero_cliente = User.objects.filter(
+                id=request.user.id,
+                is_active=True,
+                role='client'
+            ).values_list('telefono', flat=True).first()
+
+            if numero_cliente:
+                client_twilio = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+                mensaje = f"Hola {request.user.username}, tu solicitud fue registrada. Un técnico te contactará pronto."
+                client_twilio.messages.create(
+                    body=mensaje,
+                    from_='whatsapp:+14155238886',
+                    to=f'whatsapp:{numero_cliente}'
+                )
 
             return JsonResponse({
                 "status": "success",
@@ -88,23 +108,12 @@ def asistencia(request):
             })
 
         except User.DoesNotExist:
-            return JsonResponse({
-                "status": "error",
-                "message": "El técnico seleccionado no existe."
-            })
-
+            return JsonResponse({"status": "error", "message": "El técnico no existe."})
         except UserProfile.DoesNotExist:
-            return JsonResponse({
-                "status": "error",
-                "message": "El técnico no tiene un perfil válido."
-            })
-
+            return JsonResponse({"status": "error", "message": "El técnico no tiene un perfil válido."})
         except Exception as e:
             logger.error(f"Error en la creación del ticket: {str(e)}")
-            return JsonResponse({
-                "status": "error",
-                "message": "Ocurrió un error al procesar tu solicitud."
-            })
+            return JsonResponse({"status": "error", "message": "Ocurrió un error al procesar tu solicitud."})
 
 @login_required
 @user_passes_test(lambda user: user.role == "client")

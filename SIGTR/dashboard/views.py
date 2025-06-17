@@ -3,14 +3,11 @@ import os
 import json
 import time
 import psutil
-import shutil
-import random
 import logging
 import tempfile
 import platform
 import threading
 import subprocess
-import traceback
 import GPUtil
 import cpuinfo
 import speedtest
@@ -27,7 +24,6 @@ from django.templatetags.static import static
 from django.http import (
     JsonResponse,
     HttpResponse,
-    HttpResponseForbidden,
     HttpResponseBadRequest,
     FileResponse,
     Http404,
@@ -52,10 +48,6 @@ from django.core.exceptions import PermissionDenied
 
 # Django ORM
 from django.db.models import (
-    Q,
-    F,
-    Func,
-    Value,
     Count,
     Sum,
 )
@@ -235,8 +227,8 @@ def transcribe_audio(request):
 
 @login_required
 @user_passes_test(is_admin)
-def product_list(request):
-    productos = Producto.objects.all().order_by('-fechaCreacionProducto')
+def read_product(request):
+    productos = Producto.objects.all().filter(estadoProducto=True).order_by('-fechaCreacionProducto')
     
     query = request.GET.get('q')
     if query:
@@ -250,73 +242,73 @@ def product_list(request):
     page = request.GET.get('page')
     productos_paginados = paginator.get_page(page)
     
-    categorias = Categoria.objects.all()
-    
+    categorias = Categoria.objects.filter(estadoCategoria= True).all()
+    form = ProductoForm()
     context = {
         'productos': productos_paginados,
         'categorias': categorias,
         'query': query,
+        'form':form,
         'categoria_seleccionada': categoria_id
     }
     
-    return render(request, 'dashboard/admin/product_list.html', context)
+    return render(request, 'dashboard/admin/product/read_product.html', context)
 
 @login_required
 @user_passes_test(is_admin)
-def product_create(request):
-    if request.method == 'POST':
-        form = ProductoForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Producto creado exitosamente.')
-            return redirect('product_list')
-    else:
-        form = ProductoForm()
-    
-    context = {
-        'form': form,
-        'title': 'Crear Producto'
-    }
-    
-    return render(request, 'dashboard/admin/product_form.html', context)
+@require_http_methods(["GET", "POST"])
+def product_crud(request, pk=None):
+    action = request.GET.get('action') or request.POST.get('action')
+    if not action:
+        return HttpResponseBadRequest('Parámetro de acción requerido')
+    if action=='create':
+        if request.method == 'POST':
+            form = ProductoForm(request.POST, request.FILES)
+            if form.is_valid():
+                producto = form.save()
+                return JsonResponse({'success': True, 'message': 'Producto creado exitosamente.'})
+            else:
+                # Retornar errores del formulario
+                errors = form.errors.as_json()
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+        
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    elif action == 'update':
+        if not pk:
+            return HttpResponseBadRequest('Parámetro "pk" requerido para actualizar.')
+        producto = get_object_or_404(Producto, idProducto=pk)
+        if request.method == 'GET':
+            data = {
+                'nombreProducto': producto.nombreProducto,
+                'descripcionProducto': producto.descripcionProducto,
+                'stock': producto.stock,
+                'precioVenta': producto.precioVenta,
+                'precioCompra': producto.precioCompra,
+                'estadoProducto': producto.estadoProducto,
+                'fechaCaducidad': producto.fechaCaducidad.strftime('%Y-%m-%d') if producto.fechaCaducidad else '',
+                'idCategoria': producto.idCategoria.idCategoria if producto.idCategoria else '',
+            }
+            return JsonResponse(data)
+                
+        elif request.method == 'POST':
+            form = ProductoForm(request.POST, request.FILES, instance=producto)
+            if form.is_valid():
+                form.save()
+                return JsonResponse({'success': True, 'message': 'Producto actualizado exitosamente.'})
+            else:
+                return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
+        elif action == 'delete':
+            if not pk:
+                return HttpResponseBadRequest('Parámetro "pk" requerido para eliminar.')
+            producto = get_object_or_404(Producto, idProducto=pk)
+            if producto.estadoProducto:
+                producto.estadoProducto = False
+                producto.save()
+                return JsonResponse({'status': 'success', 'message': 'Producto eliminado exitosamente.'})
+            else:
+                return JsonResponse({'status': 'warning', 'message': 'El producto ya está desactivada.'})
 
-@login_required
-@user_passes_test(is_admin)
-def product_update(request, pk):
-    producto = get_object_or_404(Producto, idProducto=pk)
-    
-    if request.method == 'POST':
-        form = ProductoForm(request.POST, request.FILES, instance=producto)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Producto actualizado exitosamente.')
-            return redirect('product_list')
-    else:
-        form = ProductoForm(instance=producto)
-    
-    context = {
-        'form': form,
-        'title': 'Editar Producto',
-        'producto': producto
-    }
-    
-    return render(request, 'dashboard/admin/product_form.html', context)
-
-@login_required
-@user_passes_test(is_admin)
-def product_delete(request, pk):
-    producto = get_object_or_404(Producto, idProducto=pk)
-    
-    if request.method == 'POST':
-        producto.delete()
-        messages.success(request, 'Producto eliminado exitosamente.')
-        return redirect('product_list')
-    
-    context = {
-        'producto': producto
-    }
-    
-    return render(request, 'dashboard/admin/product_confirm_delete.html', context)
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)   
 
 @login_required
 @user_passes_test(is_admin)
@@ -337,63 +329,93 @@ def category_list(request):
         'form': form,
     }
     
-    return render(request, 'dashboard/admin/read_category.html', context)
+    return render(request, 'dashboard/admin/category/read_category.html', context)
+
 
 @login_required
 @user_passes_test(is_admin)
-def category_create(request):
-    if request.method == 'POST':
-        form = CategoriaForm(request.POST)
-        if form.is_valid():
-            form.save()
+@require_http_methods(["GET", "POST"])
+def category_crud(request, pk=None):
+    action = request.GET.get('action') or request.POST.get('action')
 
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'message': 'Categoría creada exitosamente.'})
-            else:
-                messages.success(request, 'Categoría creada exitosamente.')
-        else:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                errors = form.errors.as_json()
-                return JsonResponse({'errors': errors}, status=400)
-            else:
-                messages.error(request, 'Hubo errores en el formulario. Corrígelos e intenta de nuevo.')
+    if not action:
+        return HttpResponseBadRequest('Parámetro "action" requerido.')
+
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    if action == 'create':
+        if request.method == 'POST':
+            nombre = request.POST.get('nombreCategoria')
+
+            # Verificamos si ya existe 
+            existente = Categoria.objects.filter(nombreCategoria__iexact=nombre).first()
+
+            if existente:
+                if not existente.estadoCategoria:
+                    existente.estadoCategoria = True
+                    existente.fechaCreacionCategoria = now()
+                    existente.fechaModificacionCategoria = now()
+                    existente.save()
+                    if is_ajax:
+                        return JsonResponse({'message': 'Categoría creada exitosamente.'})
+                    messages.success(request, 'Categoría creada exitosamente.')
+                else:
+                    if is_ajax:
+                        return JsonResponse({'message': 'La categoría ya existe y está activa.'}, status=400)
+                    messages.warning(request, 'La categoría ya existe y está activa.')
                 return redirect('read_category')
-
-    return redirect('read_category')
-
-@login_required
-@user_passes_test(is_admin)
-def category_update(request, pk):
-    categoria = get_object_or_404(Categoria, idCategoria=pk)
-    
-    if request.method == 'POST':
-        form = CategoriaForm(request.POST, instance=categoria)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Categoría actualizada exitosamente.')
+            
+            # Crear nueva si no existe
+            form = CategoriaForm(request.POST)
+            if form.is_valid():
+                form.save()
+                if is_ajax:
+                    return JsonResponse({'message': 'Categoría creada exitosamente.'})
+                messages.success(request, 'Categoría creada exitosamente.')
+            else:
+                if is_ajax:
+                    return JsonResponse({'errors': form.errors}, status=400)
+                messages.error(request, 'Hubo errores en el formulario.')
             return redirect('read_category')
-    else:
-        form = CategoriaForm(instance=categoria)
-    
-    context = {
-        'form': form,
-        'title': 'Editar Categoría',
-        'categoria': categoria
-    }
-    
-    return render(request, 'dashboard/admin/read_category.html', context)
 
-@login_required
-@user_passes_test(is_admin)
-def category_delete(request, pk):
-    categoria = get_object_or_404(Categoria, idCategoria=pk)
-    
-    if categoria.estadoCategoria:  # Solo desactiva si está activa
-        categoria.estadoCategoria = False
-        categoria.save()
-        return JsonResponse({'status': 'success', 'message': 'Categoría desactivada exitosamente.'})
-    else:
-        return JsonResponse({'status': 'warning', 'message': 'La categoría ya está desactivada.'})
+    elif action == 'update':
+        if not pk:
+            return HttpResponseBadRequest('Parámetro "pk" requerido para actualizar.')
+
+        categoria = get_object_or_404(Categoria, idCategoria=pk)
+
+        if request.method == 'GET' and is_ajax:
+            return JsonResponse({
+                'idCategoria': categoria.idCategoria,
+                'nombreCategoria': categoria.nombreCategoria
+            })
+
+        elif request.method == 'POST':
+            form = CategoriaForm(request.POST, instance=categoria)
+            if form.is_valid():
+                categoria = form.save(commit=False)
+                categoria.nombreCategoria = form.cleaned_data.get('nombreCategoria')
+                categoria.fechaModificacionCategoria = now()
+                categoria.save()
+                return JsonResponse({'message': 'Categoría actualizada exitosamente.'})
+            return JsonResponse({'errors': form.errors}, status=400)
+
+        return HttpResponseBadRequest('Método no soportado o petición inválida para actualizar.')
+
+    elif action == 'delete':
+        if not pk:
+            return HttpResponseBadRequest('Parámetro "pk" requerido para eliminar.')
+
+        categoria = get_object_or_404(Categoria, idCategoria=pk)
+
+        if categoria.estadoCategoria:
+            categoria.estadoCategoria = False
+            categoria.save()
+            return JsonResponse({'status': 'success', 'message': 'Categoría eliminada exitosamente.'})
+        else:
+            return JsonResponse({'status': 'warning', 'message': 'La categoría ya está desactivada.'})
+
+    return HttpResponseBadRequest('Acción no válida.')
 
 @login_required
 @user_passes_test(is_admin)
@@ -438,7 +460,7 @@ def sales_report(request):
         'end_date': end_date_str
     }
     
-    return render(request, 'dashboard/admin/sales_report.html', context)
+    return render(request, 'dashboard/admin/ventas/sales_report.html', context)
 
 #Views de recomendacion
 @login_required
@@ -569,8 +591,6 @@ def check_speedtest_servers(max_attempts=3):
             logger.warning(f"Intento {attempt + 1} de conexión a servidores fallido: {str(e)}")
             if attempt == max_attempts - 1:
                 return False
-            
-
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -883,9 +903,6 @@ def client_chat(request):
     if request.method == "GET":
         return render(request, "dashboard/client/client_chat.html")
 
-
-
-@user_passes_test(lambda user: user.is_authenticated and user.role == 'client')
 def cpu_monitoring_data(request):
     try:
         system = platform.system()
@@ -5270,7 +5287,11 @@ def restart_system(request):
 def client_repair_disk(request):
     try:
         response = requests.post('http://localhost:5001/repair_disk')
-        data = response.json()
+
+        try:
+            data = response.json()
+        except Exception:
+            data = {}
 
         if response.status_code == 200:
             return JsonResponse({"status": data.get("status"), "message": data.get("message")})
@@ -5278,19 +5299,43 @@ def client_repair_disk(request):
             return JsonResponse({"status": "error", "message": "Error al reparar el disco"}, status=500)
 
     except Exception as e:
-        return JsonResponse({"status": "error", "message": f"Error inesperado: {str(e)}"}, status=500)
+        return JsonResponse({
+            "status": "error",
+            "message": f"Error inesperado: {str(e)}"
+        }, status=500)
     
-def get_temp_directories():
-    return [
+
+def get_temp_directories(include_downloads=False):
+    temp_dirs = list(filter(None, [
         tempfile.gettempdir(),
-        os.getenv('TEMP', '/tmp'),
-        os.getenv('TMPDIR', '/tmp'),
+        os.getenv('TEMP'),
+        os.getenv('TMP'),
+        os.getenv('TMPDIR'),
         os.path.expanduser('~/.cache'),
-        '/var/tmp',
-        os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Temp') if os.name == 'nt' else None,
-        os.path.join(os.path.expanduser('~'), 'Library', 'Caches') if os.name == 'darwin' else None,
-    ]
-    
+        'C:\\Windows\\Temp',
+        os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Temp'),
+        os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Microsoft', 'Windows', 'INetCache'),
+        os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Microsoft', 'Windows', 'WebCache'),
+        os.path.join(os.path.expanduser('~'), 'AppData', 'LocalLow', 'Temp'),
+    ]))
+
+    if include_downloads:
+        downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+        if os.path.exists(downloads):
+            temp_dirs.append(downloads)
+
+    return temp_dirs
+
+def formatear_tamano(bytes_size):
+    if bytes_size == 0:
+        return "0 B"
+    unidades = ['B', 'KB', 'MB', 'GB', 'TB']
+    for unidad in unidades:
+        if bytes_size < 1024.0:
+            return f"{bytes_size:.2f} {unidad}"
+        bytes_size /= 1024.0
+    return f"{bytes_size:.2f} PB"
+
 def is_file_in_use(file_path):
     try:
         with open(file_path, 'rb') as f:
@@ -5299,44 +5344,25 @@ def is_file_in_use(file_path):
     except (PermissionError, OSError):
         return True
     
-def formatear_tamano(bytes_size):
-    if bytes_size == 0:
-        return "0 B"
-        
-    unidades = ['B', 'KB', 'MB', 'GB', 'TB']
-    for unidad in unidades:
-        if bytes_size < 1024.0:
-            return f"{bytes_size:.2f} {unidad}"
-        bytes_size /= 1024.0
-    return f"{bytes_size:.2f} PB"
 
-        
-@login_required
-@require_POST
-@user_passes_test(is_client)
-def client_clear_space(request):
+def client_get_arch(request):
     try:
-        old_files_hours = 24 
-        min_file_size = 1024 
+        old_files_hours = 24
+        min_file_size = 0
         old_files_threshold = time.time() - (old_files_hours * 60 * 60)
 
-        temp_directories = get_temp_directories()
+        include_downloads = True
+
+        temp_directories = get_temp_directories(include_downloads=include_downloads)
         temp_directories = [d for d in temp_directories if d and os.path.exists(d) and os.path.isdir(d)]
 
-        total_deleted = 0
-        total_failed = 0
-        total_bytes_deleted = 0
-        total_scanned_files = 0
-        total_bytes_scanned = 0
-        skipped_files = 0
+        print("📁 Directorios escaneados:", temp_directories)
 
-        failed_files = []
-        deleted_files = []
+        total_bytes_scanned = 0
         files_in_use_details = []
 
         for temp_dir in temp_directories:
             try:
-                logger.info(f"Procesando directorio temporal: {temp_dir}")
                 for root, _, files in os.walk(temp_dir):
                     for file in files:
                         file_path = os.path.join(root, file)
@@ -5346,293 +5372,116 @@ def client_clear_space(request):
 
                             try:
                                 file_size = os.path.getsize(file_path)
-                                file_mod_time = os.path.getmtime(file_path)
                             except (OSError, PermissionError):
-                                total_failed += 1
                                 continue
 
                             if file_size < min_file_size:
-                                skipped_files += 1
                                 continue
 
-                            total_scanned_files += 1
                             total_bytes_scanned += file_size
 
                             if is_file_in_use(file_path):
-                                files_in_use_details.append({
-                                    'path': file_path,
-                                    'size': formatear_tamano(file_size)
-                                })
-                                total_failed += 1
-                                continue
+                                files_in_use_details.append(file_path)
 
-                            if file_mod_time < old_files_threshold:
-                                try:
-                                    os.remove(file_path)
-                                    total_deleted += 1
-                                    total_bytes_deleted += file_size
-                                    deleted_files.append({
-                                        'path': file_path,
-                                        'size': formatear_tamano(file_size)
-                                    })
-                                    logger.info(f"Archivo eliminado: {file_path} ({formatear_tamano(file_size)})")
-                                except Exception as e:
-                                    logger.error(f"Error al eliminar {file_path}: {str(e)}")
-                                    failed_files.append({
-                                        'path': file_path,
-                                        'size': formatear_tamano(file_size),
-                                        'error': str(e)
-                                    })
-                                    total_failed += 1
-                        except Exception as e:
-                            logger.error(f"Error procesando {file_path}: {str(e)}")
+                        except Exception:
                             continue
-            except Exception as e:
-                logger.error(f"Error al procesar directorio {temp_dir}: {str(e)}")
-                continue
-
-        tamano_liberado = formatear_tamano(total_bytes_deleted)
-        tamano_total_escaneado = formatear_tamano(total_bytes_scanned)
-
-        total_failed_size = 0
-        for file in files_in_use_details:
-            try:
-                if os.path.exists(file['path']) and os.access(file['path'], os.R_OK):
-                    total_failed_size += os.path.getsize(file['path'])
             except Exception:
                 continue
 
-        porcentaje_eliminados = (
-            f"{(total_deleted / total_scanned_files * 100):.1f}%"
-            if total_scanned_files > 0 else "0%"
-        )
+        tamano_total_escaneado = formatear_tamano(total_bytes_scanned)
 
-        messageSuccess = (
-            f"🧹 <strong>Eliminados:</strong> {total_deleted} de {total_scanned_files} archivos temporales.<br>"
-            f"💾 <strong>Tamaño liberado:</strong> {tamano_liberado} de {tamano_total_escaneado} totales ({porcentaje_eliminados}).<br>"
-            f"📁 <strong>Archivos en uso no eliminados:</strong> {len(files_in_use_details)}."
-        )
-        messageInfo = (
-            f" No hay archivos para eliminar porque están en uso. <br>"
-            f"🧹 <strong>Eliminados:</strong> {total_deleted} de {total_scanned_files} archivos temporales.<br>"
-            f"💾 <strong>Tamaño liberado:</strong> {tamano_liberado} de {tamano_total_escaneado} totales.<br>"
-            f"📁 <strong>Archivos en uso no eliminados:</strong> {len(files_in_use_details)}."
-        )
-
-        response_data = {
-            "total_deleted": total_deleted,
-            "space_freed": tamano_liberado,
-            "total_scanned": total_scanned_files,
+        return JsonResponse({
             "total_scanned_size": tamano_total_escaneado,
             "files_in_use": len(files_in_use_details),
-            "total_failed_size": formatear_tamano(total_failed_size),
-            "details": {
-                "directories_checked": len(temp_directories),
-                "skipped_files": skipped_files,
-                "oldest_file_age_hours": old_files_hours,
-                "percent_deleted": porcentaje_eliminados
-            }
-        }
-
-        # Adicionar el tipo de status y message:
-        if total_deleted == 0 and total_bytes_deleted == 0:
-            response_data["status"] = "info"
-            response_data["message"] = messageInfo
-        else:
-            response_data["status"] = "success"
-            response_data["message"] = messageSuccess
-
-        return JsonResponse(response_data)
+        })
 
     except Exception as e:
-        logger.error(f"Error en client_clear_space: {str(e)}")
+        logger.error(f"Error en client_get_arch: {str(e)}")
         return JsonResponse({
             "status": "error",
             "message": f"Error inesperado: {str(e)}"
         }, status=500)
-    
+
+
 @login_required
-@require_GET
 @user_passes_test(is_client)
-def get_largest_temp_files(request):
-    temp_directories = [
-        tempfile.gettempdir(),
-        os.getenv('TEMP', '/tmp'),
-        os.getenv('TMPDIR', '/tmp'),
-        os.path.expanduser('~/.cache'),
-        '/var/tmp',
-        os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Temp') if os.name == 'nt' else None,
-        os.path.join(os.path.expanduser('~'), 'Library', 'Caches') if os.name == 'darwin' else None,
-    ]
-    
-    temp_directories = [d for d in temp_directories if d and os.path.exists(d) and os.path.isdir(d)]
-    
-    max_files = 20
-    largest_files = []
-    
-    for temp_dir in temp_directories:
-        try:
+def client_clear_space(request):
+    try:
+        include_downloads = False
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            try:
+                body_data = json.loads(request.body)
+                include_downloads = body_data.get("include_downloads", False)
+            except Exception as e:
+                print("Error leyendo JSON:", e)
+
+        temp_directories = get_temp_directories(include_downloads=include_downloads)
+        temp_directories = [d for d in temp_directories if os.path.exists(d) and os.path.isdir(d)]
+
+        print("🗂️ Directorios escaneados:", temp_directories)
+
+        total_deleted = 0
+        total_failed = 0
+        total_bytes_deleted = 0
+        total_scanned_files = 0
+        total_bytes_scanned = 0
+
+        for temp_dir in temp_directories:
             for root, _, files in os.walk(temp_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
                     try:
                         if not os.path.isfile(file_path) or not os.path.exists(file_path):
                             continue
-                            
+
                         file_size = os.path.getsize(file_path)
-                        
-                        if file_size < 1024 * 1024:
-                            continue
-                            
-                        if len(largest_files) < max_files:
-                            heapq.heappush(largest_files, (file_size, file_path))
-                        elif file_size > largest_files[0][0]:
-                            heapq.heappushpop(largest_files, (file_size, file_path))
-                    except (OSError, PermissionError):
+
+                        total_scanned_files += 1
+                        total_bytes_scanned += file_size
+
+                        # 💥 Elimina cualquier archivo, sin importar fecha
+                        print("🔍 Eliminando archivo:", file_path)
+                        os.remove(file_path)
+                        total_deleted += 1
+                        total_bytes_deleted += file_size
+
+                    except Exception as e:
+                        print(f"❌ Error al eliminar {file_path}: {e}")
+                        total_failed += 1
                         continue
-        except Exception:
-            continue
-    
-    large_files_info = []
-    largest_files.sort(reverse=True)
-    
-    for size, path in largest_files:
-        large_files_info.append({
-            'path': path,
-            'size': formatear_tamano(size),
-            'size_bytes': size,
-            'can_delete': os.access(path, os.W_OK)
-        })
-    
-    return JsonResponse({
-        "status": "success",
-        "large_files": large_files_info,
-        "total_found": len(large_files_info)
-    })
 
-@login_required
-@require_POST
-@user_passes_test(is_client)
-def client_clear_specific_temp(request):
-    try:
-        data = json.loads(request.body)
-        file_paths = data.get('file_paths', [])
-        
-        if not file_paths:
-            return JsonResponse({
-                "status": "error",
-                "message": "No se proporcionaron archivos para eliminar"
-            })
-        
-        deleted = 0
-        failed = 0
-        total_size_freed = 0
-        failed_details = []
-        
-        for path in file_paths:
-            try:
-                if os.path.exists(path) and os.path.isfile(path):
-                    size = os.path.getsize(path)
-                    os.remove(path)
-                    deleted += 1
-                    total_size_freed += size
-                else:
-                    failed += 1
-                    failed_details.append({
-                        "path": path,
-                        "reason": "Archivo no encontrado"
-                    })
-            except Exception as e:
-                failed += 1
-                failed_details.append({
-                    "path": path,
-                    "reason": str(e)
-                })
-        
+        tamano_liberado = formatear_tamano(total_bytes_deleted)
+        tamano_total_escaneado = formatear_tamano(total_bytes_scanned)
+
+        porcentaje_eliminados = (
+            f"{(total_deleted / total_scanned_files * 100):.1f}%"
+            if total_scanned_files > 0 else "0%"
+        )
+
+        message = (
+            f"🧹 <strong>Eliminados:</strong> {total_deleted} de {total_scanned_files} archivos.<br>"
+            f"💾 <strong>Tamaño liberado:</strong> {tamano_liberado} de {tamano_total_escaneado} totales.<br>"
+        )
+
         return JsonResponse({
-            "status": "success",
-            "message": f"Archivos eliminados: {deleted}. Espacio liberado: {formatear_tamano(total_size_freed)}",
-            "deleted": deleted,
-            "failed": failed,
-            "space_freed": formatear_tamano(total_size_freed),
-            "failed_details": failed_details
+            "status": "success" if total_deleted > 0 else "info",
+            "message": message,
+            "total_deleted": total_deleted,
+            "space_freed": tamano_liberado,
+            "total_scanned": total_scanned_files,
+            "total_scanned_size": tamano_total_escaneado,
+            "percent_deleted": porcentaje_eliminados,
+            "directories_checked": len(temp_directories)
         })
+
     except Exception as e:
+        print("💥 Error en client_clear_space:", e)
         return JsonResponse({
             "status": "error",
-            "message": f"Error al eliminar archivos: {str(e)}"
+            "message": f"Error inesperado: {str(e)}"
         }, status=500)
-
-@login_required
-@require_GET
-def get_system_temp_info(request):
-    try:
-        temp_directories = [
-            tempfile.gettempdir(),
-            os.getenv('TEMP', '/tmp'),
-            os.getenv('TMPDIR', '/tmp'),
-            os.path.expanduser('~/.cache'),
-        ]
-        
-        temp_directories = [d for d in temp_directories if d and os.path.exists(d) and os.path.isdir(d)]
-        
-        system_info = {
-            'temp_directories': temp_directories,
-            'disk_usage': {},
-            'recommendations': []
-        }
-        
-        for temp_dir in temp_directories:
-            try:
-                total_size = 0
-                file_count = 0
-                large_file_count = 0
-                
-                for root, _, files in os.walk(temp_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        try:
-                            if os.path.isfile(file_path):
-                                size = os.path.getsize(file_path)
-                                total_size += size
-                                file_count += 1
-                                
-                                if size > 10 * 1024 * 1024:
-                                    large_file_count += 1
-                        except (OSError, PermissionError):
-                            continue
-                
-                system_info['disk_usage'][temp_dir] = {
-                    'total_size': formatear_tamano(total_size),
-                    'total_size_bytes': total_size,
-                    'file_count': file_count,
-                    'large_file_count': large_file_count
-                }
-                
-                if total_size > 1 * 1024 * 1024 * 1024:
-                    system_info['recommendations'].append(
-                        f"El directorio {temp_dir} ocupa más de 1GB. Se recomienda limpiarlo con frecuencia."
-                    )
-                
-                if large_file_count > 5:
-                    system_info['recommendations'].append(
-                        f"Se encontraron {large_file_count} archivos grandes en {temp_dir}. Considere eliminarlos manualmente."
-                    )
-                
-            except Exception:
-                continue
-        
-        return JsonResponse({
-            "status": "success",
-            "system_info": system_info
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            "status": "error",
-            "message": f"Error al obtener información del sistema: {str(e)}"
-        }, status=500)
-        
+    
 @login_required
 @user_passes_test(is_client)
 def client_update_software(request):
@@ -6177,7 +6026,7 @@ def read_client(request):
     page_obj = paginator.get_page(page_number)
 
     context = {'page_obj': page_obj, 'query': query, 'form': form}
-    return render(request, 'dashboard/admin/read_client.html', context)
+    return render(request, 'dashboard/admin/client/read_client.html', context)
 
 # Agregar cliente
 @user_passes_test(lambda u: u.role == 'admin')
@@ -6267,7 +6116,7 @@ def read_technician(request):
         'form': form,
         'countries': country_list,
     }
-    return render(request, 'dashboard/admin/read_technician.html', context)
+    return render(request, 'dashboard/admin/tech/read_technician.html', context)
 ##Add tech:
 @login_required
 @user_passes_test(lambda u: u.role == 'admin')
@@ -6406,7 +6255,14 @@ def count_tech(request):
 def list_technician(request):
     try:
         list_tech = User.objects.filter(profile__latitude__isnull=False, profile__longitude__isnull=False, is_active=True).order_by('-date_joined').values('id', 'username', 'profile__latitude', 'profile__longitude') # Ordenar por fecha de creación (más reciente primero)
-        return JsonResponse({'listaTech':list(list_tech)})
+        coord_tech_disp = UserProfile.objects.filter(estado_conexion='online', user__is_active=True).values('user_id','full_name','latitude', 'longitude')
+        coord_tech_Asig = UserProfile.objects.filter(estado_conexion='offline', user__is_active=True).values('user_id','full_name','latitude', 'longitude')
+        data = {
+            'coord_tech_disp': list(coord_tech_disp),
+            'coord_tech_Asig': list(coord_tech_Asig),
+            'listaTech':list(list_tech)
+        }
+        return JsonResponse(data)
     except Exception as e:
         return JsonResponse({'error': 'Ocurrió un error al listar los técnicos', 'detalle': str(e)}, status=500)
     
